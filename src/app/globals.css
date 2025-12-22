@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif;
+  --text-primary: #0f1419;
+  --text-secondary: #5b6472;
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-hover-bg: rgba(255, 255, 255, 0.78);
+  --glass-recessed-bg: rgba(245, 245, 245, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 4px 24px -1px rgba(15, 20, 25, 0.08);
+  --grid-line: rgba(15, 20, 25, 0.05);
+  --accent-blue: #007aff;
+  --accent-orange: #ff9500;
+  --accent-green: #34c759;
+  --accent-pink: #ff2d55;
+  --app-bg: radial-gradient(
+      900px 480px at 12% 0%,
+      rgba(0, 122, 255, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 420px at 88% 16%,
+      rgba(255, 149, 0, 0.12),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #f7f8fb 0%, #edf0f6 55%, #f7f8fb 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --text-primary: #f5f7fa;
+    --text-secondary: #9aa4b2;
+    --glass-bg: rgba(30, 30, 30, 0.6);
+    --glass-hover-bg: rgba(45, 45, 45, 0.72);
+    --glass-recessed-bg: rgba(22, 22, 22, 0.84);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 16px 32px -18px rgba(0, 0, 0, 0.7);
+    --grid-line: rgba(255, 255, 255, 0.04);
+    --app-bg: radial-gradient(
+        900px 480px at 12% 0%,
+        rgba(0, 122, 255, 0.18),
+        transparent 60%
+      ),
+      radial-gradient(
+        700px 420px at 88% 16%,
+        rgba(255, 149, 0, 0.16),
+        transparent 60%
+      ),
+      linear-gradient(180deg, #0b0d10 0%, #141820 55%, #0b0d10 100%);
+  }
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --text-primary: #0f1419;
+  --text-secondary: #5b6472;
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-hover-bg: rgba(255, 255, 255, 0.78);
+  --glass-recessed-bg: rgba(245, 245, 245, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 4px 24px -1px rgba(15, 20, 25, 0.08);
+  --grid-line: rgba(15, 20, 25, 0.05);
+  --app-bg: radial-gradient(
+      900px 480px at 12% 0%,
+      rgba(0, 122, 255, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 420px at 88% 16%,
+      rgba(255, 149, 0, 0.12),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #f7f8fb 0%, #edf0f6 55%, #f7f8fb 100%);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --text-primary: #f5f7fa;
+  --text-secondary: #9aa4b2;
+  --glass-bg: rgba(30, 30, 30, 0.6);
+  --glass-hover-bg: rgba(45, 45, 45, 0.72);
+  --glass-recessed-bg: rgba(22, 22, 22, 0.84);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 16px 32px -18px rgba(0, 0, 0, 0.7);
+  --grid-line: rgba(255, 255, 255, 0.04);
+  --app-bg: radial-gradient(
+      900px 480px at 12% 0%,
+      rgba(0, 122, 255, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 420px at 88% 16%,
+      rgba(255, 149, 0, 0.16),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #0b0d10 0%, #141820 55%, #0b0d10 100%);
+}
+
+@theme inline {
+  --font-sans: var(--font-system);
+  --color-foreground: var(--text-primary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100%;
+  background: var(--app-bg);
+  color: var(--text-primary);
+  font-family: var(--font-system);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+      90deg,
+      var(--grid-line) 1px,
+      transparent 1px
+    ),
+    linear-gradient(0deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 120px 120px;
+  opacity: 0.35;
+}
+
+@keyframes zenith-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes zenith-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.06);
+  }
+}
+
+.zenith-float {
+  animation: zenith-float 2.6s ease-in-out infinite;
+}
+
+.zenith-pulse {
+  animation: zenith-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zenith-float,
+  .zenith-pulse {
+    animation: none;
+  }
+}
