@@ -126,7 +126,7 @@ export default function JsonFormatterTool() {
         {error ?? (copied ? "Copied to clipboard." : "")}
       </p>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
-        <div className="flex min-h-[320px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+        <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
             Input
           </p>
@@ -139,10 +139,10 @@ export default function JsonFormatterTool() {
             }}
             spellCheck={false}
             placeholder='{"hello":"world"}'
-            className="mt-3 min-h-[240px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
         </div>
-        <div className="flex min-h-[320px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+        <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
             Output
           </p>
@@ -151,7 +151,7 @@ export default function JsonFormatterTool() {
             readOnly
             spellCheck={false}
             placeholder="Formatted JSON appears here."
-            className="mt-3 min-h-[240px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
         </div>
       </div>

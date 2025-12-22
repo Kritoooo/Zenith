@@ -33,10 +33,12 @@ export function ToolShell({
         </h1>
         <div className="h-9 w-9" aria-hidden />
       </div>
-      <div className="mt-6 flex min-h-0 flex-1 flex-col gap-6 lg:flex-row">
-        <aside className="text-sm text-[color:var(--text-secondary)] lg:w-[240px] lg:shrink-0">
-          {description ?? "Adjust inputs and run the tool."}
-        </aside>
+      <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4">
+        {description ? (
+          <p className="text-sm text-[color:var(--text-secondary)]">
+            {description}
+          </p>
+        ) : null}
         <div className="flex min-h-[360px] flex-1 flex-col rounded-[18px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
           {children}
         </div>
