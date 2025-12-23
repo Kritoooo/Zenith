@@ -252,6 +252,14 @@ export default function ColorConverterTool() {
     syncFromRgb(hslToRgb(parsed));
   };
 
+  const handlePickerChange = (value: string) => {
+    const parsed = parseHex(value);
+    if (!parsed) return;
+    setStatus(null);
+    setCopied(null);
+    syncFromRgb(parsed);
+  };
+
   const copyValue = async (label: string, value: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -283,6 +291,7 @@ export default function ColorConverterTool() {
   };
 
   const previewColor = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+  const hexValue = formatHex(rgb);
   const hsl = rgbToHsl(rgb);
 
   return (
@@ -321,6 +330,44 @@ export default function ColorConverterTool() {
       </div>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <div className="flex flex-1 flex-col gap-4">
+          <div className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
+                Color Picker
+              </p>
+              <span className="text-xs text-[color:var(--text-secondary)]">
+                {hexValue}
+              </span>
+            </div>
+            <div className="relative mt-3">
+              <input
+                type="color"
+                value={hexValue.toLowerCase()}
+                onChange={(event) => handlePickerChange(event.target.value)}
+                aria-label="Pick a color"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+              <div className="flex items-center justify-between gap-4 rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="h-10 w-10 rounded-full shadow-[0_8px_18px_-12px_rgba(0,0,0,0.5)]"
+                    style={{ backgroundColor: previewColor }}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-[color:var(--text-primary)]">
+                      Pick a color
+                    </p>
+                    <p className="text-xs text-[color:var(--text-secondary)]">
+                      Click to open the picker
+                    </p>
+                  </div>
+                </div>
+                <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-secondary)]">
+                  {hexValue}
+                </span>
+              </div>
+            </div>
+          </div>
           <InputRow
             label="Hex"
             value={hexInput}
@@ -349,7 +396,7 @@ export default function ColorConverterTool() {
               Preview
             </p>
             <span className="text-xs text-[color:var(--text-secondary)]">
-              {formatHex(rgb)}
+              {hexValue}
             </span>
           </div>
           <div className="mt-4 flex flex-1 items-center justify-center">

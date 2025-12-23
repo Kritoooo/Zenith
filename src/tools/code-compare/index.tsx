@@ -944,7 +944,7 @@ export default function CodeCompareTool() {
         </button>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex min-h-[200px] flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+        <div className="flex min-h-[clamp(260px,45vh,520px)] flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
             Original
           </p>
@@ -953,10 +953,10 @@ export default function CodeCompareTool() {
             onChange={(event) => setLeft(event.target.value)}
             spellCheck={false}
             placeholder="Paste original code..."
-            className="mt-3 min-h-[180px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[clamp(220px,38vh,480px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
         </div>
-        <div className="flex min-h-[200px] flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+        <div className="flex min-h-[clamp(260px,45vh,520px)] flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
             Updated
           </p>
@@ -965,7 +965,7 @@ export default function CodeCompareTool() {
             onChange={(event) => setRight(event.target.value)}
             spellCheck={false}
             placeholder="Paste updated code..."
-            className="mt-3 min-h-[180px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[clamp(220px,38vh,480px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
         </div>
       </div>
