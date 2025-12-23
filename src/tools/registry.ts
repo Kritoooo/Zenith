@@ -10,6 +10,8 @@ import ImageCompressTool from "@/tools/image-compress";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
 import JsonFormatterTool from "@/tools/json-formatter";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
+import DownGitTool from "@/tools/downgit";
+import { meta as downGitMeta } from "@/tools/downgit/meta";
 import LocalTimeTool from "@/tools/local-time";
 import { meta as localTimeMeta } from "@/tools/local-time/meta";
 import UuidTool from "@/tools/uuid";
@@ -18,6 +20,7 @@ import { meta as uuidMeta } from "@/tools/uuid/meta";
 export const tools: ToolRegistration[] = [
   { meta: jsonFormatterMeta, component: JsonFormatterTool },
   { meta: codeCompareMeta, component: CodeCompareTool },
+  { meta: downGitMeta, component: DownGitTool },
   { meta: colorConverterMeta, component: ColorConverterTool },
   { meta: imageCompressMeta, component: ImageCompressTool },
   { meta: base64Meta, component: Base64Tool },

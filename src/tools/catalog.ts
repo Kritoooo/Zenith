@@ -6,11 +6,13 @@ import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
 import { meta as localTimeMeta } from "@/tools/local-time/meta";
+import { meta as downGitMeta } from "@/tools/downgit/meta";
 import { meta as uuidMeta } from "@/tools/uuid/meta";
 
 export const toolMetas: ToolMeta[] = [
   jsonFormatterMeta,
   codeCompareMeta,
+  downGitMeta,
   colorConverterMeta,
   imageCompressMeta,
   base64Meta,
