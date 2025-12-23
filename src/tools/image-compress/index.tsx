@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, DragEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import NextImage from "next/image";
 
 import { UploadIcon } from "@/components/Icons";
 import { cn } from "@/lib/cn";
@@ -48,12 +49,15 @@ function PreviewCard({ label, src, sizeLabel, helper }: PreviewCardProps) {
         <span className="font-semibold uppercase tracking-wide">{label}</span>
         {sizeLabel ? <span>{sizeLabel}</span> : null}
       </div>
-      <div className="mt-3 flex flex-1 items-center justify-center rounded-[14px] bg-[color:var(--glass-recessed-bg)] p-3">
+      <div className="relative mt-3 flex flex-1 items-center justify-center rounded-[14px] bg-[color:var(--glass-recessed-bg)] p-3">
         {src ? (
-          <img
+          <NextImage
             src={src}
             alt={`${label} preview`}
-            className="max-h-full max-w-full rounded-[12px] object-contain"
+            fill
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            className="rounded-[12px] object-contain"
+            unoptimized
           />
         ) : (
           <p className="text-sm text-[color:var(--text-secondary)]">
@@ -116,7 +120,7 @@ export default function ImageCompressTool() {
     setError(null);
     setPending(true);
 
-    const image = new Image();
+    const image = new window.Image();
     image.onload = () => {
       imageRef.current = image;
       setDimensions({ width: image.width, height: image.height });
@@ -154,17 +158,20 @@ export default function ImageCompressTool() {
     loadImage(file);
   };
 
-  const computeTargetSize = (width: number, height: number) => {
-    const maxW = parseLimit(maxWidth);
-    const maxH = parseLimit(maxHeight);
-    let scale = 1;
-    if (maxW) scale = Math.min(scale, maxW / width);
-    if (maxH) scale = Math.min(scale, maxH / height);
-    scale = Math.min(scale, 1);
-    const targetWidth = Math.max(1, Math.round(width * scale));
-    const targetHeight = Math.max(1, Math.round(height * scale));
-    return { width: targetWidth, height: targetHeight };
-  };
+  const computeTargetSize = useCallback(
+    (width: number, height: number) => {
+      const maxW = parseLimit(maxWidth);
+      const maxH = parseLimit(maxHeight);
+      let scale = 1;
+      if (maxW) scale = Math.min(scale, maxW / width);
+      if (maxH) scale = Math.min(scale, maxH / height);
+      scale = Math.min(scale, 1);
+      const targetWidth = Math.max(1, Math.round(width * scale));
+      const targetHeight = Math.max(1, Math.round(height * scale));
+      return { width: targetWidth, height: targetHeight };
+    },
+    [maxHeight, maxWidth]
+  );
 
   const compressImage = useCallback(async () => {
     const image = imageRef.current;
@@ -201,7 +208,7 @@ export default function ImageCompressTool() {
     } finally {
       setIsProcessing(false);
     }
-  }, [format, maxHeight, maxWidth, quality]);
+  }, [computeTargetSize, format, quality]);
 
   const handleDownload = () => {
     if (!compressedUrl) return;
@@ -227,7 +234,7 @@ export default function ImageCompressTool() {
     if (!dimensions) return "—";
     const target = computeTargetSize(dimensions.width, dimensions.height);
     return `${target.width} × ${target.height}px`;
-  }, [dimensions, maxHeight, maxWidth]);
+  }, [computeTargetSize, dimensions]);
   const dropTitle = isDragActive
     ? "Drop image here"
     : originalUrl

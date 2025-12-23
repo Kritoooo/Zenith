@@ -2,6 +2,8 @@ import type { ToolRegistration } from "@/tools/types";
 
 import Base64Tool from "@/tools/base64";
 import { meta as base64Meta } from "@/tools/base64/meta";
+import CodeCompareTool from "@/tools/code-compare";
+import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
 import ColorConverterTool from "@/tools/color-converter";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
 import ImageCompressTool from "@/tools/image-compress";
@@ -15,6 +17,7 @@ import { meta as uuidMeta } from "@/tools/uuid/meta";
 
 export const tools: ToolRegistration[] = [
   { meta: jsonFormatterMeta, component: JsonFormatterTool },
+  { meta: codeCompareMeta, component: CodeCompareTool },
   { meta: colorConverterMeta, component: ColorConverterTool },
   { meta: imageCompressMeta, component: ImageCompressTool },
   { meta: base64Meta, component: Base64Tool },

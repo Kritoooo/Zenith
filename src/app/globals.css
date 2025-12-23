@@ -16,6 +16,7 @@
   --accent-orange: #ff9500;
   --accent-green: #34c759;
   --accent-pink: #ff2d55;
+  --diff-empty-line: rgba(15, 20, 25, 0.08);
   --app-bg: radial-gradient(
       900px 480px at 12% 0%,
       rgba(0, 122, 255, 0.12),
@@ -40,6 +41,7 @@
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-shadow: 0 16px 32px -18px rgba(0, 0, 0, 0.7);
     --grid-line: rgba(255, 255, 255, 0.04);
+    --diff-empty-line: rgba(255, 255, 255, 0.06);
     --app-bg: radial-gradient(
         900px 480px at 12% 0%,
         rgba(0, 122, 255, 0.18),
@@ -64,6 +66,7 @@ html[data-theme="light"] {
   --glass-border: rgba(255, 255, 255, 0.12);
   --glass-shadow: 0 4px 24px -1px rgba(15, 20, 25, 0.08);
   --grid-line: rgba(15, 20, 25, 0.05);
+  --diff-empty-line: rgba(15, 20, 25, 0.08);
   --app-bg: radial-gradient(
       900px 480px at 12% 0%,
       rgba(0, 122, 255, 0.12),
@@ -87,6 +90,7 @@ html[data-theme="dark"] {
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-shadow: 0 16px 32px -18px rgba(0, 0, 0, 0.7);
   --grid-line: rgba(255, 255, 255, 0.04);
+  --diff-empty-line: rgba(255, 255, 255, 0.06);
   --app-bg: radial-gradient(
       900px 480px at 12% 0%,
       rgba(0, 122, 255, 0.18),
@@ -161,6 +165,21 @@ body::before {
 
 .zenith-pulse {
   animation: zenith-pulse 2.4s ease-in-out infinite;
+}
+
+.diff-empty {
+  background-image: linear-gradient(
+    135deg,
+    var(--diff-empty-line) 25%,
+    transparent 25%,
+    transparent 50%,
+    var(--diff-empty-line) 50%,
+    var(--diff-empty-line) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 8px 8px;
+  background-position: 0 calc(0px - var(--diff-offset, 0px));
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -62,7 +62,10 @@ export default function UuidTool() {
   }, [formatUuid, normalizedCount]);
 
   useEffect(() => {
-    generate();
+    const id = window.setTimeout(() => {
+      generate();
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [generate]);
 
   const copyAll = async () => {

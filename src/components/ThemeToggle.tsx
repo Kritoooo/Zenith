@@ -20,8 +20,11 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     const saved = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const nextTheme = saved ?? (prefersDark ? "dark" : "light");
-    setTheme(nextTheme);
-    document.documentElement.dataset.theme = nextTheme;
+    const id = window.setTimeout(() => {
+      setTheme(nextTheme);
+      document.documentElement.dataset.theme = nextTheme;
+    }, 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   const toggle = () => {

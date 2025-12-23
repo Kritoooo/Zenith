@@ -1,6 +1,7 @@
 import type { ToolMeta } from "@/tools/types";
 
 import { meta as base64Meta } from "@/tools/base64/meta";
+import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
@@ -9,6 +10,7 @@ import { meta as uuidMeta } from "@/tools/uuid/meta";
 
 export const toolMetas: ToolMeta[] = [
   jsonFormatterMeta,
+  codeCompareMeta,
   colorConverterMeta,
   imageCompressMeta,
   base64Meta,

@@ -1,7 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import { SearchIcon } from "@/components/Icons";
@@ -29,6 +37,26 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const resetSelection = useCallback(() => {
+    setQuery("");
+    setActiveIndex(0);
+  }, []);
+  const open = useCallback(() => {
+    setIsOpen(true);
+    resetSelection();
+  }, [resetSelection]);
+  const close = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+  const toggle = useCallback(() => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        resetSelection();
+      }
+      return next;
+    });
+  }, [resetSelection]);
 
   const tools = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
@@ -39,51 +67,48 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
     });
   }, [query]);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setIsOpen((prev) => !prev);
+        toggle();
       }
       if (event.key === "Escape") {
-        setIsOpen(false);
+        close();
       }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+    },
+    [close, toggle]
+  );
 
   useEffect(() => {
-    if (isOpen) {
-      setQuery("");
-      setActiveIndex(0);
-      window.setTimeout(() => inputRef.current?.focus(), 0);
-      document.body.style.overflow = "hidden";
-    } else {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  useEffect(() => {
+    if (!isOpen) {
       document.body.style.overflow = "";
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    if (tools.length === 0) {
-      setActiveIndex(-1);
       return;
     }
-    setActiveIndex((prev) => (prev < 0 || prev >= tools.length ? 0 : prev));
-  }, [isOpen, tools.length]);
+    window.setTimeout(() => inputRef.current?.focus(), 0);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const resolvedActiveIndex =
+    tools.length === 0
+      ? -1
+      : Math.min(Math.max(activeIndex, 0), tools.length - 1);
 
   useEffect(() => {
-    if (!listRef.current || activeIndex < 0) return;
+    if (!listRef.current || resolvedActiveIndex < 0) return;
     const node = listRef.current.querySelector(
-      `[data-index="${activeIndex}"]`
+      `[data-index="${resolvedActiveIndex}"]`
     ) as HTMLElement | null;
     node?.scrollIntoView({ block: "nearest" });
-  }, [activeIndex]);
-
-  const open = () => setIsOpen(true);
-  const close = () => setIsOpen(false);
-  const toggle = () => setIsOpen((prev) => !prev);
+  }, [resolvedActiveIndex]);
 
   const goToTool = (slug: string) => {
     setIsOpen(false);
@@ -136,7 +161,7 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
                     }
                     if (event.key === "Enter" && tools[0]) {
                       event.preventDefault();
-                      const target = tools[activeIndex] ?? tools[0];
+                      const target = tools[resolvedActiveIndex] ?? tools[0];
                       if (target) goToTool(target.slug);
                     }
                   }}
@@ -166,10 +191,10 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
                         onMouseEnter={() => setActiveIndex(index)}
                         data-index={index}
                         role="option"
-                        aria-selected={index === activeIndex}
+                        aria-selected={index === resolvedActiveIndex}
                         className={cn(
                           "group flex w-full items-center gap-3 rounded-[18px] px-3 py-2 text-left transition-colors hover:bg-[color:var(--glass-hover-bg)]",
-                          index === activeIndex &&
+                          index === resolvedActiveIndex &&
                             "bg-[color:var(--glass-hover-bg)] ring-1 ring-[color:var(--glass-border)]"
                         )}
                       >
