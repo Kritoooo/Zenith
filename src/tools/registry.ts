@@ -12,6 +12,8 @@ import JsonFormatterTool from "@/tools/json-formatter";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
 import DownGitTool from "@/tools/downgit";
 import { meta as downGitMeta } from "@/tools/downgit/meta";
+import YtDlpTool from "@/tools/yt-dlp";
+import { meta as ytDlpMeta } from "@/tools/yt-dlp/meta";
 import LocalTimeTool from "@/tools/local-time";
 import { meta as localTimeMeta } from "@/tools/local-time/meta";
 import UuidTool from "@/tools/uuid";
@@ -21,6 +23,7 @@ export const tools: ToolRegistration[] = [
   { meta: jsonFormatterMeta, component: JsonFormatterTool },
   { meta: codeCompareMeta, component: CodeCompareTool },
   { meta: downGitMeta, component: DownGitTool },
+  { meta: ytDlpMeta, component: YtDlpTool },
   { meta: colorConverterMeta, component: ColorConverterTool },
   { meta: imageCompressMeta, component: ImageCompressTool },
   { meta: base64Meta, component: Base64Tool },
