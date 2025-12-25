@@ -671,12 +671,525 @@ const getInlineMarkerTone = (row: InlineRow) => {
   return "text-[color:var(--text-tertiary)]";
 };
 
+const getExportFilename = (viewMode: ViewMode) => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  return `zenith-code-compare-${viewMode}-${timestamp}.png`;
+};
+
+const getExportBackgroundColor = () => {
+  const bodyStyles = window.getComputedStyle(document.body);
+  const backgroundColor = bodyStyles.backgroundColor;
+  if (backgroundColor && backgroundColor !== "rgba(0, 0, 0, 0)") {
+    return backgroundColor;
+  }
+  const theme = document.documentElement.dataset.theme;
+  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  const isDark = theme === "dark" || (!theme && prefersDark);
+  return isDark ? "#0b0d10" : "#f7f8fb";
+};
+
+const EXPORT_FONT_FAMILY =
+  'ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+const EXPORT_FONT_SIZE = 12;
+const EXPORT_LINE_HEIGHT = Math.round(EXPORT_FONT_SIZE * 1.5);
+const EXPORT_OUTER_PADDING = 24;
+const EXPORT_CARD_PADDING = 16;
+const EXPORT_CELL_PADDING_X = 8;
+const EXPORT_CELL_PADDING_Y = 4;
+const EXPORT_COLUMN_GAP = 12;
+const EXPORT_CELL_GAP = 8;
+const EXPORT_MARKER_WIDTH = 16;
+const EXPORT_MIN_TEXT_WIDTH = 240;
+const EXPORT_FALLBACK_SPLIT_WIDTH = 960;
+const EXPORT_FALLBACK_INLINE_WIDTH = 760;
+
+const sanitizeExportText = (value: string) => value.replace(/\t/g, "  ");
+
+const getExportColors = () => {
+  const rootStyles = window.getComputedStyle(document.documentElement);
+  const readVar = (name: string, fallback: string) => {
+    const value = rootStyles.getPropertyValue(name).trim();
+    return value || fallback;
+  };
+
+  return {
+    background: getExportBackgroundColor(),
+    textPrimary: readVar("--text-primary", "#0f1419"),
+    textSecondary: readVar("--text-secondary", "#5b6472"),
+    glassBg: readVar("--glass-bg", "rgba(255, 255, 255, 0.65)"),
+    glassBorder: readVar("--glass-border", "rgba(255, 255, 255, 0.12)"),
+    insertRow: "rgba(16, 185, 129, 0.12)",
+    deleteRow: "rgba(244, 63, 94, 0.12)",
+    insertHighlight: "rgba(16, 185, 129, 0.25)",
+    deleteHighlight: "rgba(244, 63, 94, 0.25)",
+    insertMarker: "#10b981",
+    deleteMarker: "#f43f5e",
+  };
+};
+
+type ExportColors = ReturnType<typeof getExportColors>;
+
+const drawSegments = (
+  ctx: CanvasRenderingContext2D,
+  options: {
+    segments?: Segment[];
+    text: string;
+    x: number;
+    y: number;
+    lineHeight: number;
+    colors: ExportColors;
+  }
+) => {
+  const { segments, text, x, y, lineHeight, colors } = options;
+  const pieces = segments?.length
+    ? segments
+    : [{ value: text, type: "equal" as const }];
+  let cursorX = x;
+  const textOffset = Math.max(0, (lineHeight - EXPORT_FONT_SIZE) / 2);
+  const textY = y + textOffset;
+  const highlightHeight = Math.max(lineHeight - 2, EXPORT_FONT_SIZE + 4);
+  const highlightY = y + (lineHeight - highlightHeight) / 2;
+
+  pieces.forEach((segment) => {
+    const value = sanitizeExportText(segment.value);
+    if (!value) return;
+    const width = ctx.measureText(value).width;
+
+    if (segment.type === "insert") {
+      ctx.fillStyle = colors.insertHighlight;
+      ctx.fillRect(cursorX - 1, highlightY, width + 2, highlightHeight);
+    }
+    if (segment.type === "delete") {
+      ctx.fillStyle = colors.deleteHighlight;
+      ctx.fillRect(cursorX - 1, highlightY, width + 2, highlightHeight);
+    }
+
+    ctx.fillStyle = colors.textPrimary;
+    ctx.fillText(value, cursorX, textY);
+    cursorX += width;
+  });
+};
+
+const wrapSegmentsToLines = (
+  ctx: CanvasRenderingContext2D,
+  segments: Segment[] | undefined,
+  text: string,
+  maxWidth: number
+) => {
+  const safeMaxWidth = Math.max(maxWidth, 1);
+  const pieces = segments?.length
+    ? segments
+    : [{ value: text, type: "equal" as const }];
+  const lines: Segment[][] = [];
+  let currentLine: Segment[] = [];
+  let currentWidth = 0;
+
+  const pushLine = () => {
+    lines.push(currentLine);
+    currentLine = [];
+    currentWidth = 0;
+  };
+
+  const pushChar = (type: Segment["type"], char: string) => {
+    const charWidth = ctx.measureText(char).width;
+    if (currentWidth + charWidth > safeMaxWidth && currentLine.length > 0) {
+      pushLine();
+    }
+    const last = currentLine[currentLine.length - 1];
+    if (last && last.type === type) {
+      last.value += char;
+    } else {
+      currentLine.push({ type, value: char });
+    }
+    currentWidth += charWidth;
+  };
+
+  pieces.forEach((segment) => {
+    const value = sanitizeExportText(segment.value);
+    if (!value) return;
+    for (const char of Array.from(value)) {
+      pushChar(segment.type, char);
+    }
+  });
+
+  if (currentLine.length > 0) {
+    pushLine();
+  }
+
+  if (lines.length === 0) {
+    return [[]];
+  }
+
+  return lines;
+};
+
+const renderDiffToCanvas = (options: {
+  viewMode: ViewMode;
+  rows: DiffRow[];
+  inlineRows: InlineRow[];
+  containerWidth: number;
+}) => {
+  const { viewMode, rows, inlineRows, containerWidth } = options;
+  const colors = getExportColors();
+  const measureCtx = document.createElement("canvas").getContext("2d");
+  if (!measureCtx) {
+    throw new Error("Unable to render export image.");
+  }
+  measureCtx.font = `${EXPORT_FONT_SIZE}px ${EXPORT_FONT_FAMILY}`;
+  const numberWidth = Math.max(measureCtx.measureText("0").width * 4, 1);
+
+  const rowHeight = EXPORT_LINE_HEIGHT + EXPORT_CELL_PADDING_Y * 2;
+  let tableWidth = 0;
+  let tableHeight = 0;
+  let leftCellWidth = 0;
+  let rightCellWidth = 0;
+
+  if (viewMode === "split") {
+    const overhead =
+      EXPORT_MARKER_WIDTH +
+      numberWidth +
+      EXPORT_CELL_GAP * 2 +
+      EXPORT_CELL_PADDING_X * 2;
+    const minColumnWidth = EXPORT_MIN_TEXT_WIDTH + overhead;
+    const minTableWidth = minColumnWidth * 2 + EXPORT_COLUMN_GAP;
+    const hasMeasuredWidth = containerWidth > 0;
+    const targetWidth = hasMeasuredWidth
+      ? containerWidth
+      : EXPORT_FALLBACK_SPLIT_WIDTH;
+    tableWidth = hasMeasuredWidth ? targetWidth : Math.max(targetWidth, minTableWidth);
+    leftCellWidth = Math.floor((tableWidth - EXPORT_COLUMN_GAP) / 2);
+    rightCellWidth = tableWidth - EXPORT_COLUMN_GAP - leftCellWidth;
+    const textWidth = Math.max(leftCellWidth - overhead, 1);
+
+    const rowLayouts = rows.map((row) => {
+      const leftLines = row.left
+        ? wrapSegmentsToLines(
+            measureCtx,
+            row.left.segments,
+            row.left.text,
+            textWidth
+          )
+        : [[]];
+      const rightLines = row.right
+        ? wrapSegmentsToLines(
+            measureCtx,
+            row.right.segments,
+            row.right.text,
+            textWidth
+          )
+        : [[]];
+      const lineCount = Math.max(leftLines.length, rightLines.length);
+      return {
+        row,
+        leftLines,
+        rightLines,
+        lineCount,
+        height: lineCount * EXPORT_LINE_HEIGHT + EXPORT_CELL_PADDING_Y * 2,
+      };
+    });
+
+    tableHeight =
+      rowLayouts.length === 0
+        ? rowHeight
+        : rowLayouts.reduce((total, layout) => total + layout.height, 0);
+
+    const cardWidth = tableWidth + EXPORT_CARD_PADDING * 2;
+    const cardHeight = tableHeight + EXPORT_CARD_PADDING * 2;
+    const canvasWidth = cardWidth + EXPORT_OUTER_PADDING * 2;
+    const canvasHeight = cardHeight + EXPORT_OUTER_PADDING * 2;
+    const scale = Math.min(window.devicePixelRatio || 1, 2);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(canvasWidth * scale);
+    canvas.height = Math.ceil(canvasHeight * scale);
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Unable to render export image.");
+    }
+
+    ctx.scale(scale, scale);
+    ctx.font = `${EXPORT_FONT_SIZE}px ${EXPORT_FONT_FAMILY}`;
+    ctx.textBaseline = "top";
+
+    ctx.fillStyle = colors.background;
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    const cardX = EXPORT_OUTER_PADDING;
+    const cardY = EXPORT_OUTER_PADDING;
+    ctx.fillStyle = colors.glassBg;
+    ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+    ctx.strokeStyle = colors.glassBorder;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cardX + 0.5, cardY + 0.5, cardWidth - 1, cardHeight - 1);
+
+    const tableX = cardX + EXPORT_CARD_PADDING;
+    const tableY = cardY + EXPORT_CARD_PADDING;
+
+    const leftX = tableX;
+    const rightX = tableX + leftCellWidth + EXPORT_COLUMN_GAP;
+
+    let cursorY = tableY;
+    rowLayouts.forEach((layout) => {
+      const { row, leftLines, rightLines, lineCount, height } = layout;
+      if (row.kind === "delete" || row.kind === "replace") {
+        ctx.fillStyle = colors.deleteRow;
+        ctx.fillRect(leftX, cursorY, leftCellWidth, height);
+      }
+      if (row.kind === "insert" || row.kind === "replace") {
+        ctx.fillStyle = colors.insertRow;
+        ctx.fillRect(rightX, cursorY, rightCellWidth, height);
+      }
+
+      const markerY =
+        cursorY +
+        EXPORT_CELL_PADDING_Y +
+        Math.max(0, (EXPORT_LINE_HEIGHT - EXPORT_FONT_SIZE) / 2);
+      const leftMarkerX =
+        leftX + EXPORT_CELL_PADDING_X + EXPORT_MARKER_WIDTH / 2;
+      const leftNumberX =
+        leftX +
+        EXPORT_CELL_PADDING_X +
+        EXPORT_MARKER_WIDTH +
+        EXPORT_CELL_GAP +
+        numberWidth;
+      const leftTextX =
+        leftX +
+        EXPORT_CELL_PADDING_X +
+        EXPORT_MARKER_WIDTH +
+        numberWidth +
+        EXPORT_CELL_GAP * 2;
+
+      if (row.left) {
+        const marker = getLeftMarker(row);
+        if (marker) {
+          ctx.fillStyle = colors.deleteMarker;
+          ctx.textAlign = "center";
+          ctx.fillText(marker, leftMarkerX, markerY);
+        }
+        if (row.left.number !== undefined) {
+          ctx.fillStyle = colors.textSecondary;
+          ctx.textAlign = "right";
+          ctx.fillText(String(row.left.number), leftNumberX, markerY);
+        }
+      }
+
+      const rightMarkerX =
+        rightX + EXPORT_CELL_PADDING_X + EXPORT_MARKER_WIDTH / 2;
+      const rightNumberX =
+        rightX +
+        EXPORT_CELL_PADDING_X +
+        EXPORT_MARKER_WIDTH +
+        EXPORT_CELL_GAP +
+        numberWidth;
+      const rightTextX =
+        rightX +
+        EXPORT_CELL_PADDING_X +
+        EXPORT_MARKER_WIDTH +
+        numberWidth +
+        EXPORT_CELL_GAP * 2;
+
+      if (row.right) {
+        const marker = getRightMarker(row);
+        if (marker) {
+          ctx.fillStyle = colors.insertMarker;
+          ctx.textAlign = "center";
+          ctx.fillText(marker, rightMarkerX, markerY);
+        }
+        if (row.right.number !== undefined) {
+          ctx.fillStyle = colors.textSecondary;
+          ctx.textAlign = "right";
+          ctx.fillText(String(row.right.number), rightNumberX, markerY);
+        }
+      }
+
+      for (let lineIndex = 0; lineIndex < lineCount; lineIndex += 1) {
+        const lineY =
+          cursorY +
+          EXPORT_CELL_PADDING_Y +
+          lineIndex * EXPORT_LINE_HEIGHT;
+        const leftSegments = leftLines[lineIndex];
+        if (leftSegments) {
+          ctx.textAlign = "left";
+          drawSegments(ctx, {
+            segments: leftSegments,
+            text: "",
+            x: leftTextX,
+            y: lineY,
+            lineHeight: EXPORT_LINE_HEIGHT,
+            colors,
+          });
+        }
+        const rightSegments = rightLines[lineIndex];
+        if (rightSegments) {
+          ctx.textAlign = "left";
+          drawSegments(ctx, {
+            segments: rightSegments,
+            text: "",
+            x: rightTextX,
+            y: lineY,
+            lineHeight: EXPORT_LINE_HEIGHT,
+            colors,
+          });
+        }
+      }
+
+      cursorY += height;
+    });
+
+    return canvas;
+  } else {
+    const overhead =
+      EXPORT_MARKER_WIDTH +
+      numberWidth * 2 +
+      EXPORT_CELL_GAP * 3 +
+      EXPORT_CELL_PADDING_X * 2;
+    const minTableWidth = EXPORT_MIN_TEXT_WIDTH + overhead;
+    const hasMeasuredWidth = containerWidth > 0;
+    const targetWidth = hasMeasuredWidth
+      ? containerWidth
+      : EXPORT_FALLBACK_INLINE_WIDTH;
+    tableWidth = hasMeasuredWidth ? targetWidth : Math.max(targetWidth, minTableWidth);
+    const textWidth = Math.max(tableWidth - overhead, 1);
+
+    const rowLayouts = inlineRows.map((row) => {
+      const lines = wrapSegmentsToLines(
+        measureCtx,
+        row.segments,
+        row.text,
+        textWidth
+      );
+      return {
+        row,
+        lines,
+        height: lines.length * EXPORT_LINE_HEIGHT + EXPORT_CELL_PADDING_Y * 2,
+      };
+    });
+
+    tableHeight =
+      rowLayouts.length === 0
+        ? rowHeight
+        : rowLayouts.reduce((total, layout) => total + layout.height, 0);
+
+    const cardWidth = tableWidth + EXPORT_CARD_PADDING * 2;
+    const cardHeight = tableHeight + EXPORT_CARD_PADDING * 2;
+    const canvasWidth = cardWidth + EXPORT_OUTER_PADDING * 2;
+    const canvasHeight = cardHeight + EXPORT_OUTER_PADDING * 2;
+    const scale = Math.min(window.devicePixelRatio || 1, 2);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(canvasWidth * scale);
+    canvas.height = Math.ceil(canvasHeight * scale);
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Unable to render export image.");
+    }
+
+    ctx.scale(scale, scale);
+    ctx.font = `${EXPORT_FONT_SIZE}px ${EXPORT_FONT_FAMILY}`;
+    ctx.textBaseline = "top";
+
+    ctx.fillStyle = colors.background;
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    const cardX = EXPORT_OUTER_PADDING;
+    const cardY = EXPORT_OUTER_PADDING;
+    ctx.fillStyle = colors.glassBg;
+    ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+    ctx.strokeStyle = colors.glassBorder;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cardX + 0.5, cardY + 0.5, cardWidth - 1, cardHeight - 1);
+
+    const tableX = cardX + EXPORT_CARD_PADDING;
+    const tableY = cardY + EXPORT_CARD_PADDING;
+
+    let cursorY = tableY;
+    rowLayouts.forEach((layout) => {
+      const { row, lines, height } = layout;
+      if (row.kind === "insert") {
+        ctx.fillStyle = colors.insertRow;
+        ctx.fillRect(tableX, cursorY, tableWidth, height);
+      }
+      if (row.kind === "delete") {
+        ctx.fillStyle = colors.deleteRow;
+        ctx.fillRect(tableX, cursorY, tableWidth, height);
+      }
+
+      const markerY =
+        cursorY +
+        EXPORT_CELL_PADDING_Y +
+        Math.max(0, (EXPORT_LINE_HEIGHT - EXPORT_FONT_SIZE) / 2);
+      const markerX =
+        tableX + EXPORT_CELL_PADDING_X + EXPORT_MARKER_WIDTH / 2;
+      const leftNumberX =
+        tableX +
+        EXPORT_CELL_PADDING_X +
+        EXPORT_MARKER_WIDTH +
+        EXPORT_CELL_GAP +
+        numberWidth;
+      const rightNumberX =
+        tableX +
+        EXPORT_CELL_PADDING_X +
+        EXPORT_MARKER_WIDTH +
+        EXPORT_CELL_GAP +
+        numberWidth * 2 +
+        EXPORT_CELL_GAP;
+      const textX =
+        tableX +
+        EXPORT_CELL_PADDING_X +
+        EXPORT_MARKER_WIDTH +
+        EXPORT_CELL_GAP +
+        numberWidth * 2 +
+        EXPORT_CELL_GAP * 2;
+
+      const marker = getInlineMarker(row);
+      if (marker) {
+        ctx.fillStyle =
+          row.kind === "insert" ? colors.insertMarker : colors.deleteMarker;
+        ctx.textAlign = "center";
+        ctx.fillText(marker, markerX, markerY);
+      }
+      if (row.leftNumber !== undefined) {
+        ctx.fillStyle = colors.textSecondary;
+        ctx.textAlign = "right";
+        ctx.fillText(String(row.leftNumber), leftNumberX, markerY);
+      }
+      if (row.rightNumber !== undefined) {
+        ctx.fillStyle = colors.textSecondary;
+        ctx.textAlign = "right";
+        ctx.fillText(String(row.rightNumber), rightNumberX, markerY);
+      }
+
+      lines.forEach((lineSegments, lineIndex) => {
+        const lineY =
+          cursorY +
+          EXPORT_CELL_PADDING_Y +
+          lineIndex * EXPORT_LINE_HEIGHT;
+        ctx.textAlign = "left";
+        drawSegments(ctx, {
+          segments: lineSegments,
+          text: "",
+          x: textX,
+          y: lineY,
+          lineHeight: EXPORT_LINE_HEIGHT,
+          colors,
+        });
+      });
+
+      cursorY += height;
+    });
+
+    return canvas;
+  }
+};
+
 export default function CodeCompareTool() {
   const [left, setLeft] = useState(SAMPLE_LEFT);
   const [right, setRight] = useState(SAMPLE_RIGHT);
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [realtimeDiff, setRealtimeDiff] = useState(false);
   const [hasCompared, setHasCompared] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const diffContainerRef = useRef<HTMLDivElement | null>(null);
   const emptyCellRefs = useRef(new Map<string, HTMLDivElement>());
   const deferredLeft = useDeferredValue(left);
@@ -749,7 +1262,48 @@ export default function CodeCompareTool() {
     setLeft("");
     setRight("");
     setHasCompared(false);
+    setExportError(null);
   };
+
+  const exportDiffImage = useCallback(async () => {
+    setIsExporting(true);
+    setExportError(null);
+
+    try {
+      const filename = getExportFilename(viewMode);
+      const fallbackWidth =
+        viewMode === "split"
+          ? EXPORT_FALLBACK_SPLIT_WIDTH
+          : EXPORT_FALLBACK_INLINE_WIDTH;
+      const containerWidth =
+        diffContainerRef.current?.clientWidth ?? fallbackWidth;
+      const canvas = renderDiffToCanvas({
+        viewMode,
+        rows,
+        inlineRows,
+        containerWidth,
+      });
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => {
+          if (result) resolve(result);
+          else reject(new Error("Unable to export image."));
+        }, "image/png");
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to export image.";
+      setExportError(message);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [inlineRows, rows, viewMode]);
 
   return (
     <div className="flex h-full flex-col gap-5">
@@ -794,13 +1348,28 @@ export default function CodeCompareTool() {
                 Realtime diff
               </button>
             </div>
-            <p
-              className="text-xs text-[color:var(--text-secondary)]"
-              aria-live="polite"
-            >
-              {summary}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p
+                className="text-xs text-[color:var(--text-secondary)]"
+                aria-live="polite"
+              >
+                {summary}
+              </p>
+              <button
+                type="button"
+                onClick={exportDiffImage}
+                disabled={isExporting}
+                className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-primary)] transition-colors hover:bg-[color:var(--glass-hover-bg)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isExporting ? "Exporting..." : "Export PNG"}
+              </button>
+            </div>
           </div>
+          {exportError ? (
+            <p className="text-xs text-rose-500" role="status">
+              {exportError}
+            </p>
+          ) : null}
           <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
@@ -810,7 +1379,11 @@ export default function CodeCompareTool() {
                 {viewMode === "split" ? "Side-by-side" : "Inline"}
               </span>
             </div>
-            <div className="mt-3 flex-1 overflow-auto" ref={diffContainerRef}>
+            <div
+              className="mt-3 flex-1 overflow-auto"
+              ref={diffContainerRef}
+              data-diff-scroll="true"
+            >
               {viewMode === "split" ? (
                 <div className="flex w-full min-w-0 flex-col text-xs font-mono">
                   {rows.map((row, index) => {
@@ -827,7 +1400,7 @@ export default function CodeCompareTool() {
                               : undefined
                           }
                           className={cn(
-                            "grid grid-cols-[16px_44px_1fr] items-start gap-2 px-2 py-1",
+                            "grid grid-cols-[16px_4ch_1fr] items-start gap-2 px-2 py-1",
                             getLeftTone(row),
                             getLeftBorder(row),
                             getLeftGhost(row)
@@ -857,7 +1430,7 @@ export default function CodeCompareTool() {
                               : undefined
                           }
                           className={cn(
-                            "grid grid-cols-[16px_44px_1fr] items-start gap-2 px-2 py-1",
+                            "grid grid-cols-[16px_4ch_1fr] items-start gap-2 px-2 py-1",
                             getRightTone(row),
                             getRightBorder(row),
                             getRightGhost(row)
@@ -890,7 +1463,7 @@ export default function CodeCompareTool() {
                     <div
                       key={row.id}
                       className={cn(
-                        "grid grid-cols-[16px_44px_44px_1fr] gap-2 px-2 py-1",
+                        "grid grid-cols-[16px_4ch_4ch_1fr] gap-2 px-2 py-1",
                         row.kind === "insert" && "bg-emerald-500/10",
                         row.kind === "delete" && "bg-rose-500/10"
                       )}
