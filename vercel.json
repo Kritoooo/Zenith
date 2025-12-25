@@ -1,0 +1,12 @@
+{
+    "buildCommand": "npm run build",
+    "outputDirectory": "out",
+    "framework": null,
+    "rewrites": [
+        {
+            "source": "/tool/:slug",
+            "destination": "/tool/:slug/index.html"
+        }
+    ],
+    "trailingSlash": true
+}

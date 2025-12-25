@@ -1,5 +1,7 @@
 import type { ToolRegistration } from "@/tools/types";
 
+import AnimeUpscaleTool from "@/tools/anime-upscale";
+import { meta as animeUpscaleMeta } from "@/tools/anime-upscale/meta";
 import Base64Tool from "@/tools/base64";
 import { meta as base64Meta } from "@/tools/base64/meta";
 import CodeCompareTool from "@/tools/code-compare";
@@ -25,6 +27,7 @@ export const tools: ToolRegistration[] = [
   { meta: downGitMeta, component: DownGitTool },
   { meta: ytDlpMeta, component: YtDlpTool },
   { meta: colorConverterMeta, component: ColorConverterTool },
+  { meta: animeUpscaleMeta, component: AnimeUpscaleTool },
   { meta: imageCompressMeta, component: ImageCompressTool },
   { meta: base64Meta, component: Base64Tool },
   { meta: uuidMeta, component: UuidTool },
