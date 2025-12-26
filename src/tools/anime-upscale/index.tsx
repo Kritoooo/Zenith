@@ -8,6 +8,12 @@ import { UploadIcon } from "@/components/Icons";
 import { cn } from "@/lib/cn";
 
 type UpscaleModelId = "2x" | "4x";
+type PrecisionMode = "quality" | "performance";
+type PipelineEntry = {
+  pipeline: UpscalePipeline;
+  device: "webgpu" | "wasm";
+  dtype: "fp32" | "q8";
+};
 
 type ModelOption = {
   id: UpscaleModelId;
@@ -55,6 +61,26 @@ const MODEL_OPTIONS: ModelOption[] = [
     modelId: "Xenova/4x_APISR_GRL_GAN_generator-onnx",
     sourceUrl: "https://huggingface.co/Xenova/4x_APISR_GRL_GAN_generator-onnx",
     summary: "Heavy upscale for posters and print output.",
+  },
+];
+
+const PRECISION_OPTIONS: Array<{
+  id: PrecisionMode;
+  label: string;
+  detail: string;
+  summary: string;
+}> = [
+  {
+    id: "quality",
+    label: "Quality",
+    detail: "FP32",
+    summary: "Full precision for best detail.",
+  },
+  {
+    id: "performance",
+    label: "Performance",
+    detail: "Q8",
+    summary: "Smaller weights for faster runs.",
   },
 ];
 
@@ -115,6 +141,15 @@ const normalizeProgress = (event: ModelProgressEvent) => {
   return null;
 };
 
+const getPipelineKey = (modelId: UpscaleModelId, precision: PrecisionMode) =>
+  `${modelId}:${precision}`;
+
+const formatDeviceLabel = (device: PipelineEntry["device"]) =>
+  device === "webgpu" ? "WebGPU" : "WASM";
+
+const formatDtypeLabel = (dtype: PipelineEntry["dtype"]) =>
+  dtype === "fp32" ? "FP32" : "Q8";
+
 const renderRawImage = async (raw: RawImage) => {
   const canvas = document.createElement("canvas");
   canvas.width = raw.width;
@@ -165,6 +200,13 @@ export default function AnimeUpscaleTool() {
     height: number;
   } | null>(null);
   const [modelId, setModelId] = useState<UpscaleModelId>("2x");
+  const [precisionMode, setPrecisionMode] = useState<PrecisionMode>("quality");
+  const [loadedInfo, setLoadedInfo] = useState<{
+    modelId: UpscaleModelId;
+    precision: PrecisionMode;
+    device: PipelineEntry["device"];
+    dtype: PipelineEntry["dtype"];
+  } | null>(null);
   const [modelStatus, setModelStatus] = useState<
     "idle" | "loading" | "ready" | "error"
   >("idle");
@@ -173,8 +215,7 @@ export default function AnimeUpscaleTool() {
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
-  const pipelineRef = useRef<UpscalePipeline | null>(null);
-  const pipelineModelRef = useRef<UpscaleModelId | null>(null);
+  const pipelineCacheRef = useRef<Map<string, PipelineEntry>>(new Map());
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -210,6 +251,19 @@ export default function AnimeUpscaleTool() {
       ? `Expected ${formatDimensions(expectedDimensions)}`
       : "No output yet";
 
+  const loadedLabel = useMemo(() => {
+    if (!loadedInfo) return null;
+    const modelLabel =
+      MODEL_OPTIONS.find((model) => model.id === loadedInfo.modelId)?.label ??
+      loadedInfo.modelId;
+    const precisionLabel =
+      PRECISION_OPTIONS.find((option) => option.id === loadedInfo.precision)
+        ?.label ?? loadedInfo.precision;
+    const deviceLabel = formatDeviceLabel(loadedInfo.device);
+    const dtypeLabel = formatDtypeLabel(loadedInfo.dtype);
+    return `${modelLabel} · ${precisionLabel} · ${deviceLabel} · ${dtypeLabel}`;
+  }, [loadedInfo]);
+
   const statusLabel = useMemo(() => {
     if (isUpscaling) return "Upscaling image...";
     if (modelStatus === "loading") {
@@ -217,10 +271,12 @@ export default function AnimeUpscaleTool() {
         modelProgress !== null ? ` (${Math.min(modelProgress, 100)}%)` : "";
       return `${modelMessage ?? "Loading model..."}${progressLabel}`;
     }
-    if (modelStatus === "ready") return "Model loaded and ready.";
+    if (modelStatus === "ready") {
+      return loadedLabel ? `Loaded: ${loadedLabel}` : "Model loaded and ready.";
+    }
     if (modelStatus === "error") return "Model failed to load.";
     return "Load an image to begin.";
-  }, [isUpscaling, modelMessage, modelProgress, modelStatus]);
+  }, [isUpscaling, loadedLabel, modelMessage, modelProgress, modelStatus]);
 
   const resetOutput = () => {
     setOutputUrl(null);
@@ -276,8 +332,19 @@ export default function AnimeUpscaleTool() {
   };
 
   const ensurePipeline = async (model: ModelOption) => {
-    if (pipelineRef.current && pipelineModelRef.current === model.id) {
-      return pipelineRef.current;
+    const cacheKey = getPipelineKey(model.id, precisionMode);
+    const cachedPipeline = pipelineCacheRef.current.get(cacheKey);
+    if (cachedPipeline) {
+      setModelStatus("ready");
+      setModelMessage(null);
+      setModelProgress(null);
+      setLoadedInfo({
+        modelId: model.id,
+        precision: precisionMode,
+        device: cachedPipeline.device,
+        dtype: cachedPipeline.dtype,
+      });
+      return cachedPipeline.pipeline;
     }
     setModelStatus("loading");
     setModelMessage("Downloading model...");
@@ -291,24 +358,96 @@ export default function AnimeUpscaleTool() {
       runtimeEnv.allowLocalModels = false;
       runtimeEnv.useBrowserCache = true;
       const createPipeline = pipeline as unknown as PipelineFactory;
-      const upscaler = await createPipeline("image-to-image", model.modelId, {
-        dtype: "fp32",
-        progress_callback: (progress: ModelProgressEvent) => {
-          const normalized = normalizeProgress(progress);
-          if (normalized !== null) {
-            setModelProgress(normalized);
-          }
-          if (progress.status) {
-            setModelMessage(progress.status);
-          }
-        },
-      });
-      pipelineRef.current = upscaler;
-      pipelineModelRef.current = model.id;
-      setModelStatus("ready");
-      setModelMessage(null);
-      setModelProgress(null);
-      return upscaler;
+      const createUpscaler = async (
+        device: "webgpu" | "wasm",
+        dtype: PipelineEntry["dtype"]
+      ) =>
+        createPipeline("image-to-image", model.modelId, {
+          device,
+          dtype,
+          session_options: {
+            logSeverityLevel: 3,
+          },
+          progress_callback: (progress: ModelProgressEvent) => {
+            const normalized = normalizeProgress(progress);
+            if (normalized !== null) {
+              setModelProgress(normalized);
+            }
+            if (progress.status) {
+              setModelMessage(progress.status);
+            }
+          },
+        });
+      const hasWebGPU = typeof navigator !== "undefined" && "gpu" in navigator;
+      const isQualityMode = precisionMode === "quality";
+      const attempts = isQualityMode
+        ? hasWebGPU
+          ? [
+              {
+                device: "webgpu" as const,
+                dtype: "fp32" as const,
+                label: "Initializing WebGPU...",
+              },
+              {
+                device: "wasm" as const,
+                dtype: "fp32" as const,
+                label: "WebGPU unavailable, switching to WASM...",
+              },
+            ]
+          : [
+              {
+                device: "wasm" as const,
+                dtype: "fp32" as const,
+                label: "Initializing WASM...",
+              },
+            ]
+        : hasWebGPU
+          ? [
+              {
+                device: "webgpu" as const,
+                dtype: "q8" as const,
+                label: "Initializing quantized WebGPU...",
+              },
+              {
+                device: "wasm" as const,
+                dtype: "q8" as const,
+                label: "WebGPU unavailable, switching to quantized WASM...",
+              },
+            ]
+          : [
+              {
+                device: "wasm" as const,
+                dtype: "q8" as const,
+                label: "Initializing quantized WASM...",
+              },
+            ];
+      let lastError: unknown = null;
+      for (const attempt of attempts) {
+        setModelMessage(attempt.label);
+        setModelProgress(null);
+        try {
+          const upscaler = await createUpscaler(attempt.device, attempt.dtype);
+          const entry: PipelineEntry = {
+            pipeline: upscaler,
+            device: attempt.device,
+            dtype: attempt.dtype,
+          };
+          pipelineCacheRef.current.set(cacheKey, entry);
+          setModelStatus("ready");
+          setModelMessage(null);
+          setModelProgress(null);
+          setLoadedInfo({
+            modelId: model.id,
+            precision: precisionMode,
+            device: attempt.device,
+            dtype: attempt.dtype,
+          });
+          return upscaler;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+      throw lastError ?? new Error("Unable to load model.");
     } catch (err) {
       setModelStatus("error");
       setModelMessage(null);
@@ -453,47 +592,121 @@ export default function AnimeUpscaleTool() {
               </span>
             </div>
           </div>
-          <div className="grid gap-3">
-            {MODEL_OPTIONS.map((model) => {
-              const isActive = model.id === modelId;
-              const isDisabled = isUpscaling || modelStatus === "loading";
-              return (
-                <button
-                  key={model.id}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => {
-                    if (model.id === modelId) return;
-                    setModelId(model.id);
-                    resetOutput();
-                    pipelineRef.current = null;
-                    pipelineModelRef.current = null;
-                    setModelStatus("idle");
-                    setModelMessage(null);
-                    setModelProgress(null);
-                  }}
-                  className={cn(
-                    "rounded-[14px] border px-4 py-3 text-left transition-colors",
-                    isActive
-                      ? "border-[color:var(--accent-pink)] bg-[color:var(--glass-hover-bg)] text-[color:var(--text-primary)]"
-                      : "border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]",
-                    isDisabled && "cursor-not-allowed opacity-60"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-[color:var(--text-primary)]">
-                      {model.label}
-                    </span>
-                    <span className="text-xs text-[color:var(--text-secondary)]">
-                      {model.scale}x
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                    {model.summary}
-                  </p>
-                </button>
-              );
-            })}
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
+                Precision
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {PRECISION_OPTIONS.map((option) => {
+                  const isActive = option.id === precisionMode;
+                  const isDisabled = isUpscaling || modelStatus === "loading";
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => {
+                        if (option.id === precisionMode) return;
+                        setPrecisionMode(option.id);
+                        resetOutput();
+                        setModelMessage(null);
+                        setModelProgress(null);
+                        const cachedEntry = pipelineCacheRef.current.get(
+                          getPipelineKey(modelId, option.id)
+                        );
+                        setModelStatus(cachedEntry ? "ready" : "idle");
+                        setLoadedInfo(
+                          cachedEntry
+                            ? {
+                                modelId,
+                                precision: option.id,
+                                device: cachedEntry.device,
+                                dtype: cachedEntry.dtype,
+                              }
+                            : null
+                        );
+                      }}
+                      className={cn(
+                        "rounded-[14px] border px-4 py-3 text-left transition-colors",
+                        isActive
+                          ? "border-[color:var(--accent-pink)] bg-[color:var(--glass-hover-bg)] text-[color:var(--text-primary)]"
+                          : "border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]",
+                        isDisabled && "cursor-not-allowed opacity-60"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-[color:var(--text-primary)]">
+                          {option.label}
+                        </span>
+                        <span className="text-xs text-[color:var(--text-secondary)]">
+                          {option.detail}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                        {option.summary}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-[color:var(--text-secondary)]">
+                Performance locks q8 quantized weights. Quality runs full fp32.
+              </p>
+            </div>
+            <div className="grid gap-3">
+              {MODEL_OPTIONS.map((model) => {
+                const isActive = model.id === modelId;
+                const isDisabled = isUpscaling || modelStatus === "loading";
+                return (
+                  <button
+                    key={model.id}
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={() => {
+                      if (model.id === modelId) return;
+                      setModelId(model.id);
+                      resetOutput();
+                      setModelMessage(null);
+                      setModelProgress(null);
+                      const cachedEntry = pipelineCacheRef.current.get(
+                        getPipelineKey(model.id, precisionMode)
+                      );
+                      setModelStatus(cachedEntry ? "ready" : "idle");
+                      setLoadedInfo(
+                        cachedEntry
+                          ? {
+                              modelId: model.id,
+                              precision: precisionMode,
+                              device: cachedEntry.device,
+                              dtype: cachedEntry.dtype,
+                            }
+                          : null
+                      );
+                    }}
+                    className={cn(
+                      "rounded-[14px] border px-4 py-3 text-left transition-colors",
+                      isActive
+                        ? "border-[color:var(--accent-pink)] bg-[color:var(--glass-hover-bg)] text-[color:var(--text-primary)]"
+                        : "border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]",
+                      isDisabled && "cursor-not-allowed opacity-60"
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-[color:var(--text-primary)]">
+                        {model.label}
+                      </span>
+                      <span className="text-xs text-[color:var(--text-secondary)]">
+                        {model.scale}x
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                      {model.summary}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button
