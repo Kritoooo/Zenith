@@ -8,5 +8,20 @@
             "destination": "/tool/:slug/index.html"
         }
     ],
+    "headers": [
+        {
+            "source": "/tool/anime-upscale/:path*",
+            "headers": [
+                {
+                    "key": "Cross-Origin-Opener-Policy",
+                    "value": "same-origin"
+                },
+                {
+                    "key": "Cross-Origin-Embedder-Policy",
+                    "value": "require-corp"
+                }
+            ]
+        }
+    ],
     "trailingSlash": true
 }
