@@ -10,6 +10,7 @@ import { meta as localTimeMeta } from "@/tools/local-time/meta";
 import { meta as downGitMeta } from "@/tools/downgit/meta";
 import { meta as ytDlpMeta } from "@/tools/yt-dlp/meta";
 import { meta as uuidMeta } from "@/tools/uuid/meta";
+import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
 
 export const toolMetas: ToolMeta[] = [
   jsonFormatterMeta,
@@ -20,6 +21,7 @@ export const toolMetas: ToolMeta[] = [
   animeUpscaleMeta,
   imageCompressMeta,
   base64Meta,
+  aigcDetectorMeta,
   uuidMeta,
   localTimeMeta,
 ];

@@ -20,6 +20,8 @@ import LocalTimeTool from "@/tools/local-time";
 import { meta as localTimeMeta } from "@/tools/local-time/meta";
 import UuidTool from "@/tools/uuid";
 import { meta as uuidMeta } from "@/tools/uuid/meta";
+import AigcDetectorTool from "@/tools/aigc-detector";
+import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
 
 export const tools: ToolRegistration[] = [
   { meta: jsonFormatterMeta, component: JsonFormatterTool },
@@ -30,6 +32,7 @@ export const tools: ToolRegistration[] = [
   { meta: animeUpscaleMeta, component: AnimeUpscaleTool },
   { meta: imageCompressMeta, component: ImageCompressTool },
   { meta: base64Meta, component: Base64Tool },
+  { meta: aigcDetectorMeta, component: AigcDetectorTool },
   { meta: uuidMeta, component: UuidTool },
   { meta: localTimeMeta, component: LocalTimeTool },
 ];
