@@ -344,8 +344,9 @@ const getWasmThreadCount = () => {
 
 const checkWebGpuFp16Support = async () => {
   if (typeof navigator === "undefined") return false;
+  type WebGpuAdapter = { features?: { has?: (value: string) => boolean } };
   const gpu = (navigator as Navigator & {
-    gpu?: { requestAdapter?: () => Promise<any> };
+    gpu?: { requestAdapter?: () => Promise<WebGpuAdapter | null> };
   }).gpu;
   if (!gpu?.requestAdapter) return false;
   try {

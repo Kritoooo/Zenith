@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+export {};
+
 type PipelineDtype = "fp32" | "q4" | "uint8" | "q4f16";
 type RuntimeMode = "webgpu" | "wasm";
 
@@ -102,14 +104,19 @@ type RuntimeEnv = {
   };
 };
 
+type DomShimElement = {
+  [key: string]: unknown;
+  onload?: ((event: { type: string }) => void) | null;
+};
+
 type WorkerRuntime = DedicatedWorkerGlobalScope & {
   document?: {
-    createElement?: (tag: string) => any;
-    createTextNode?: (text: string) => any;
-    getElementsByTagName?: (tag: string) => any[];
-    querySelector?: (selector: string) => any | null;
-    head?: { appendChild?: (el: any) => void };
-    body?: { appendChild?: (el: any) => void };
+    createElement?: (tag: string) => DomShimElement;
+    createTextNode?: (text: string) => DomShimElement;
+    getElementsByTagName?: (tag: string) => DomShimElement[];
+    querySelector?: (selector: string) => DomShimElement | null;
+    head?: DomShimElement;
+    body?: DomShimElement;
   };
   _N_E_STYLE_LOAD?: (href: string) => Promise<void>;
 };
@@ -117,15 +124,16 @@ type WorkerRuntime = DedicatedWorkerGlobalScope & {
 const ctx = self as unknown as WorkerRuntime;
 
 const ensureDomShims = () => {
-  const runtime = ctx as WorkerRuntime & Record<string, any>;
+  const runtime = ctx as WorkerRuntime & Record<string, unknown>;
   if (typeof runtime._N_E_STYLE_LOAD !== "function") {
     runtime._N_E_STYLE_LOAD = async () => {};
   }
   if (runtime.document) return;
   const noop = () => {};
-  const appendChild = (el: any) => {
-    if (el?.onload) {
-      setTimeout(() => el.onload({ type: "load" }), 0);
+  const appendChild = (el: DomShimElement) => {
+    if (typeof el.onload === "function") {
+      const handleLoad = el.onload;
+      setTimeout(() => handleLoad({ type: "load" }), 0);
     }
     return el;
   };
@@ -135,7 +143,7 @@ const ensureDomShims = () => {
     const normalized = tag?.toLowerCase?.() ?? "";
     if (normalized === "canvas") {
       if (typeof OffscreenCanvas !== "undefined") {
-        return new OffscreenCanvas(1, 1);
+        return new OffscreenCanvas(1, 1) as unknown as DomShimElement;
       }
       return {
         width: 1,

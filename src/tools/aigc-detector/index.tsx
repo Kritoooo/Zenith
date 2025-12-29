@@ -101,6 +101,7 @@ export default function AigcDetectorTool() {
   const [modelProgress, setModelProgress] = useState<number | null>(null);
   const [modelMessage, setModelMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasWorker, setHasWorker] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const workerRunIdRef = useRef(0);
 
@@ -139,8 +140,14 @@ export default function AigcDetectorTool() {
   }, [analysisStats, error, modelMessage, modelProgress, phase]);
 
   const runWorker = (text: string, chunkSize: number) => {
-    const worker = workerRef.current ?? createDetectorWorker();
-    if (!workerRef.current) workerRef.current = worker;
+    if (!workerRef.current) {
+      workerRef.current = createDetectorWorker();
+      setHasWorker(true);
+    }
+    const worker = workerRef.current;
+    if (!worker) {
+      return Promise.reject(new Error("Worker unavailable."));
+    }
     const runId = (workerRunIdRef.current += 1);
     return new Promise<WorkerResultMessage>((resolve, reject) => {
       const handleMessage = (event: MessageEvent<WorkerMessage>) => {
@@ -233,6 +240,7 @@ export default function AigcDetectorTool() {
       workerRef.current.terminate();
       workerRef.current = null;
     }
+    setHasWorker(false);
     setModelProgress(null);
     setModelMessage(null);
     setPhase("idle");
@@ -302,20 +310,20 @@ export default function AigcDetectorTool() {
           <span
             className={cn(
               "rounded-full border border-[color:var(--glass-border)] px-2.5 py-1",
-              workerRef.current
+              hasWorker
                 ? "bg-[color:var(--glass-bg)]"
                 : "bg-[color:var(--glass-recessed-bg)]"
             )}
           >
-            Model {workerRef.current ? "loaded" : "idle"}
+            Model {hasWorker ? "loaded" : "idle"}
           </span>
           <button
             type="button"
             onClick={unloadModel}
-            disabled={!workerRef.current}
+            disabled={!hasWorker}
             className={cn(
               "rounded-full border border-[color:var(--glass-border)] px-2.5 py-1 transition-colors",
-              workerRef.current
+              hasWorker
                 ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
                 : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
             )}
