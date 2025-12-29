@@ -22,6 +22,8 @@ import UuidTool from "@/tools/uuid";
 import { meta as uuidMeta } from "@/tools/uuid/meta";
 import AigcDetectorTool from "@/tools/aigc-detector";
 import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
+import AddressGeneratorTool from "@/tools/address-generator";
+import { meta as addressGeneratorMeta } from "@/tools/address-generator/meta";
 
 export const tools: ToolRegistration[] = [
   { meta: jsonFormatterMeta, component: JsonFormatterTool },
@@ -35,6 +37,7 @@ export const tools: ToolRegistration[] = [
   { meta: aigcDetectorMeta, component: AigcDetectorTool },
   { meta: uuidMeta, component: UuidTool },
   { meta: localTimeMeta, component: LocalTimeTool },
+  { meta: addressGeneratorMeta, component: AddressGeneratorTool },
 ];
 
 export const toolIndex = tools.reduce(

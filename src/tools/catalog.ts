@@ -11,6 +11,7 @@ import { meta as downGitMeta } from "@/tools/downgit/meta";
 import { meta as ytDlpMeta } from "@/tools/yt-dlp/meta";
 import { meta as uuidMeta } from "@/tools/uuid/meta";
 import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
+import { meta as addressGeneratorMeta } from "@/tools/address-generator/meta";
 
 export const toolMetas: ToolMeta[] = [
   jsonFormatterMeta,
@@ -24,6 +25,7 @@ export const toolMetas: ToolMeta[] = [
   aigcDetectorMeta,
   uuidMeta,
   localTimeMeta,
+  addressGeneratorMeta,
 ];
 
 export const toolMetaIndex = toolMetas.reduce(
