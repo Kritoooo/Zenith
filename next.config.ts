@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
         headers: crossOriginHeaders,
       },
       {
+        source: '/tool/aigc-detector/:path*',
+        headers: crossOriginHeaders,
+      },
+      {
         source: '/_next/static/:path*',
         headers: crossOriginHeaders,
       },
