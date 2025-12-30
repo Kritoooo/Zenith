@@ -33,7 +33,7 @@ export default function Home() {
             <ThemeToggle />
             <a
               className={iconButtonClass}
-              href="https://github.com"
+              href="https://github.com/Kritoooo/Zenith"
               target="_blank"
               rel="noreferrer"
               aria-label="GitHub"

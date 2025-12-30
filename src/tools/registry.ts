@@ -1,29 +1,34 @@
+import dynamic from "next/dynamic";
+
 import type { ToolRegistration } from "@/tools/types";
 
-import AnimeUpscaleTool from "@/tools/anime-upscale";
 import { meta as animeUpscaleMeta } from "@/tools/anime-upscale/meta";
-import Base64Tool from "@/tools/base64";
 import { meta as base64Meta } from "@/tools/base64/meta";
-import CodeCompareTool from "@/tools/code-compare";
 import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
-import ColorConverterTool from "@/tools/color-converter";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
-import ImageCompressTool from "@/tools/image-compress";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
-import JsonFormatterTool from "@/tools/json-formatter";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
-import DownGitTool from "@/tools/downgit";
 import { meta as downGitMeta } from "@/tools/downgit/meta";
-import YtDlpTool from "@/tools/yt-dlp";
 import { meta as ytDlpMeta } from "@/tools/yt-dlp/meta";
-import LocalTimeTool from "@/tools/local-time";
 import { meta as localTimeMeta } from "@/tools/local-time/meta";
-import UuidTool from "@/tools/uuid";
 import { meta as uuidMeta } from "@/tools/uuid/meta";
-import AigcDetectorTool from "@/tools/aigc-detector";
 import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
-import AddressGeneratorTool from "@/tools/address-generator";
 import { meta as addressGeneratorMeta } from "@/tools/address-generator/meta";
+
+// 动态导入工具组件，实现代码分割
+// 每个工具会被打包成独立的 chunk，只在访问时加载
+const JsonFormatterTool = dynamic(() => import("@/tools/json-formatter"));
+const CodeCompareTool = dynamic(() => import("@/tools/code-compare"));
+const DownGitTool = dynamic(() => import("@/tools/downgit"));
+const YtDlpTool = dynamic(() => import("@/tools/yt-dlp"));
+const ColorConverterTool = dynamic(() => import("@/tools/color-converter"));
+const AnimeUpscaleTool = dynamic(() => import("@/tools/anime-upscale"));
+const ImageCompressTool = dynamic(() => import("@/tools/image-compress"));
+const Base64Tool = dynamic(() => import("@/tools/base64"));
+const AigcDetectorTool = dynamic(() => import("@/tools/aigc-detector"));
+const UuidTool = dynamic(() => import("@/tools/uuid"));
+const LocalTimeTool = dynamic(() => import("@/tools/local-time"));
+const AddressGeneratorTool = dynamic(() => import("@/tools/address-generator"));
 
 export const tools: ToolRegistration[] = [
   { meta: jsonFormatterMeta, component: JsonFormatterTool },
