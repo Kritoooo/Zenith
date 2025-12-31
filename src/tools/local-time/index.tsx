@@ -42,6 +42,25 @@ export default function LocalTimeTool() {
     [is24h, showSeconds]
   );
 
+  const zoneFormatters = useMemo(() => {
+    const baseOptions = {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: showSeconds ? "2-digit" : undefined,
+      hour12: !is24h,
+    } as const;
+    return WORLD_CLOCKS.reduce(
+      (acc, zone) => {
+        acc[zone.timeZone] = new Intl.DateTimeFormat("en-US", {
+          ...baseOptions,
+          timeZone: zone.timeZone,
+        });
+        return acc;
+      },
+      {} as Record<string, Intl.DateTimeFormat>
+    );
+  }, [is24h, showSeconds]);
+
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat("en-US", {
@@ -68,13 +87,15 @@ export default function LocalTimeTool() {
   };
 
   const formatZoneTime = (zone: ClockZone) =>
-    new Intl.DateTimeFormat("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: showSeconds ? "2-digit" : undefined,
-      hour12: !is24h,
-      timeZone: zone.timeZone,
-    }).format(now);
+    (zoneFormatters[zone.timeZone] ??
+      new Intl.DateTimeFormat("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: showSeconds ? "2-digit" : undefined,
+        hour12: !is24h,
+        timeZone: zone.timeZone,
+      })
+    ).format(now);
 
   return (
     <div className="flex h-full flex-col gap-5">

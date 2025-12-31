@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { DangerButton, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 type Coordinates = {
@@ -1260,47 +1261,20 @@ export default function AddressGeneratorTool() {
               ))}
             </select>
           </div>
-          <button
-            type="button"
+          <PrimaryButton
             onClick={() => generateAddress(selectedCountry)}
             disabled={isLoading}
-            className={cn(
-              "rounded-full px-4 py-2 text-sm font-semibold shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)] transition-colors",
-              isLoading
-                ? "cursor-wait bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-                : "bg-[color:var(--accent-blue)] text-white"
-            )}
           >
             {isLoading ? "Generating..." : "Generate"}
-          </button>
+          </PrimaryButton>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={copyAll}
-            disabled={!current}
-            className={cn(
-              "rounded-full border border-[color:var(--glass-border)] px-3 py-2 text-xs shadow-[var(--glass-shadow)] transition-colors",
-              current
-                ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-            )}
-          >
+          <SecondaryButton size="sm" onClick={copyAll} disabled={!current}>
             Copy all
-          </button>
-          <button
-            type="button"
-            onClick={saveAddress}
-            disabled={!current}
-            className={cn(
-              "rounded-full border border-[color:var(--glass-border)] px-3 py-2 text-xs shadow-[var(--glass-shadow)] transition-colors",
-              current
-                ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-            )}
-          >
+          </SecondaryButton>
+          <SecondaryButton size="sm" onClick={saveAddress} disabled={!current}>
             Save
-          </button>
+          </SecondaryButton>
         </div>
       </div>
 
@@ -1432,19 +1406,13 @@ export default function AddressGeneratorTool() {
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
             Saved addresses
           </p>
-          <button
-            type="button"
+          <SecondaryButton
+            size="sm"
             onClick={clearEntries}
             disabled={savedEntries.length === 0}
-            className={cn(
-              "rounded-full border border-[color:var(--glass-border)] px-3 py-1 text-xs transition-colors",
-              savedEntries.length
-                ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-            )}
           >
             Clear all
-          </button>
+          </SecondaryButton>
         </div>
         {savedEntries.length === 0 ? (
           <p className="mt-3 text-xs text-[color:var(--text-secondary)]">
@@ -1475,8 +1443,8 @@ export default function AddressGeneratorTool() {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
+                    <SecondaryButton
+                      size="sm"
                       onClick={() =>
                         copyValue(
                           "Saved entry",
@@ -1491,17 +1459,12 @@ export default function AddressGeneratorTool() {
                             .join(" | ")
                         )
                       }
-                      className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-[11px] text-[color:var(--text-primary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
                     >
                       Copy
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteEntry(entry.id)}
-                      className="rounded-full border border-transparent bg-rose-500/10 px-3 py-1 text-[11px] text-rose-500 transition-colors hover:bg-rose-500/20"
-                    >
+                    </SecondaryButton>
+                    <DangerButton onClick={() => deleteEntry(entry.id)}>
                       Delete
-                    </button>
+                    </DangerButton>
                   </div>
                 </div>
               </div>

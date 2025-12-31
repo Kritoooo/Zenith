@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { Button, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 const QUICK_COUNTS = [1, 3, 5] as const;
@@ -98,64 +99,33 @@ export default function UuidTool() {
             />
           </div>
           {QUICK_COUNTS.map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setCount(value)}
-              className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-primary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
-            >
+            <SecondaryButton key={value} size="sm" onClick={() => setCount(value)}>
               {value}
-            </button>
+            </SecondaryButton>
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant={withHyphens ? "primary" : "secondary"}
+            size="sm"
             onClick={() => setWithHyphens((prev) => !prev)}
-            className={cn(
-              "rounded-full border border-[color:var(--glass-border)] px-3 py-1 text-xs transition-colors",
-              withHyphens
-                ? "bg-[color:var(--accent-blue)] text-white"
-                : "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-            )}
           >
             Hyphens
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={uppercase ? "primary" : "secondary"}
+            size="sm"
             onClick={() => setUppercase((prev) => !prev)}
-            className={cn(
-              "rounded-full border border-[color:var(--glass-border)] px-3 py-1 text-xs transition-colors",
-              uppercase
-                ? "bg-[color:var(--accent-blue)] text-white"
-                : "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-            )}
           >
             Uppercase
-          </button>
+          </Button>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={generate}
-          className="rounded-full bg-[color:var(--accent-blue)] px-5 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)]"
-        >
-          Generate
-        </button>
-        <button
-          type="button"
-          onClick={copyAll}
-          disabled={!uuids.length}
-          className={cn(
-            "rounded-full border border-[color:var(--glass-border)] px-4 py-2 text-sm shadow-[var(--glass-shadow)] transition-colors",
-            uuids.length
-              ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-              : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-          )}
-        >
+        <PrimaryButton onClick={generate}>Generate</PrimaryButton>
+        <SecondaryButton onClick={copyAll} disabled={!uuids.length}>
           Copy
-        </button>
+        </SecondaryButton>
         <p
           className={cn(
             "text-xs",

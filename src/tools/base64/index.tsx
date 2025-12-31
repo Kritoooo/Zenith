@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { Button, GhostButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 type Mode = "encode" | "decode";
@@ -84,65 +85,29 @@ export default function Base64Tool() {
     <div className="flex h-full flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant={mode === "encode" ? "primary" : "secondary"}
             onClick={() => run("encode", input)}
-            className={cn(
-              "rounded-full px-4 py-2 text-sm font-semibold shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)] transition-colors",
-              mode === "encode"
-                ? "bg-[color:var(--accent-blue)] text-white"
-                : "border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-            )}
+            className="font-semibold"
           >
             Encode
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={mode === "decode" ? "primary" : "secondary"}
             onClick={() => run("decode", input)}
-            className={cn(
-              "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-              mode === "decode"
-                ? "bg-[color:var(--accent-blue)] text-white shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)]"
-                : "border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-            )}
+            className="font-semibold"
           >
             Decode
-          </button>
+          </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={swap}
-            disabled={!output}
-            className={cn(
-              "rounded-full border border-[color:var(--glass-border)] px-3 py-2 text-sm shadow-[var(--glass-shadow)] transition-colors",
-              output
-                ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-            )}
-          >
+          <SecondaryButton onClick={swap} disabled={!output}>
             Swap
-          </button>
-          <button
-            type="button"
-            onClick={copyOutput}
-            disabled={!output}
-            className={cn(
-              "rounded-full border border-[color:var(--glass-border)] px-3 py-2 text-sm shadow-[var(--glass-shadow)] transition-colors",
-              output
-                ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-            )}
-          >
+          </SecondaryButton>
+          <SecondaryButton onClick={copyOutput} disabled={!output}>
             Copy
-          </button>
-          <button
-            type="button"
-            onClick={clearAll}
-            className="rounded-full px-3 py-2 text-sm text-[color:var(--text-secondary)] transition-colors hover:text-[color:var(--text-primary)]"
-          >
-            Clear
-          </button>
+          </SecondaryButton>
+          <GhostButton onClick={clearAll}>Clear</GhostButton>
         </div>
       </div>
       <p

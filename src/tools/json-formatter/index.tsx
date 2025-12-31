@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { PrimaryButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 const SAMPLE_JSON = `{
@@ -306,20 +307,8 @@ export default function JsonFormatterTool() {
     <div className="flex h-full flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={formatJson}
-            className="rounded-full bg-[color:var(--accent-blue)] px-5 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)]"
-          >
-            Format
-          </button>
-          <button
-            type="button"
-            onClick={minifyJson}
-            className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-4 py-2 text-sm text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
-          >
-            Minify
-          </button>
+          <PrimaryButton onClick={formatJson}>Format</PrimaryButton>
+          <SecondaryButton onClick={minifyJson}>Minify</SecondaryButton>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-1 text-[11px] text-[color:var(--text-secondary)] shadow-[var(--glass-shadow)]">
@@ -339,19 +328,9 @@ export default function JsonFormatterTool() {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={copyOutput}
-            disabled={!output}
-            className={cn(
-              "rounded-full border border-[color:var(--glass-border)] px-4 py-2 text-sm shadow-[var(--glass-shadow)] transition-colors",
-              output
-                ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-            )}
-          >
+          <SecondaryButton onClick={copyOutput} disabled={!output}>
             Copy
-          </button>
+          </SecondaryButton>
         </div>
       </div>
       <p
@@ -405,32 +384,20 @@ export default function JsonFormatterTool() {
               </div>
               {viewMode === "tree" ? (
                 <>
-                  <button
-                    type="button"
+                  <SecondaryButton
+                    size="sm"
                     onClick={expandAll}
                     disabled={!parsedValue}
-                    className={cn(
-                      "rounded-full border border-[color:var(--glass-border)] px-3 py-1 transition-colors",
-                      parsedValue
-                        ? "bg-[color:var(--glass-bg)] text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]"
-                        : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-                    )}
                   >
                     Expand all
-                  </button>
-                  <button
-                    type="button"
+                  </SecondaryButton>
+                  <SecondaryButton
+                    size="sm"
                     onClick={collapseAll}
                     disabled={!parsedValue}
-                    className={cn(
-                      "rounded-full border border-[color:var(--glass-border)] px-3 py-1 transition-colors",
-                      parsedValue
-                        ? "bg-[color:var(--glass-bg)] text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]"
-                        : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-                    )}
                   >
                     Collapse all
-                  </button>
+                  </SecondaryButton>
                 </>
               ) : null}
             </div>

@@ -1,7 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import {
+  DangerButton,
+  GhostButton,
+  PrimaryButton,
+  SecondaryButton,
+} from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 const SAMPLE_URL = "https://github.com/Kritoooo/Zenith";
@@ -43,55 +49,34 @@ type ZipEntry = {
   name: string;
   data: Uint8Array;
   isDirectory?: boolean;
-  modified?: Date;
+  modified?: number | null;
 };
 
-const textEncoder = new TextEncoder();
-
-const CRC_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let i = 0; i < 256; i += 1) {
-    let value = i;
-    for (let k = 0; k < 8; k += 1) {
-      value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
-    }
-    table[i] = value >>> 0;
-  }
-  return table;
-})();
-
-const crc32 = (data: Uint8Array) => {
-  let crc = 0xffffffff;
-  for (const byte of data) {
-    crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
-  }
-  return (crc ^ 0xffffffff) >>> 0;
+type ZipWorkerProgressMessage = {
+  type: "progress";
+  id: number;
+  completed: number;
+  total: number;
 };
 
-const writeUint16LE = (buffer: Uint8Array, offset: number, value: number) => {
-  buffer[offset] = value & 0xff;
-  buffer[offset + 1] = (value >>> 8) & 0xff;
+type ZipWorkerResultMessage = {
+  type: "result";
+  id: number;
+  buffer: ArrayBuffer;
 };
 
-const writeUint32LE = (buffer: Uint8Array, offset: number, value: number) => {
-  buffer[offset] = value & 0xff;
-  buffer[offset + 1] = (value >>> 8) & 0xff;
-  buffer[offset + 2] = (value >>> 16) & 0xff;
-  buffer[offset + 3] = (value >>> 24) & 0xff;
+type ZipWorkerErrorMessage = {
+  type: "error";
+  id: number;
+  message: string;
 };
 
-const toDosDateTime = (date: Date) => {
-  const safeDate = date.getFullYear() < 1980 ? new Date(1980, 0, 1) : date;
-  const year = safeDate.getFullYear() - 1980;
-  const month = safeDate.getMonth() + 1;
-  const day = safeDate.getDate();
-  const hours = safeDate.getHours();
-  const minutes = safeDate.getMinutes();
-  const seconds = Math.floor(safeDate.getSeconds() / 2);
-  const dosDate = (year << 9) | (month << 5) | day;
-  const dosTime = (hours << 11) | (minutes << 5) | seconds;
-  return { dosDate, dosTime };
-};
+type ZipWorkerMessage =
+  | ZipWorkerProgressMessage
+  | ZipWorkerResultMessage
+  | ZipWorkerErrorMessage;
+
+const createZipWorker = () => new Worker(new URL("./worker.ts", import.meta.url));
 
 const normalizeRepo = (value: string) =>
   value.endsWith(".git") ? value.slice(0, -4) : value;
@@ -213,9 +198,86 @@ const buildContentsUrl = (
   return url.toString();
 };
 
-const fetchJson = async (url: string, token?: string) => {
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const parseHeaderInt = (value: string | null) => {
+  if (!value) return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const formatDuration = (ms: number) => {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  if (totalSeconds <= 1) return "a moment";
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) {
+    return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remMinutes = minutes % 60;
+  return remMinutes ? `${hours}h ${remMinutes}m` : `${hours}h`;
+};
+
+const formatRetryTime = (date: Date, waitMs: number) => {
+  if (waitMs >= DAY_MS) {
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const buildRateLimitHint = (response: Response) => {
+  const retryAfterSeconds = parseHeaderInt(response.headers.get("retry-after"));
+  const resetEpochSeconds = parseHeaderInt(
+    response.headers.get("x-ratelimit-reset")
+  );
+  const remaining = parseHeaderInt(
+    response.headers.get("x-ratelimit-remaining")
+  );
+
+  const hasRetryAfter = typeof retryAfterSeconds === "number";
+  const hasReset = typeof resetEpochSeconds === "number";
+  const isRateLimited =
+    response.status === 429 ||
+    hasRetryAfter ||
+    (hasReset && remaining === 0);
+
+  if (!isRateLimited) return null;
+
+  let waitMs: number | null = null;
+  let retryTime: Date | null = null;
+
+  if (hasRetryAfter && retryAfterSeconds) {
+    waitMs = Math.max(0, retryAfterSeconds * 1000);
+    retryTime = new Date(Date.now() + waitMs);
+  } else if (hasReset && resetEpochSeconds) {
+    retryTime = new Date(resetEpochSeconds * 1000);
+    waitMs = retryTime.getTime() - Date.now();
+  }
+
+  if (waitMs === null || !retryTime) {
+    return "Rate limit reached. Please wait and try again.";
+  }
+
+  const durationLabel = formatDuration(waitMs);
+  const timeLabel = formatRetryTime(retryTime, waitMs);
+  return `Rate limit reached. Try again in about ${durationLabel} (around ${timeLabel}).`;
+};
+
+const fetchJson = async (url: string, token?: string, signal?: AbortSignal) => {
   const response = await fetch(url, {
     headers: buildHeaders(token),
+    signal,
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
@@ -223,7 +285,8 @@ const fetchJson = async (url: string, token?: string) => {
       payload && typeof payload.message === "string"
         ? payload.message
         : `GitHub API error (${response.status}).`;
-    throw new Error(message);
+    const rateHint = buildRateLimitHint(response);
+    throw new Error(rateHint ? `${message} ${rateHint}` : message);
   }
   return response.json();
 };
@@ -238,107 +301,38 @@ const decodeBase64 = (value: string) => {
   return bytes;
 };
 
-const toArrayBuffer = (value: Uint8Array) => {
-  const buffer = value.buffer;
-  if (buffer instanceof ArrayBuffer) {
-    if (value.byteOffset === 0 && value.byteLength === buffer.byteLength) {
-      return buffer;
-    }
-    return buffer.slice(value.byteOffset, value.byteOffset + value.byteLength);
-  }
-  return new Uint8Array(value).buffer;
-};
-
-const createZip = (entries: ZipEntry[]) => {
-  const localParts: ArrayBuffer[] = [];
-  const centralParts: ArrayBuffer[] = [];
-  let offset = 0;
-
-  entries.forEach((entry) => {
-    const name = entry.isDirectory && !entry.name.endsWith("/")
-      ? `${entry.name}/`
-      : entry.name;
-    const nameBytes = textEncoder.encode(name);
-    const data = entry.data;
-    const size = data.length;
-    const crc = crc32(data);
-    const { dosDate, dosTime } = toDosDateTime(entry.modified ?? new Date());
-    const localHeader = new Uint8Array(30);
-
-    writeUint32LE(localHeader, 0, 0x04034b50);
-    writeUint16LE(localHeader, 4, 20);
-    writeUint16LE(localHeader, 6, 0x0800);
-    writeUint16LE(localHeader, 8, 0);
-    writeUint16LE(localHeader, 10, dosTime);
-    writeUint16LE(localHeader, 12, dosDate);
-    writeUint32LE(localHeader, 14, crc);
-    writeUint32LE(localHeader, 18, size);
-    writeUint32LE(localHeader, 22, size);
-    writeUint16LE(localHeader, 26, nameBytes.length);
-    writeUint16LE(localHeader, 28, 0);
-
-    localParts.push(
-      toArrayBuffer(localHeader),
-      toArrayBuffer(nameBytes),
-      toArrayBuffer(data)
-    );
-
-    const centralHeader = new Uint8Array(46);
-    writeUint32LE(centralHeader, 0, 0x02014b50);
-    writeUint16LE(centralHeader, 4, 20);
-    writeUint16LE(centralHeader, 6, 20);
-    writeUint16LE(centralHeader, 8, 0x0800);
-    writeUint16LE(centralHeader, 10, 0);
-    writeUint16LE(centralHeader, 12, dosTime);
-    writeUint16LE(centralHeader, 14, dosDate);
-    writeUint32LE(centralHeader, 16, crc);
-    writeUint32LE(centralHeader, 20, size);
-    writeUint32LE(centralHeader, 24, size);
-    writeUint16LE(centralHeader, 28, nameBytes.length);
-    writeUint16LE(centralHeader, 30, 0);
-    writeUint16LE(centralHeader, 32, 0);
-    writeUint16LE(centralHeader, 34, 0);
-    writeUint16LE(centralHeader, 36, 0);
-    writeUint32LE(centralHeader, 38, entry.isDirectory ? 0x10 : 0);
-    writeUint32LE(centralHeader, 42, offset);
-
-    centralParts.push(
-      toArrayBuffer(centralHeader),
-      toArrayBuffer(nameBytes)
-    );
-
-    offset += localHeader.length + nameBytes.length + data.length;
-  });
-
-  const centralOffset = offset;
-  const centralSize = centralParts.reduce(
-    (sum, part) => sum + part.byteLength,
-    0
-  );
-  const endRecord = new Uint8Array(22);
-
-  writeUint32LE(endRecord, 0, 0x06054b50);
-  writeUint16LE(endRecord, 4, 0);
-  writeUint16LE(endRecord, 6, 0);
-  writeUint16LE(endRecord, 8, entries.length);
-  writeUint16LE(endRecord, 10, entries.length);
-  writeUint32LE(endRecord, 12, centralSize);
-  writeUint32LE(endRecord, 16, centralOffset);
-  writeUint16LE(endRecord, 20, 0);
-
-  return new Blob([...localParts, ...centralParts, toArrayBuffer(endRecord)], {
-    type: "application/zip",
-  });
-};
-
 const sanitizeFileName = (value: string) =>
   value.replace(/[\\/:*?"<>|]+/g, "-");
+
+const DEFAULT_CONCURRENCY = 6;
+const MIN_CONCURRENCY = 2;
+const MAX_CONCURRENCY = 8;
+
+const parseConcurrency = (value: string) => {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return Math.min(MAX_CONCURRENCY, Math.max(MIN_CONCURRENCY, parsed));
+};
+
+const getConcurrentDownloads = () => {
+  if (typeof navigator === "undefined") return DEFAULT_CONCURRENCY;
+  const cores = navigator.hardwareConcurrency ?? DEFAULT_CONCURRENCY;
+  const scaled = Math.round(cores * 0.75);
+  const clamped = Math.min(MAX_CONCURRENCY, Math.max(MIN_CONCURRENCY, scaled));
+  return Number.isFinite(clamped) && clamped > 0 ? clamped : DEFAULT_CONCURRENCY;
+};
+
+const isAbortError = (error: unknown) =>
+  error instanceof DOMException
+    ? error.name === "AbortError"
+    : error instanceof Error && error.name === "AbortError";
 
 export default function DownGitTool() {
   const [input, setInput] = useState(SAMPLE_URL);
   const [refOverride, setRefOverride] = useState("");
   const [token, setToken] = useState("");
   const [outputName, setOutputName] = useState("");
+  const [concurrencyInput, setConcurrencyInput] = useState("");
   const [resolved, setResolved] = useState<ResolvedTarget | null>(null);
   const [status, setStatus] = useState("Ready to download from GitHub.");
   const [error, setError] = useState<string | null>(null);
@@ -346,33 +340,145 @@ export default function DownGitTool() {
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(
     null
   );
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const zipWorkerRef = useRef<Worker | null>(null);
+  const zipRunIdRef = useRef(0);
+  const zipRejectRef = useRef<((error: unknown) => void) | null>(null);
 
   const parseResult = useMemo(() => parseGithubUrl(input), [input]);
   const parsedTarget = parseResult.target;
   const parseError = parseResult.error;
+  const autoConcurrency = useMemo(() => getConcurrentDownloads(), []);
+  const manualConcurrency = useMemo(
+    () => parseConcurrency(concurrencyInput.trim()),
+    [concurrencyInput]
+  );
+  const effectiveConcurrency = manualConcurrency ?? autoConcurrency;
 
   const effectiveRef =
     refOverride.trim() || parsedTarget?.ref || undefined;
 
   const displayPath = parsedTarget?.path ? `/${parsedTarget.path}` : "/";
+  const concurrencyLabel = manualConcurrency
+    ? `Manual (${manualConcurrency})`
+    : `Auto (${autoConcurrency})`;
+  const tokenStatus = token.trim() ? "Token provided" : "No token";
 
-  const primaryButtonClass =
-    "rounded-full bg-[color:var(--accent-blue)] px-5 py-2 text-sm font-semibold text-white shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)] transition-colors";
-  const secondaryButtonClass =
-    "rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-4 py-2 text-sm text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] transition-colors hover:bg-[color:var(--glass-hover-bg)]";
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (zipWorkerRef.current) {
+        zipWorkerRef.current.terminate();
+        zipWorkerRef.current = null;
+      }
+      zipRejectRef.current = null;
+    };
+  }, []);
+
+  const terminateZipWorker = () => {
+    if (!zipWorkerRef.current) return;
+    zipWorkerRef.current.terminate();
+    zipWorkerRef.current = null;
+    if (zipRejectRef.current) {
+      zipRejectRef.current(new DOMException("Aborted", "AbortError"));
+      zipRejectRef.current = null;
+    }
+  };
+
+  const getZipTransferList = (entries: ZipEntry[]) => {
+    const buffers = new Set<ArrayBuffer>();
+    entries.forEach((entry) => {
+      if (entry.data?.buffer instanceof ArrayBuffer) {
+        buffers.add(entry.data.buffer);
+      }
+    });
+    return Array.from(buffers);
+  };
+
+  const createZipInWorker = (entries: ZipEntry[]) => {
+    terminateZipWorker();
+    const worker = createZipWorker();
+    zipWorkerRef.current = worker;
+    const runId = (zipRunIdRef.current += 1);
+
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      zipRejectRef.current = reject;
+      const handleMessage = (event: MessageEvent<ZipWorkerMessage>) => {
+        const data = event.data;
+        if (!data || data.id !== runId) return;
+        if (data.type === "progress") {
+          setProgress({ current: data.completed, total: data.total });
+          setStatus(`Building zip ${data.completed}/${data.total}...`);
+          return;
+        }
+        if (data.type === "result") {
+          cleanup();
+          resolve(data.buffer);
+          return;
+        }
+        if (data.type === "error") {
+          cleanup();
+          reject(new Error(data.message));
+        }
+      };
+
+      const handleError = (event: Event | ErrorEvent) => {
+        cleanup();
+        const errorEvent = event as ErrorEvent;
+        const message = errorEvent?.message
+          ? `Zip worker error: ${errorEvent.message}`
+          : "Zip worker failed.";
+        reject(new Error(message));
+      };
+
+      const handleMessageError = () => {
+        cleanup();
+        reject(new Error("Zip worker message could not be deserialized."));
+      };
+
+      const cleanup = () => {
+        worker.removeEventListener("message", handleMessage);
+        worker.removeEventListener("error", handleError);
+        worker.removeEventListener("messageerror", handleMessageError);
+        if (zipRejectRef.current === reject) {
+          zipRejectRef.current = null;
+        }
+        if (zipWorkerRef.current === worker) {
+          zipWorkerRef.current = null;
+        }
+      };
+
+      worker.addEventListener("message", handleMessage);
+      worker.addEventListener("error", handleError);
+      worker.addEventListener("messageerror", handleMessageError);
+
+      const transferables = getZipTransferList(entries);
+      worker.postMessage({ type: "zip", id: runId, entries }, transferables);
+    });
+  };
 
   const reset = () => {
+    terminateZipWorker();
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     setInput("");
     setRefOverride("");
     setToken("");
     setOutputName("");
+    setConcurrencyInput("");
     setResolved(null);
     setStatus("Ready to download from GitHub.");
     setError(null);
     setProgress(null);
   };
 
-  const resolveTarget = async () => {
+  const resolveTarget = async (signal?: AbortSignal) => {
     if (!parsedTarget) {
       throw new Error(parseError ?? "Enter a valid GitHub URL.");
     }
@@ -385,7 +491,7 @@ export default function DownGitTool() {
       ref
     );
 
-    const data = await fetchJson(apiUrl, token.trim() || undefined);
+    const data = await fetchJson(apiUrl, token.trim() || undefined, signal);
 
     if (Array.isArray(data)) {
       const name = parsedTarget.path
@@ -432,27 +538,32 @@ export default function DownGitTool() {
     owner: string,
     repo: string,
     path: string,
-    ref?: string
+    ref?: string,
+    signal?: AbortSignal
   ) => {
     const apiUrl = buildContentsUrl(owner, repo, path, ref);
-    const data = await fetchJson(apiUrl, token.trim() || undefined);
+    const data = await fetchJson(apiUrl, token.trim() || undefined, signal);
     if (!Array.isArray(data)) {
       throw new Error("Expected a directory but found a file.");
     }
     return data as GithubContent[];
   };
 
-  const collectFiles = async (target: ResolvedTarget) => {
+  const collectFiles = async (target: ResolvedTarget, signal?: AbortSignal) => {
     const queue = [target.path];
     const files: GithubContent[] = [];
 
     while (queue.length > 0) {
+      if (signal?.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
       const current = queue.shift() ?? "";
       const entries = await fetchDirectory(
         target.owner,
         target.repo,
         current,
-        target.ref
+        target.ref,
+        signal
       );
 
       entries.forEach((entry) => {
@@ -471,11 +582,12 @@ export default function DownGitTool() {
     entry: GithubContent,
     owner: string,
     repo: string,
-    ref?: string
+    ref?: string,
+    signal?: AbortSignal
   ) => {
     if (entry.download_url) {
       try {
-        const response = await fetch(entry.download_url);
+        const response = await fetch(entry.download_url, { signal });
         if (response.ok) {
           const buffer = await response.arrayBuffer();
           return new Uint8Array(buffer);
@@ -486,7 +598,7 @@ export default function DownGitTool() {
     }
 
     const apiUrl = buildContentsUrl(owner, repo, entry.path, ref);
-    const data = await fetchJson(apiUrl, token.trim() || undefined);
+    const data = await fetchJson(apiUrl, token.trim() || undefined, signal);
     if (!data?.content || data.encoding !== "base64") {
       throw new Error(`Unable to download ${entry.path}.`);
     }
@@ -516,11 +628,23 @@ export default function DownGitTool() {
     return candidate;
   };
 
+  const outputPreview = resolved
+    ? buildFileName(resolved)
+    : outputName.trim() || "—";
+
   const updateResolved = (next: ResolvedTarget) => {
     setResolved(next);
     setOutputName(
       next.type === "file" ? next.name : `${next.name}.zip`
     );
+  };
+
+  const cancelWork = () => {
+    terminateZipWorker();
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setStatus("Cancelling...");
+    setProgress(null);
   };
 
   const handleAnalyze = async () => {
@@ -530,19 +654,27 @@ export default function DownGitTool() {
       setStatus("Paste a valid GitHub URL.");
       return;
     }
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     setIsWorking(true);
     setStatus("Checking the target on GitHub...");
     try {
-      const next = await resolveTarget();
+      const next = await resolveTarget(controller.signal);
       updateResolved(next);
       setStatus(`Ready to download ${next.type}.`);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to reach GitHub.";
-      setError(message);
-      setStatus("Check failed.");
+      if (isAbortError(err)) {
+        setStatus("Check canceled.");
+      } else {
+        const message =
+          err instanceof Error ? err.message : "Unable to reach GitHub.";
+        setError(message);
+        setStatus("Check failed.");
+      }
     } finally {
       setIsWorking(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -553,10 +685,14 @@ export default function DownGitTool() {
       setStatus("Paste a valid GitHub URL.");
       return;
     }
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const signal = controller.signal;
     setIsWorking(true);
     try {
       setStatus("Resolving download target...");
-      const target = resolved ?? (await resolveTarget());
+      const target = resolved ?? (await resolveTarget(signal));
       if (!resolved) {
         updateResolved(target);
       }
@@ -579,7 +715,8 @@ export default function DownGitTool() {
           entry,
           target.owner,
           target.repo,
-          target.ref
+          target.ref,
+          signal
         );
         const blob = new Blob([bytes], { type: "application/octet-stream" });
         const filename = buildFileName(target);
@@ -589,7 +726,7 @@ export default function DownGitTool() {
       }
 
       setStatus("Scanning folders...");
-      const { files } = await collectFiles(target);
+      const { files } = await collectFiles(target, signal);
       if (files.length === 0) {
         throw new Error("No files found in this directory.");
       }
@@ -600,35 +737,70 @@ export default function DownGitTool() {
       setProgress({ current: 0, total: files.length });
       const baseName = sanitizeFileName(target.name);
       const prefix = target.path ? `${trimSlashes(target.path)}/` : "";
-      const entries: ZipEntry[] = [];
+      const concurrentDownloads = manualConcurrency ?? autoConcurrency;
+      const entries = await (async () => {
+        const results: ZipEntry[] = new Array(files.length);
+        let completed = 0;
+        const inflight = new Set<Promise<void>>();
 
-      for (let i = 0; i < files.length; i += 1) {
-        const file = files[i];
-        const bytes = await fetchFileBytes(
-          file,
-          target.owner,
-          target.repo,
-          target.ref
-        );
-        const relative = prefix ? file.path.slice(prefix.length) : file.path;
-        const entryName = `${baseName}/${relative}`;
-        entries.push({ name: entryName, data: bytes });
-        setProgress({ current: i + 1, total: files.length });
-        setStatus(`Downloading ${i + 1}/${files.length} files...`);
-      }
+        const runTask = async (index: number) => {
+          if (signal.aborted) {
+            throw new DOMException("Aborted", "AbortError");
+          }
+          const file = files[index];
+          const bytes = await fetchFileBytes(
+            file,
+            target.owner,
+            target.repo,
+            target.ref,
+            signal
+          );
+          const relative = prefix ? file.path.slice(prefix.length) : file.path;
+          const entryName = `${baseName}/${relative}`;
+          results[index] = { name: entryName, data: bytes };
+          completed += 1;
+          setProgress({ current: completed, total: files.length });
+          setStatus(`Downloading ${completed}/${files.length} files...`);
+        };
+
+        try {
+          for (let i = 0; i < files.length; i += 1) {
+            const task = runTask(i);
+            inflight.add(task);
+            task.finally(() => inflight.delete(task));
+          if (inflight.size >= concurrentDownloads) {
+            await Promise.race(inflight);
+          }
+        }
+
+          await Promise.all(inflight);
+          return results;
+        } catch (err) {
+          await Promise.allSettled(inflight);
+          throw err;
+        }
+      })();
 
       setStatus("Building zip...");
-      const zipBlob = createZip(entries);
+      setProgress({ current: 0, total: entries.length });
+      const zipBuffer = await createZipInWorker(entries);
+      const zipBlob = new Blob([zipBuffer], { type: "application/zip" });
       const filename = buildFileName(target);
       triggerDownload(zipBlob, filename);
       setStatus(`Downloaded ${filename}.`);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Download failed.";
-      setError(message);
-      setStatus("Download failed.");
+      if (isAbortError(err)) {
+        setStatus("Download canceled.");
+        setProgress(null);
+      } else {
+        const message =
+          err instanceof Error ? err.message : "Download failed.";
+        setError(message);
+        setStatus("Download failed.");
+      }
     } finally {
       setIsWorking(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -660,102 +832,107 @@ export default function DownGitTool() {
             className="w-full flex-1 rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
+            <SecondaryButton
               onClick={handleAnalyze}
               disabled={disableActions || !input.trim()}
-              className={cn(
-                secondaryButtonClass,
-                disableActions || !input.trim()
-                  ? "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-                  : ""
-              )}
             >
               Check
-            </button>
-            <button
-              type="button"
+            </SecondaryButton>
+            <PrimaryButton
               onClick={handleDownload}
               disabled={disableActions || !input.trim()}
-              className={cn(
-                primaryButtonClass,
-                disableActions || !input.trim()
-                  ? "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)] shadow-none"
-                  : ""
-              )}
             >
               Download
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-full px-3 py-2 text-sm text-[color:var(--text-secondary)] transition-colors hover:text-[color:var(--text-primary)]"
-            >
-              Clear
-            </button>
+            </PrimaryButton>
+            {isWorking ? (
+              <DangerButton onClick={cancelWork}>Cancel</DangerButton>
+            ) : null}
+            <GhostButton onClick={reset}>Clear</GhostButton>
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-2">
-        <p
-          className={cn(
-            "min-h-[1.25rem] text-xs",
-            error ? "text-rose-500/80" : "text-[color:var(--text-secondary)]"
-          )}
-          aria-live="polite"
-        >
-          {statusMessage}
-        </p>
-        {progress ? (
-          <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--glass-recessed-bg)]">
-            <div
-              className="h-full rounded-full bg-[color:var(--accent-blue)] transition-all"
-              style={{
-                width: `${Math.round(
-                  (progress.current / progress.total) * 100
-                )}%`,
-              }}
-            />
-          </div>
-        ) : null}
-      </div>
-      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Target
-            </p>
-            <p className="mt-2 text-sm text-[color:var(--text-primary)]">
-              {parsedTarget
-                ? `${parsedTarget.owner}/${parsedTarget.repo}${displayPath}`
-                : "Waiting for a GitHub URL."}
-            </p>
-            <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-              {parsedTarget
-                ? `Source: ${parsedTarget.source.toUpperCase()}`
-                : "Paste a repo, file, or folder link."}
-            </p>
-            {parsedTarget ? (
-              <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                Ref: {effectiveRef ?? "default branch"}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
+                Target
               </p>
+              <p className="mt-2 text-sm text-[color:var(--text-primary)]">
+                {parsedTarget
+                  ? `${parsedTarget.owner}/${parsedTarget.repo}${displayPath}`
+                  : "Waiting for a GitHub URL."}
+              </p>
+              <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                {parsedTarget
+                  ? `Source: ${parsedTarget.source.toUpperCase()}`
+                  : "Paste a repo, file, or folder link."}
+              </p>
+              {parsedTarget ? (
+                <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                  Ref: {effectiveRef ?? "default branch"}
+                </p>
+              ) : null}
+            </div>
+            <div className="rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-xs text-[color:var(--text-secondary)]">
+              {resolved
+                ? `Resolved as a ${resolved.type} (${resolved.name}).`
+                : "Check the URL to confirm file or folder before downloading."}
+            </div>
+            {resolved?.htmlUrl ? (
+              <a
+                href={resolved.htmlUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-semibold text-[color:var(--accent-blue)] hover:underline"
+              >
+                View on GitHub
+              </a>
             ) : null}
           </div>
-          <div className="rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-xs text-[color:var(--text-secondary)]">
-            {resolved
-              ? `Resolved as a ${resolved.type} (${resolved.name}).`
-              : "Check the URL to confirm file or folder before downloading."}
-          </div>
-          {resolved?.htmlUrl ? (
-            <a
-              href={resolved.htmlUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-semibold text-[color:var(--accent-blue)] hover:underline"
+          <div className="flex flex-col gap-3 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
+                Status
+              </p>
+              <span className="text-[11px] text-[color:var(--text-secondary)]">
+                {concurrencyLabel}
+              </span>
+            </div>
+            <p
+              className={cn(
+                "min-h-[1.25rem] text-xs",
+                error ? "text-rose-500/80" : "text-[color:var(--text-secondary)]"
+              )}
+              aria-live="polite"
             >
-              View on GitHub
-            </a>
-          ) : null}
+              {statusMessage}
+            </p>
+            {progress ? (
+              <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--glass-recessed-bg)]">
+                <div
+                  className="h-full rounded-full bg-[color:var(--accent-blue)] transition-all"
+                  style={{
+                    width: `${Math.round(
+                      (progress.current / progress.total) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            ) : null}
+            <div className="grid gap-2 text-xs text-[color:var(--text-secondary)]">
+              <div className="flex items-center justify-between">
+                <span>Output</span>
+                <span className="text-[color:var(--text-primary)]">{outputPreview}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Auth</span>
+                <span className="text-[color:var(--text-primary)]">
+                  {tokenStatus}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <div>
@@ -789,6 +966,22 @@ export default function DownGitTool() {
                   placeholder={resolved ? buildFileName(resolved) : "example.zip"}
                   className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                 />
+              </div>
+              <div>
+                <label className="text-xs text-[color:var(--text-secondary)]">
+                  Concurrent downloads
+                </label>
+                <input
+                  value={concurrencyInput}
+                  onChange={(event) => setConcurrencyInput(event.target.value)}
+                  placeholder={`Auto (${autoConcurrency})`}
+                  inputMode="numeric"
+                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                />
+                <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
+                  Auto uses ~75% of CPU cores (min {MIN_CONCURRENCY}, max {MAX_CONCURRENCY}).
+                  Effective: {effectiveConcurrency}.
+                </p>
               </div>
               <div>
                 <label className="text-xs text-[color:var(--text-secondary)]">

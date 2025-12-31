@@ -4,6 +4,7 @@ import type { ChangeEvent, DragEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import NextImage from "next/image";
 
+import { PrimaryButton, SecondaryButton } from "@/components/Button";
 import { UploadIcon } from "@/components/Icons";
 import { cn } from "@/lib/cn";
 
@@ -413,46 +414,28 @@ export default function ImageCompressTool() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {QUICK_PRESETS.map((preset) => (
-              <button
+              <SecondaryButton
                 key={preset.label}
-                type="button"
+                size="sm"
                 onClick={() => {
                   setQuality(preset.quality);
                   setPending(true);
                 }}
-                className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
               >
                 {preset.label}
-              </button>
+              </SecondaryButton>
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
+            <PrimaryButton
               onClick={compressImage}
               disabled={!originalUrl || isProcessing}
-              className={cn(
-                "rounded-full px-5 py-2 text-sm font-semibold shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)] transition-colors",
-                originalUrl
-                  ? "bg-[color:var(--accent-blue)] text-white"
-                  : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-              )}
             >
               {isProcessing ? "Compressing..." : "Compress"}
-            </button>
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={!compressedUrl}
-              className={cn(
-                "rounded-full border border-[color:var(--glass-border)] px-4 py-2 text-sm shadow-[var(--glass-shadow)] transition-colors",
-                compressedUrl
-                  ? "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                  : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
-              )}
-            >
+            </PrimaryButton>
+            <SecondaryButton onClick={handleDownload} disabled={!compressedUrl}>
               Download
-            </button>
+            </SecondaryButton>
             {pending ? (
               <span className="text-xs text-[color:var(--text-secondary)]">
                 Settings changed — recompress.

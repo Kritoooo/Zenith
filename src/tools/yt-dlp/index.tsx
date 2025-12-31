@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { Button, GhostButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 const SAMPLE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
@@ -325,55 +326,37 @@ export default function YtDlpTool() {
     <div className="flex h-full flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant={mode === "video" ? "primary" : "secondary"}
             onClick={() => {
               setMode("video");
               setCopied(false);
             }}
-            className={cn(
-              "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-              mode === "video"
-                ? "bg-[color:var(--accent-blue)] text-white shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)]"
-                : "border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-            )}
+            className="font-semibold"
           >
             Video
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={mode === "audio" ? "primary" : "secondary"}
             onClick={() => {
               setMode("audio");
               setCopied(false);
             }}
-            className={cn(
-              "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-              mode === "audio"
-                ? "bg-[color:var(--accent-blue)] text-white shadow-[0_12px_24px_-14px_rgba(0,122,255,0.6)]"
-                : "border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-            )}
+            className="font-semibold"
           >
             Audio
-          </button>
+          </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
+          <SecondaryButton
             onClick={() => {
               setUrl(SAMPLE_URL);
               setCopied(false);
             }}
-            className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
           >
             Sample URL
-          </button>
-          <button
-            type="button"
-            onClick={resetAll}
-            className="rounded-full px-3 py-2 text-sm text-[color:var(--text-secondary)] transition-colors hover:text-[color:var(--text-primary)]"
-          >
-            Reset
-          </button>
+          </SecondaryButton>
+          <GhostButton onClick={resetAll}>Reset</GhostButton>
         </div>
       </div>
       <p
@@ -414,13 +397,9 @@ export default function YtDlpTool() {
                 {isRecommended ? "Recommended (default)" : "Custom"}
               </span>
               {!isRecommended ? (
-                <button
-                  type="button"
-                  onClick={applyRecommended}
-                  className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2.5 py-1 text-[11px] text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
-                >
+                <SecondaryButton size="sm" onClick={applyRecommended}>
                   Use recommended
-                </button>
+                </SecondaryButton>
               ) : null}
             </div>
           </div>
@@ -738,13 +717,9 @@ export default function YtDlpTool() {
           <section className="flex min-h-[220px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
             <div className="flex items-center justify-between">
               <SectionLabel>Command</SectionLabel>
-              <button
-                type="button"
-                onClick={copyCommand}
-                className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-[11px] text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
-              >
+              <SecondaryButton size="sm" onClick={copyCommand}>
                 Copy
-              </button>
+              </SecondaryButton>
             </div>
             <textarea
               value={command}

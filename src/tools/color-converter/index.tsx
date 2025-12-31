@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Button, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 type Rgb = { r: number; g: number; b: number };
@@ -153,13 +154,9 @@ function InputRow({
         <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
           {label}
         </p>
-        <button
-          type="button"
-          onClick={onCopy}
-          className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-[11px] text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
-        >
+        <SecondaryButton size="sm" onClick={onCopy}>
           Copy
-        </button>
+        </SecondaryButton>
       </div>
       <input
         value={value}
@@ -299,22 +296,21 @@ export default function ColorConverterTool() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map((preset) => (
-            <button
+            <SecondaryButton
               key={preset.name}
-              type="button"
+              size="sm"
               onClick={() => applyPreset(preset.hex)}
-              className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
             >
               {preset.name}
-            </button>
+            </SecondaryButton>
           ))}
-          <button
-            type="button"
+          <Button
+            size="sm"
             onClick={randomize}
-            className="rounded-full bg-[color:var(--accent-orange)] px-3 py-1 text-xs font-semibold text-white shadow-[0_12px_24px_-14px_rgba(255,149,0,0.6)]"
+            className="bg-[color:var(--accent-orange)] font-semibold text-white shadow-[0_12px_24px_-14px_rgba(255,149,0,0.6)]"
           >
             Random
-          </button>
+          </Button>
         </div>
         <p
           className={cn(

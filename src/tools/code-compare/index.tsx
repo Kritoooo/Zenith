@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 
+import { Button, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 type DiffOp = { type: "equal" | "delete" | "insert"; value: string };
@@ -1214,7 +1215,10 @@ export default function CodeCompareTool() {
     [deferredLeft, deferredRight, realtimeDiff, hasCompared]
   );
 
-  const inlineRows = useMemo(() => buildInlineRows(rows), [rows]);
+  const inlineRows = useMemo(
+    () => (viewMode === "inline" ? buildInlineRows(rows) : []),
+    [rows, viewMode]
+  );
 
   useLayoutEffect(() => {
     if (!hasCompared || viewMode !== "split") return;
@@ -1311,42 +1315,27 @@ export default function CodeCompareTool() {
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
+              <Button
+                variant={viewMode === "split" ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setViewMode("split")}
-                className={cn(
-                  "rounded-full border border-[color:var(--glass-border)] px-3 py-1 text-xs transition-colors",
-                  viewMode === "split"
-                    ? "bg-[color:var(--accent-blue)] text-white"
-                    : "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                )}
               >
                 Split view
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant={viewMode === "inline" ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setViewMode("inline")}
-                className={cn(
-                  "rounded-full border border-[color:var(--glass-border)] px-3 py-1 text-xs transition-colors",
-                  viewMode === "inline"
-                    ? "bg-[color:var(--accent-blue)] text-white"
-                    : "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                )}
               >
                 Inline view
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant={realtimeDiff ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setRealtimeDiff((prev) => !prev)}
-                className={cn(
-                  "rounded-full border border-[color:var(--glass-border)] px-3 py-1 text-xs transition-colors",
-                  realtimeDiff
-                    ? "bg-[color:var(--accent-blue)] text-white"
-                    : "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
-                )}
               >
                 Realtime diff
-              </button>
+              </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <p
@@ -1355,14 +1344,13 @@ export default function CodeCompareTool() {
               >
                 {summary}
               </p>
-              <button
-                type="button"
+              <SecondaryButton
+                size="sm"
                 onClick={exportDiffImage}
                 disabled={isExporting}
-                className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-primary)] transition-colors hover:bg-[color:var(--glass-hover-bg)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isExporting ? "Exporting..." : "Export PNG"}
-              </button>
+              </SecondaryButton>
             </div>
           </div>
           {exportError ? (
@@ -1494,27 +1482,15 @@ export default function CodeCompareTool() {
         </>
       ) : null}
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => setHasCompared(true)}
-          className="rounded-full bg-[color:var(--accent-blue)] px-3 py-1 text-xs text-white transition-colors hover:bg-[#0b5bd3]"
-        >
+        <PrimaryButton size="sm" onClick={() => setHasCompared(true)}>
           Compare
-        </button>
-        <button
-          type="button"
-          onClick={swapSides}
-          className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-primary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
-        >
+        </PrimaryButton>
+        <SecondaryButton size="sm" onClick={swapSides}>
           Swap
-        </button>
-        <button
-          type="button"
-          onClick={clearAll}
-          className="rounded-full px-3 py-1 text-xs text-[color:var(--text-secondary)] transition-colors hover:text-[color:var(--text-primary)]"
-        >
+        </SecondaryButton>
+        <Button variant="ghost" size="sm" onClick={clearAll}>
           Clear
-        </button>
+        </Button>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex min-h-[clamp(260px,45vh,520px)] flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
