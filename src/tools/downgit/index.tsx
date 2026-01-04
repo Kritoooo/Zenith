@@ -17,6 +17,7 @@ type ParsedTarget = {
   repo: string;
   path: string;
   ref?: string;
+  refSegments?: string[];
   hint: "file" | "dir";
   source: "github" | "raw" | "api";
 };
@@ -76,6 +77,19 @@ type ZipWorkerMessage =
   | ZipWorkerResultMessage
   | ZipWorkerErrorMessage;
 
+class ApiError extends Error {
+  status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+const isRefResolutionError = (error: unknown) =>
+  error instanceof ApiError && (error.status === 404 || error.status === 422);
+
 const createZipWorker = () => new Worker(new URL("./worker.ts", import.meta.url));
 
 const normalizeRepo = (value: string) =>
@@ -113,8 +127,9 @@ const parseGithubUrl = (value: string): ParseResult => {
 
     const marker = parts[2];
     if (marker === "tree" || marker === "blob") {
-      const ref = parts[3];
-      const path = parts.slice(4).join("/");
+      const refSegments = parts.slice(3);
+      const ref = refSegments[0];
+      const path = refSegments.slice(1).join("/");
       if (!ref) {
         return { error: "This URL is missing a branch or tag name." };
       }
@@ -127,6 +142,7 @@ const parseGithubUrl = (value: string): ParseResult => {
           repo,
           path,
           ref,
+          refSegments,
           hint: marker === "blob" ? "file" : "dir",
           source: "github",
         },
@@ -183,6 +199,11 @@ const buildHeaders = (token?: string) => {
   }
   return headers;
 };
+
+const buildRawHeaders = (token?: string) => ({
+  ...buildHeaders(token),
+  Accept: "application/vnd.github.raw",
+});
 
 const buildContentsUrl = (
   owner: string,
@@ -274,21 +295,39 @@ const buildRateLimitHint = (response: Response) => {
   return `Rate limit reached. Try again in about ${durationLabel} (around ${timeLabel}).`;
 };
 
+const readGithubErrorMessage = async (response: Response) => {
+  const payload = await response.json().catch(() => null);
+  const message =
+    payload && typeof payload.message === "string"
+      ? payload.message
+      : `GitHub API error (${response.status}).`;
+  const rateHint = buildRateLimitHint(response);
+  return rateHint ? `${message} ${rateHint}` : message;
+};
+
 const fetchJson = async (url: string, token?: string, signal?: AbortSignal) => {
   const response = await fetch(url, {
     headers: buildHeaders(token),
     signal,
   });
   if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    const message =
-      payload && typeof payload.message === "string"
-        ? payload.message
-        : `GitHub API error (${response.status}).`;
-    const rateHint = buildRateLimitHint(response);
-    throw new Error(rateHint ? `${message} ${rateHint}` : message);
+    const message = await readGithubErrorMessage(response);
+    throw new ApiError(message, response.status);
   }
   return response.json();
+};
+
+const fetchRawBytes = async (url: string, token?: string, signal?: AbortSignal) => {
+  const response = await fetch(url, {
+    headers: buildRawHeaders(token),
+    signal,
+  });
+  if (!response.ok) {
+    const message = await readGithubErrorMessage(response);
+    throw new ApiError(message, response.status);
+  }
+  const buffer = await response.arrayBuffer();
+  return new Uint8Array(buffer);
 };
 
 const decodeBase64 = (value: string) => {
@@ -327,6 +366,15 @@ const isAbortError = (error: unknown) =>
     ? error.name === "AbortError"
     : error instanceof Error && error.name === "AbortError";
 
+const derivePathFromRefSegments = (segments: string[] | undefined, ref: string) => {
+  if (!segments || segments.length === 0) return null;
+  const refParts = ref.split("/").filter(Boolean);
+  if (refParts.length === 0) return null;
+  const prefix = segments.slice(0, refParts.length).join("/");
+  if (prefix !== ref) return null;
+  return segments.slice(refParts.length).join("/");
+};
+
 export default function DownGitTool() {
   const [input, setInput] = useState(SAMPLE_URL);
   const [refOverride, setRefOverride] = useState("");
@@ -358,7 +406,24 @@ export default function DownGitTool() {
   const effectiveRef =
     refOverride.trim() || parsedTarget?.ref || undefined;
 
-  const displayPath = parsedTarget?.path ? `/${parsedTarget.path}` : "/";
+  const previewPath = useMemo(() => {
+    if (!parsedTarget) return "";
+    const overrideRef = refOverride.trim();
+    const refCandidate = overrideRef || parsedTarget.ref;
+    if (refCandidate && parsedTarget.refSegments) {
+      const derived = derivePathFromRefSegments(
+        parsedTarget.refSegments,
+        refCandidate
+      );
+      if (derived !== null) return derived;
+    }
+    return parsedTarget.path;
+  }, [parsedTarget, refOverride]);
+
+  const displayPath = (resolved?.path ?? previewPath)
+    ? `/${resolved?.path ?? previewPath}`
+    : "/";
+  const displayRef = resolved?.ref ?? effectiveRef;
   const concurrencyLabel = manualConcurrency
     ? `Manual (${manualConcurrency})`
     : `Auto (${autoConcurrency})`;
@@ -478,29 +543,27 @@ export default function DownGitTool() {
     setProgress(null);
   };
 
-  const resolveTarget = async (signal?: AbortSignal) => {
-    if (!parsedTarget) {
-      throw new Error(parseError ?? "Enter a valid GitHub URL.");
+  const resolveTargetWithRef = async (
+    target: ParsedTarget,
+    path: string,
+    ref: string | undefined,
+    signal?: AbortSignal
+  ) => {
+    if (target.hint === "file" && !path) {
+      throw new Error("Blob URLs must include a file path.");
     }
 
-    const ref = effectiveRef;
-    const apiUrl = buildContentsUrl(
-      parsedTarget.owner,
-      parsedTarget.repo,
-      parsedTarget.path,
-      ref
-    );
-
+    const apiUrl = buildContentsUrl(target.owner, target.repo, path, ref);
     const data = await fetchJson(apiUrl, token.trim() || undefined, signal);
 
     if (Array.isArray(data)) {
-      const name = parsedTarget.path
-        ? parsedTarget.path.split("/").filter(Boolean).pop() ?? parsedTarget.repo
-        : parsedTarget.repo;
+      const name = path
+        ? path.split("/").filter(Boolean).pop() ?? target.repo
+        : target.repo;
       return {
-        owner: parsedTarget.owner,
-        repo: parsedTarget.repo,
-        path: parsedTarget.path,
+        owner: target.owner,
+        repo: target.repo,
+        path,
         ref,
         type: "dir",
         name,
@@ -509,12 +572,12 @@ export default function DownGitTool() {
 
     if (data?.type === "file") {
       return {
-        owner: parsedTarget.owner,
-        repo: parsedTarget.repo,
-        path: parsedTarget.path,
+        owner: target.owner,
+        repo: target.repo,
+        path,
         ref,
         type: "file",
-        name: data.name ?? parsedTarget.path.split("/").pop() ?? parsedTarget.repo,
+        name: data.name ?? path.split("/").pop() ?? target.repo,
         downloadUrl: data.download_url,
         htmlUrl: data.html_url,
       } satisfies ResolvedTarget;
@@ -522,16 +585,60 @@ export default function DownGitTool() {
 
     if (data?.type === "dir") {
       return {
-        owner: parsedTarget.owner,
-        repo: parsedTarget.repo,
-        path: parsedTarget.path,
+        owner: target.owner,
+        repo: target.repo,
+        path,
         ref,
         type: "dir",
-        name: data.name ?? parsedTarget.path.split("/").pop() ?? parsedTarget.repo,
+        name: data.name ?? path.split("/").pop() ?? target.repo,
       } satisfies ResolvedTarget;
     }
 
     throw new Error("Unsupported target type (symlink or submodule).");
+  };
+
+  const resolveTarget = async (signal?: AbortSignal) => {
+    if (!parsedTarget) {
+      throw new Error(parseError ?? "Enter a valid GitHub URL.");
+    }
+
+    const trimmedOverride = refOverride.trim();
+    if (trimmedOverride) {
+      const overridePath =
+        derivePathFromRefSegments(parsedTarget.refSegments, trimmedOverride) ??
+        parsedTarget.path;
+      return resolveTargetWithRef(parsedTarget, overridePath, trimmedOverride, signal);
+    }
+
+    if (
+      parsedTarget.source === "github" &&
+      parsedTarget.refSegments &&
+      parsedTarget.refSegments.length > 1
+    ) {
+      const segments = parsedTarget.refSegments;
+      const minPathSegments = parsedTarget.hint === "file" ? 1 : 0;
+      for (let i = segments.length - minPathSegments; i >= 1; i -= 1) {
+        const refCandidate = segments.slice(0, i).join("/");
+        const pathCandidate = segments.slice(i).join("/");
+        try {
+          return await resolveTargetWithRef(
+            parsedTarget,
+            pathCandidate,
+            refCandidate,
+            signal
+          );
+        } catch (err) {
+          if (isRefResolutionError(err)) continue;
+          throw err;
+        }
+      }
+      const hint = token.trim()
+        ? "Try the Ref override."
+        : "If this is a private repo, add a token or set Ref manually.";
+      throw new Error(`Unable to resolve branch or tag from this URL. ${hint}`);
+    }
+
+    return resolveTargetWithRef(parsedTarget, parsedTarget.path, effectiveRef, signal);
   };
 
   const fetchDirectory = async (
@@ -585,6 +692,18 @@ export default function DownGitTool() {
     ref?: string,
     signal?: AbortSignal
   ) => {
+    const tokenValue = token.trim() || undefined;
+    if (tokenValue) {
+      const apiUrl = buildContentsUrl(owner, repo, entry.path, ref);
+      try {
+        return await fetchRawBytes(apiUrl, tokenValue, signal);
+      } catch (err) {
+        if (!isRefResolutionError(err)) {
+          throw err;
+        }
+      }
+    }
+
     if (entry.download_url) {
       try {
         const response = await fetch(entry.download_url, { signal });
@@ -598,7 +717,7 @@ export default function DownGitTool() {
     }
 
     const apiUrl = buildContentsUrl(owner, repo, entry.path, ref);
-    const data = await fetchJson(apiUrl, token.trim() || undefined, signal);
+    const data = await fetchJson(apiUrl, tokenValue, signal);
     if (!data?.content || data.encoding !== "base64") {
       throw new Error(`Unable to download ${entry.path}.`);
     }
@@ -870,7 +989,7 @@ export default function DownGitTool() {
               </p>
               {parsedTarget ? (
                 <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                  Ref: {effectiveRef ?? "default branch"}
+                  Ref: {displayRef ?? "default branch"}
                 </p>
               ) : null}
             </div>
