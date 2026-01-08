@@ -29,6 +29,10 @@ const nextConfig: NextConfig = {
         headers: crossOriginHeaders,
       },
       {
+        source: '/tool/paddleocr-onnx/:path*',
+        headers: crossOriginHeaders,
+      },
+      {
         source: '/_next/static/:path*',
         headers: crossOriginHeaders,
       },

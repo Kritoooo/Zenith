@@ -2,7 +2,7 @@ const COOP_HEADER = "Cross-Origin-Opener-Policy";
 const COEP_HEADER = "Cross-Origin-Embedder-Policy";
 const COOP_VALUE = "same-origin";
 const COEP_VALUE = "require-corp";
-const COI_TOOL_REGEX = /(?:^|\/)tool\/(anime-upscale|aigc-detector)(?:\/|$)/;
+const COI_TOOL_REGEX = /(?:^|\/)tool\/(anime-upscale|aigc-detector|paddleocr-onnx)(?:\/|$)/;
 const COI_ASSET_REGEX = /(?:^|\/)_next\/static\/.+/;
 
 const shouldApplyIsolation = (pathname) =>
