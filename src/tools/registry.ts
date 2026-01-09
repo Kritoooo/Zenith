@@ -14,6 +14,7 @@ import { meta as localTimeMeta } from "@/tools/local-time/meta";
 import { meta as uuidMeta } from "@/tools/uuid/meta";
 import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
 import { meta as addressGeneratorMeta } from "@/tools/address-generator/meta";
+import { meta as paddleOcrMeta } from "@/tools/paddleocr-onnx/meta";
 
 // 动态导入工具组件，实现代码分割
 // 每个工具会被打包成独立的 chunk，只在访问时加载
@@ -23,6 +24,7 @@ const DownGitTool = dynamic(() => import("@/tools/downgit"));
 const YtDlpTool = dynamic(() => import("@/tools/yt-dlp"));
 const ColorConverterTool = dynamic(() => import("@/tools/color-converter"));
 const AnimeUpscaleTool = dynamic(() => import("@/tools/anime-upscale"));
+const PaddleOcrTool = dynamic(() => import("@/tools/paddleocr-onnx"));
 const ImageCompressTool = dynamic(() => import("@/tools/image-compress"));
 const Base64Tool = dynamic(() => import("@/tools/base64"));
 const AigcDetectorTool = dynamic(() => import("@/tools/aigc-detector"));
@@ -37,6 +39,7 @@ export const tools: ToolRegistration[] = [
   { meta: ytDlpMeta, component: YtDlpTool },
   { meta: colorConverterMeta, component: ColorConverterTool },
   { meta: animeUpscaleMeta, component: AnimeUpscaleTool },
+  { meta: paddleOcrMeta, component: PaddleOcrTool },
   { meta: imageCompressMeta, component: ImageCompressTool },
   { meta: base64Meta, component: Base64Tool },
   { meta: aigcDetectorMeta, component: AigcDetectorTool },

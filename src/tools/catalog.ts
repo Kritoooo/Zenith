@@ -12,6 +12,7 @@ import { meta as ytDlpMeta } from "@/tools/yt-dlp/meta";
 import { meta as uuidMeta } from "@/tools/uuid/meta";
 import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
 import { meta as addressGeneratorMeta } from "@/tools/address-generator/meta";
+import { meta as paddleOcrMeta } from "@/tools/paddleocr-onnx/meta";
 
 export const toolMetas: ToolMeta[] = [
   jsonFormatterMeta,
@@ -20,6 +21,7 @@ export const toolMetas: ToolMeta[] = [
   ytDlpMeta,
   colorConverterMeta,
   animeUpscaleMeta,
+  paddleOcrMeta,
   imageCompressMeta,
   base64Meta,
   aigcDetectorMeta,
