@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DangerButton, PrimaryButton, SecondaryButton } from "@/components/Button";
+import { Select } from "@/components/Select";
 import { cn } from "@/lib/cn";
 
 type Coordinates = {
@@ -1247,19 +1248,19 @@ export default function AddressGeneratorTool() {
             <span className="text-xs text-[color:var(--text-secondary)]">
               Country
             </span>
-            <select
+            <Select
               value={selectedCountry}
               onChange={(event) =>
                 setSelectedCountry(event.target.value as CountryCode)
               }
-              className="bg-transparent text-sm text-[color:var(--text-primary)] outline-none"
+              variant="ghost"
             >
               {COUNTRIES.map((country) => (
                 <option key={country.code} value={country.code}>
                   {country.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <PrimaryButton
             onClick={() => generateAddress(selectedCountry)}

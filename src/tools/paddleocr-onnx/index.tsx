@@ -3,6 +3,7 @@
 import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Select } from "@/components/Select";
 import { UploadIcon } from "@/components/Icons";
 import { cn } from "@/lib/cn";
 
@@ -212,7 +213,40 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 
 const createOcrWorker = () => new Worker(new URL("./worker.ts", import.meta.url));
 
-const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
+const clampConfidence = (value: number) => Math.min(1, Math.max(0, value));
+
+const HIGH_CONFIDENCE_THRESHOLD = 0.85;
+const LOW_CONFIDENCE_THRESHOLD = 0.6;
+const DEFAULT_LOW_CONFIDENCE_THRESHOLD = 0.6;
+
+const toPercent = (value: number) => {
+  if (!Number.isFinite(value)) return null;
+  return Math.round(clampConfidence(value) * 100);
+};
+
+const formatPercent = (value: number) => {
+  const percent = toPercent(value);
+  if (percent === null) return "—";
+  return `${percent}%`;
+};
+
+const MAX_VISIBLE_LINES = 8;
+
+const getConfidenceLabel = (value: number) => {
+  if (!Number.isFinite(value)) return "Unknown";
+  const normalized = clampConfidence(value);
+  if (normalized >= HIGH_CONFIDENCE_THRESHOLD) return "High";
+  if (normalized >= LOW_CONFIDENCE_THRESHOLD) return "Medium";
+  return "Low";
+};
+
+const getConfidenceColor = (value: number) => {
+  if (!Number.isFinite(value)) return "var(--text-secondary)";
+  const normalized = clampConfidence(value);
+  if (normalized >= HIGH_CONFIDENCE_THRESHOLD) return "var(--accent-green)";
+  if (normalized >= LOW_CONFIDENCE_THRESHOLD) return "var(--accent-orange)";
+  return "var(--accent-pink)";
+};
 
 const formatErrorMessage = (err: unknown, fallback: string) => {
   if (err instanceof Error && err.message) return err.message;
@@ -263,6 +297,11 @@ export default function PaddleOcrTool() {
   const [duration, setDuration] = useState<number | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [showBoxes, setShowBoxes] = useState(true);
+  const [showAllLines, setShowAllLines] = useState(false);
+  const [showLowConfidenceOnly, setShowLowConfidenceOnly] = useState(false);
+  const [lowConfidenceThreshold, setLowConfidenceThreshold] = useState(
+    DEFAULT_LOW_CONFIDENCE_THRESHOLD
+  );
   const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
   const [hasWorker, setHasWorker] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -289,6 +328,7 @@ export default function PaddleOcrTool() {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWebgpuAvailable(Boolean((navigator as Navigator & { gpu?: unknown })?.gpu));
   }, []);
 
@@ -328,6 +368,51 @@ export default function PaddleOcrTool() {
     }
     return "Ready to recognize text.";
   }, [duration, error, imageData, phase, progress, statusMessage]);
+
+  const lineStats = useMemo(() => {
+    if (!lines.length) return null;
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+    let total = 0;
+    let count = 0;
+    let high = 0;
+    let medium = 0;
+    let low = 0;
+    for (const line of lines) {
+      if (!Number.isFinite(line.confidence)) continue;
+      const normalized = clampConfidence(line.confidence);
+      total += normalized;
+      count += 1;
+      if (normalized < min) min = normalized;
+      if (normalized > max) max = normalized;
+      if (normalized >= HIGH_CONFIDENCE_THRESHOLD) high += 1;
+      else if (normalized >= LOW_CONFIDENCE_THRESHOLD) medium += 1;
+      else low += 1;
+    }
+    if (!count) return null;
+    return {
+      avg: total / count,
+      min,
+      max,
+      high,
+      medium,
+      low,
+    };
+  }, [lines]);
+
+  const filteredLines = useMemo(() => {
+    const entries = lines.map((line, index) => ({ line, index }));
+    if (!showLowConfidenceOnly) return entries;
+    return entries.filter(({ line }) => {
+      if (!Number.isFinite(line.confidence)) return false;
+      return clampConfidence(line.confidence) < lowConfidenceThreshold;
+    });
+  }, [lines, lowConfidenceThreshold, showLowConfidenceOnly]);
+
+  const visibleLines = useMemo(() => {
+    if (showAllLines) return filteredLines;
+    return filteredLines.slice(0, MAX_VISIBLE_LINES);
+  }, [filteredLines, showAllLines]);
 
   const runWorker = (image: WorkerImagePayload, config: WorkerRunRequest["model"]) => {
     if (!workerRef.current) {
@@ -398,6 +483,8 @@ export default function PaddleOcrTool() {
     setText("");
     setConfidence(null);
     setDuration(null);
+    setShowAllLines(false);
+    setShowLowConfidenceOnly(false);
     setPhase("idle");
     try {
       const { imageData: nextImageData, width, height } =
@@ -444,6 +531,8 @@ export default function PaddleOcrTool() {
     setText("");
     setConfidence(null);
     setDuration(null);
+    setShowAllLines(false);
+    setShowLowConfidenceOnly(false);
     setProgress(null);
     setStatusMessage(null);
     setPhase("loading");
@@ -482,6 +571,8 @@ export default function PaddleOcrTool() {
     setStatusMessage(null);
     setPhase("idle");
     setImageUrl(null);
+    setShowAllLines(false);
+    setShowLowConfidenceOnly(false);
   };
 
   const unloadModel = () => {
@@ -514,6 +605,14 @@ export default function PaddleOcrTool() {
   const isBusy = phase === "loading" || phase === "running";
   const webgpuStatus =
     webgpuAvailable === null ? "checking" : webgpuAvailable ? "ready" : "needed";
+  const hasHiddenLines = filteredLines.length > MAX_VISIBLE_LINES;
+  const hasLowConfidenceLines = lines.some((line) => {
+    if (!Number.isFinite(line.confidence)) return false;
+    return clampConfidence(line.confidence) < lowConfidenceThreshold;
+  });
+  const totalLinesCount = lines.length;
+  const filteredLinesCount = filteredLines.length;
+  const visibleLinesCount = visibleLines.length;
 
   return (
     <div className="flex h-full flex-col gap-5">
@@ -560,9 +659,9 @@ export default function PaddleOcrTool() {
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-secondary)]">
-          <label className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2.5 py-1">
-            <span>Language</span>
-            <select
+          <div className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2.5 py-1">
+            <span id="ocr-language-label">Language</span>
+            <Select
               value={selectedLanguageId}
               onChange={(event) => {
                 setSelectedLanguageId(event.target.value);
@@ -573,18 +672,21 @@ export default function PaddleOcrTool() {
                 setDuration(null);
                 setProgress(null);
                 setStatusMessage(null);
+                setShowAllLines(false);
+                setShowLowConfidenceOnly(false);
                 setPhase("idle");
               }}
               disabled={isBusy}
-              className="bg-transparent text-[color:var(--text-primary)] outline-none"
+              variant="ghost"
+              aria-labelledby="ocr-language-label"
             >
               {LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
                 </option>
               ))}
-            </select>
-          </label>
+            </Select>
+          </div>
           <span
             className={cn(
               "rounded-full border border-[color:var(--glass-border)] px-2.5 py-1",
@@ -670,6 +772,7 @@ export default function PaddleOcrTool() {
           >
             {imageUrl ? (
               <div className="relative w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imageUrl}
                   alt="Uploaded preview"
@@ -735,10 +838,62 @@ export default function PaddleOcrTool() {
           <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
             <span className="font-semibold uppercase tracking-wide">Result</span>
             {confidence !== null ? (
-              <span>Confidence {formatPercent(confidence)}</span>
+              <span className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wide text-[color:var(--text-secondary)]">
+                  Overall
+                </span>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: getConfidenceColor(confidence) }}
+                >
+                  {formatPercent(confidence)}
+                </span>
+              </span>
             ) : null}
           </div>
           <div className="mt-3 flex flex-1 flex-col gap-3 rounded-[14px] bg-[color:var(--glass-recessed-bg)] p-3">
+            {confidence !== null || lineStats ? (
+              <div className="rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--text-secondary)]">
+                  <span className="font-semibold uppercase tracking-wide">
+                    Confidence
+                  </span>
+                  {confidence !== null ? (
+                    <span className="flex items-center gap-2">
+                      <span style={{ color: getConfidenceColor(confidence) }}>
+                        {getConfidenceLabel(confidence)}
+                      </span>
+                      <span className="text-[color:var(--text-primary)]">
+                        {formatPercent(confidence)}
+                      </span>
+                    </span>
+                  ) : null}
+                </div>
+                {confidence !== null ? (
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[color:var(--glass-recessed-bg)]">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${toPercent(confidence) ?? 0}%`,
+                        backgroundColor: getConfidenceColor(confidence),
+                      }}
+                    />
+                  </div>
+                ) : null}
+                {lineStats ? (
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-[color:var(--text-secondary)]">
+                    <span>Avg {formatPercent(lineStats.avg)}</span>
+                    <span>
+                      Range {formatPercent(lineStats.min)}–{formatPercent(lineStats.max)}
+                    </span>
+                    <span>
+                      High {lineStats.high} · Mid {lineStats.medium} · Low{" "}
+                      {lineStats.low}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             {text ? (
               <pre className="whitespace-pre-wrap text-sm leading-relaxed text-[color:var(--text-primary)]">
                 {text}
@@ -749,24 +904,114 @@ export default function PaddleOcrTool() {
               </p>
             )}
             {lines.length ? (
-              <div className="grid gap-2">
-                {lines.map((line, index) => (
-                  <div
-                    key={`${line.text}-${index}`}
-                    className="rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2"
-                  >
-                    <div className="flex items-center justify-between text-[11px] text-[color:var(--text-secondary)]">
-                      <span>Line {index + 1}</span>
-                      <span>{formatPercent(line.confidence)}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-[color:var(--text-primary)]">
-                      {line.text}
-                    </p>
-                    <p className="mt-1 text-[10px] text-[color:var(--text-secondary)]">
-                      {line.count} segments
-                    </p>
+              <div className="rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--text-secondary)]">
+                  <span className="font-semibold uppercase tracking-wide">Lines</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAllLines(false);
+                        setShowLowConfidenceOnly((prev) => !prev);
+                      }}
+                      disabled={!hasLowConfidenceLines}
+                      className={cn(
+                        "rounded-full border border-[color:var(--glass-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide shadow-[var(--glass-shadow)] transition-colors",
+                        showLowConfidenceOnly
+                          ? "bg-[color:var(--accent-blue)] text-white shadow-[0_10px_20px_-12px_rgba(0,122,255,0.65)] hover:brightness-110 hover:text-white"
+                          : "bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]",
+                        hasLowConfidenceLines ? "" : "cursor-not-allowed opacity-50"
+                      )}
+                    >
+                      Filter &lt;{formatPercent(lowConfidenceThreshold)}
+                    </button>
+                    <label className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2 py-0.5 text-[10px] text-[color:var(--text-secondary)]">
+                      <span>Threshold</span>
+                      <input
+                        type="range"
+                        min={30}
+                        max={95}
+                        step={5}
+                        value={toPercent(lowConfidenceThreshold) ?? 60}
+                        onChange={(event) => {
+                          const value = Number(event.target.value);
+                          if (!Number.isFinite(value)) return;
+                          setLowConfidenceThreshold(value / 100);
+                        }}
+                        aria-label="Low confidence threshold"
+                        className="h-1 w-20 cursor-pointer accent-[color:var(--accent-blue)]"
+                      />
+                      <span className="text-[color:var(--text-primary)]">
+                        {formatPercent(lowConfidenceThreshold)}
+                      </span>
+                    </label>
+                    <span>
+                      {showLowConfidenceOnly
+                        ? filteredLinesCount
+                          ? showAllLines
+                            ? `${filteredLinesCount} low of ${totalLinesCount}`
+                            : `Showing ${visibleLinesCount} of ${filteredLinesCount} low`
+                          : "No low-confidence lines"
+                        : showAllLines
+                          ? `${totalLinesCount} lines`
+                          : `Showing ${visibleLinesCount} of ${totalLinesCount}`}
+                    </span>
+                    {hasHiddenLines ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllLines((prev) => !prev)}
+                        className="rounded-full border border-[color:var(--glass-border)] px-2 py-0.5 text-[10px] text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
+                      >
+                        {showAllLines ? "Show less" : "Show all"}
+                      </button>
+                    ) : null}
                   </div>
-                ))}
+                </div>
+                <div className="mt-2 max-h-[320px] overflow-y-auto pr-1">
+                  <div className="grid gap-2">
+                    {visibleLines.map(({ line, index }) => {
+                      const toneColor = getConfidenceColor(line.confidence);
+                      return (
+                        <div
+                          key={`${line.text}-${index}`}
+                          className="rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2"
+                        >
+                          <div className="flex items-center justify-between text-[11px] text-[color:var(--text-secondary)]">
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: toneColor }}
+                              />
+                              Line {index + 1}
+                            </span>
+                            <span
+                              className="font-semibold"
+                              style={{ color: toneColor }}
+                            >
+                              {formatPercent(line.confidence)}
+                            </span>
+                          </div>
+                          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--glass-bg)]">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${toPercent(line.confidence) ?? 0}%`,
+                                backgroundColor: toneColor,
+                              }}
+                            />
+                          </div>
+                          <p className="mt-2 text-sm text-[color:var(--text-primary)]">
+                            {line.text}
+                          </p>
+                          <div className="mt-1 flex items-center justify-between text-[10px] text-[color:var(--text-secondary)]">
+                            <span>{line.count} segments</span>
+                            <span>{getConfidenceLabel(line.confidence)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             ) : null}
           </div>

@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { AppLayout } from "@/components/AppLayout";
+import { ToolDocs } from "@/components/ToolDocs";
 import { ToolShell } from "@/components/ToolShell";
 import { getToolMetaBySlug, toolMetas } from "@/tools/catalog";
+import { getToolDocs } from "@/tools/docs";
 import { getToolBySlug } from "@/tools/registry";
 
 type ToolPageParams = {
@@ -35,6 +37,7 @@ export async function generateMetadata({
 export default async function ToolPage({ params }: ToolPageProps) {
   const { slug } = await params;
   const tool = getToolBySlug(slug);
+  const docs = await getToolDocs(slug);
 
   if (!tool) {
     notFound();
@@ -44,7 +47,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
   return (
     <AppLayout>
-      <div className="mt-4 flex flex-1 flex-col">
+      <div className="mt-4 flex flex-1 flex-col gap-4">
         <ToolShell
           title={tool.meta.title}
           description={tool.meta.description}
@@ -52,6 +55,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
         >
           <ToolComponent />
         </ToolShell>
+        {docs ? <ToolDocs slug={slug} content={docs} /> : null}
       </div>
     </AppLayout>
   );

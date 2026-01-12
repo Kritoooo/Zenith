@@ -6,6 +6,7 @@ import NextImage from "next/image";
 
 import { PrimaryButton, SecondaryButton } from "@/components/Button";
 import { UploadIcon } from "@/components/Icons";
+import { Select } from "@/components/Select";
 import { cn } from "@/lib/cn";
 
 type OutputFormat = "image/jpeg" | "image/webp" | "image/png";
@@ -343,23 +344,27 @@ export default function ImageCompressTool() {
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs text-[color:var(--text-secondary)]">
-              Format
-              <select
+            <div className="text-xs text-[color:var(--text-secondary)]">
+              <span id="image-compress-format-label" className="block">
+                Format
+              </span>
+              <Select
                 value={format}
                 onChange={(event) => {
                   setFormat(event.target.value as OutputFormat);
                   setPending(true);
                 }}
-                className="mt-2 w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)]"
+                className="mt-2"
+                buttonClassName="rounded-[12px]"
+                aria-labelledby="image-compress-format-label"
               >
                 {Object.entries(FORMAT_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </div>
             <label className="text-xs text-[color:var(--text-secondary)]">
               Quality
               <div className="mt-2 flex items-center gap-2 rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2">

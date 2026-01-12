@@ -98,6 +98,18 @@ let patchedWebgpu = false;
 
 const assetCache = new Map<string, ArrayBuffer | string | string[]>();
 
+const clampConfidence = (value: number) => Math.min(1, Math.max(0, value));
+
+const normalizeConfidence = (value: unknown) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  return clampConfidence(value);
+};
+
+const averageConfidence = (values: number[]) => {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, item) => sum + item, 0) / values.length;
+};
+
 const postWorkerMessage = (message: OutgoingMessage) => {
   ctx.postMessage(message);
 };
@@ -134,10 +146,11 @@ const loadOrt = async () => {
 
 const loadPaddleOcr = async () => {
   if (PaddleOcrService) return PaddleOcrService;
-  const module = await import("paddleocr");
+  const moduleResult = await import("paddleocr");
   const fromModule =
-    (module as { PaddleOcrService?: unknown }).PaddleOcrService ??
-    (module as { default?: { PaddleOcrService?: unknown } }).default?.PaddleOcrService;
+    (moduleResult as { PaddleOcrService?: unknown }).PaddleOcrService ??
+    (moduleResult as { default?: { PaddleOcrService?: unknown } }).default
+      ?.PaddleOcrService;
   const fromGlobal = (ctx as unknown as { paddleocr?: { PaddleOcrService?: unknown } })
     .paddleocr?.PaddleOcrService;
   const resolved = fromModule ?? fromGlobal;
@@ -233,9 +246,15 @@ const buildLines = (lines: RecognitionResult[][] | undefined) => {
   return lines
     .map((line) => {
       const text = line.map((item) => item.text).join("");
-      const confidence =
-        line.reduce((sum, item) => sum + (item.confidence ?? 0), 0) /
-        Math.max(1, line.length);
+      let sum = 0;
+      let count = 0;
+      for (const item of line) {
+        const confidence = normalizeConfidence(item.confidence);
+        if (confidence === null) continue;
+        sum += confidence;
+        count += 1;
+      }
+      const confidence = count > 0 ? sum / count : 0;
       return {
         text,
         confidence,
@@ -341,11 +360,16 @@ ctx.onmessage = async (event: MessageEvent<IncomingMessage>) => {
     });
     const processed = service.processRecognition(results);
     const lines = buildLines(processed.lines);
+    const lineConfidenceValues = lines
+      .map((line) => line.confidence)
+      .filter((value) => Number.isFinite(value));
+    const processedConfidence = normalizeConfidence(processed.confidence);
     postWorkerMessage({
       type: "result",
       id: data.id,
       text: processed.text,
-      confidence: processed.confidence,
+      confidence:
+        processedConfidence ?? averageConfidence(lineConfidenceValues),
       duration: Math.round(performance.now() - startedAt),
       lines,
       items: results,

@@ -8,6 +8,7 @@ import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
+import { meta as classToJsonMeta } from "@/tools/class-to-json/meta";
 import { meta as downGitMeta } from "@/tools/downgit/meta";
 import { meta as ytDlpMeta } from "@/tools/yt-dlp/meta";
 import { meta as localTimeMeta } from "@/tools/local-time/meta";
@@ -19,6 +20,7 @@ import { meta as paddleOcrMeta } from "@/tools/paddleocr-onnx/meta";
 // 动态导入工具组件，实现代码分割
 // 每个工具会被打包成独立的 chunk，只在访问时加载
 const JsonFormatterTool = dynamic(() => import("@/tools/json-formatter"));
+const ClassToJsonTool = dynamic(() => import("@/tools/class-to-json"));
 const CodeCompareTool = dynamic(() => import("@/tools/code-compare"));
 const DownGitTool = dynamic(() => import("@/tools/downgit"));
 const YtDlpTool = dynamic(() => import("@/tools/yt-dlp"));
@@ -34,6 +36,7 @@ const AddressGeneratorTool = dynamic(() => import("@/tools/address-generator"));
 
 export const tools: ToolRegistration[] = [
   { meta: jsonFormatterMeta, component: JsonFormatterTool },
+  { meta: classToJsonMeta, component: ClassToJsonTool },
   { meta: codeCompareMeta, component: CodeCompareTool },
   { meta: downGitMeta, component: DownGitTool },
   { meta: ytDlpMeta, component: YtDlpTool },

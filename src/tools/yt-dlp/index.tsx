@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { Button, GhostButton, SecondaryButton } from "@/components/Button";
+import { Select } from "@/components/Select";
 import { cn } from "@/lib/cn";
 
 const SAMPLE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
@@ -427,20 +428,21 @@ export default function YtDlpTool() {
                 <div className="flex flex-col gap-3">
                   <div>
                     <SectionLabel>Format</SectionLabel>
-                    <select
+                    <Select
                       value={formatPreset}
                       onChange={(event) => {
                         setFormatPreset(event.target.value as FormatPreset);
                         setCopied(false);
                       }}
-                      className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                      className="mt-2"
+                      buttonClassName="border-transparent"
                     >
                       {FORMAT_PRESETS.map((preset) => (
                         <option key={preset.value} value={preset.value}>
                           {preset.label}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                     {formatPreset === "custom" ? (
                       <div className="mt-2">
                         <input
@@ -461,20 +463,21 @@ export default function YtDlpTool() {
                   </div>
                   <div>
                     <SectionLabel>Merge format</SectionLabel>
-                    <select
+                    <Select
                       value={mergeFormat}
                       onChange={(event) => {
                         setMergeFormat(event.target.value as MergeFormat);
                         setCopied(false);
                       }}
-                      className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                      className="mt-2"
+                      buttonClassName="border-transparent"
                     >
                       {MERGE_FORMATS.map((preset) => (
                         <option key={preset.value} value={preset.value}>
                           {preset.label}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                     <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                       Use MP4 for broad compatibility.
                     </p>
@@ -484,20 +487,21 @@ export default function YtDlpTool() {
                 <div className="flex flex-col gap-3">
                   <div>
                     <SectionLabel>Audio format</SectionLabel>
-                    <select
+                    <Select
                       value={audioFormat}
                       onChange={(event) => {
                         setAudioFormat(event.target.value as AudioFormat);
                         setCopied(false);
                       }}
-                      className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                      className="mt-2"
+                      buttonClassName="border-transparent"
                     >
                       {AUDIO_FORMATS.map((format) => (
                         <option key={format} value={format}>
                           {format}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   <div>
                     <SectionLabel>Audio quality</SectionLabel>
