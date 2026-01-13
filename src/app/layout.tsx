@@ -3,19 +3,22 @@ import Script from "next/script";
 
 import "./globals.css";
 import IsolationServiceWorker from "@/components/IsolationServiceWorker";
+import { defaultLocale, toHtmlLang } from "@/i18n/config";
 
 export const metadata: Metadata = {
   title: "Zenith",
   description: "Apple-style bento grid for precision tools.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const htmlLang = toHtmlLang(defaultLocale);
+
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang={htmlLang} suppressHydrationWarning>
       <head>
         <Script id="theme-init" strategy="beforeInteractive">{`
 (() => {

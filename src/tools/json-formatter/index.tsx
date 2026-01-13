@@ -1,19 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { PrimaryButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
-
-const SAMPLE_JSON = `{
-  "project": "Zenith",
-  "status": "ok",
-  "items": [
-    1,
-    2,
-    3
-  ]
-}`;
 
 const indentOptions = [2, 4] as const;
 
@@ -45,9 +36,14 @@ const getPrimitiveTone = (value: JsonValue) => {
   return "text-[color:var(--accent-blue)]";
 };
 
-const getNodeSummary = (value: JsonValue) => {
-  if (Array.isArray(value)) return `Array(${value.length})`;
-  if (isJsonBranch(value)) return `Object(${Object.keys(value).length})`;
+type SummaryLabels = {
+  array: string;
+  object: string;
+};
+
+const getNodeSummary = (value: JsonValue, labels: SummaryLabels) => {
+  if (Array.isArray(value)) return `${labels.array}(${value.length})`;
+  if (isJsonBranch(value)) return `${labels.object}(${Object.keys(value).length})`;
   return formatPrimitive(value);
 };
 
@@ -83,6 +79,11 @@ type JsonNodeProps = {
   isLast: boolean;
   collapsedPaths: Set<string>;
   onToggle: (path: string) => void;
+  summaryLabels: SummaryLabels;
+  ariaLabels: {
+    expand: string;
+    collapse: string;
+  };
 };
 
 function JsonNode({
@@ -93,6 +94,8 @@ function JsonNode({
   isLast,
   collapsedPaths,
   onToggle,
+  summaryLabels,
+  ariaLabels,
 }: JsonNodeProps) {
   const isBranch = isJsonBranch(value);
   const isArray = Array.isArray(value);
@@ -106,14 +109,14 @@ function JsonNode({
   const comma = isLast ? "" : ",";
   const opener = isArray ? "[" : "{";
   const closer = isArray ? "]" : "}";
-  const summary = getNodeSummary(value);
+  const summary = getNodeSummary(value, summaryLabels);
 
   const renderControl = (interactive: boolean) =>
     interactive ? (
       <button
         type="button"
         onClick={() => onToggle(path)}
-        aria-label={isCollapsed ? "Expand node" : "Collapse node"}
+        aria-label={isCollapsed ? ariaLabels.expand : ariaLabels.collapse}
         className="mt-[2px] flex h-4 w-4 items-center justify-center rounded border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[10px] text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
       >
         {isCollapsed ? "+" : "-"}
@@ -204,6 +207,8 @@ function JsonNode({
             isLast={childIsLast}
             collapsedPaths={collapsedPaths}
             onToggle={onToggle}
+            summaryLabels={summaryLabels}
+            ariaLabels={ariaLabels}
           />
         );
       })}
@@ -221,7 +226,9 @@ function JsonNode({
 }
 
 export default function JsonFormatterTool() {
-  const [input, setInput] = useState(SAMPLE_JSON);
+  const t = useTranslations("tools.json-formatter.ui");
+  const sampleJson = t("sample");
+  const [input, setInput] = useState(sampleJson);
   const [output, setOutput] = useState("");
   const [parsedValue, setParsedValue] = useState<JsonValue | null>(null);
   const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(
@@ -243,10 +250,8 @@ export default function JsonFormatterTool() {
       const value = JSON.parse(input);
       setError(null);
       return value;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Invalid JSON payload.";
-      setError(message);
+    } catch {
+      setError(t("errors.invalid"));
       setOutput("");
       setParsedValue(null);
       setCollapsedPaths(new Set());
@@ -299,7 +304,7 @@ export default function JsonFormatterTool() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
-      setError("Clipboard unavailable. Switch to Raw to copy manually.");
+      setError(t("errors.clipboard"));
     }
   };
 
@@ -307,8 +312,8 @@ export default function JsonFormatterTool() {
     <div className="flex h-full flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <PrimaryButton onClick={formatJson}>Format</PrimaryButton>
-          <SecondaryButton onClick={minifyJson}>Minify</SecondaryButton>
+          <PrimaryButton onClick={formatJson}>{t("actions.format")}</PrimaryButton>
+          <SecondaryButton onClick={minifyJson}>{t("actions.minify")}</SecondaryButton>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-1 text-[11px] text-[color:var(--text-secondary)] shadow-[var(--glass-shadow)]">
@@ -324,12 +329,12 @@ export default function JsonFormatterTool() {
                     : "hover:bg-[color:var(--glass-hover-bg)]"
                 )}
               >
-                {value} spaces
+                {t("indent.label", { count: value })}
               </button>
             ))}
           </div>
           <SecondaryButton onClick={copyOutput} disabled={!output}>
-            Copy
+            {t("actions.copy")}
           </SecondaryButton>
         </div>
       </div>
@@ -342,12 +347,12 @@ export default function JsonFormatterTool() {
         )}
         aria-live="polite"
       >
-        {error ?? (copied ? "Copied to clipboard." : "")}
+        {error ?? (copied ? t("status.copied") : "")}
       </p>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            Input
+            {t("labels.input")}
           </p>
           <textarea
             value={input}
@@ -357,13 +362,13 @@ export default function JsonFormatterTool() {
               if (copied) setCopied(false);
             }}
             spellCheck={false}
-            placeholder='{"hello":"world"}'
+            placeholder={t("placeholders.input")}
             className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
         </div>
         <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            <p>Output</p>
+            <p>{t("labels.output")}</p>
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium normal-case">
               <div className="flex items-center gap-1 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-1">
                 {(["tree", "raw"] as const).map((mode) => (
@@ -378,7 +383,7 @@ export default function JsonFormatterTool() {
                         : "text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]"
                     )}
                   >
-                    {mode}
+                    {t(`view.${mode}`)}
                   </button>
                 ))}
               </div>
@@ -389,14 +394,14 @@ export default function JsonFormatterTool() {
                     onClick={expandAll}
                     disabled={!parsedValue}
                   >
-                    Expand all
+                    {t("actions.expandAll")}
                   </SecondaryButton>
                   <SecondaryButton
                     size="sm"
                     onClick={collapseAll}
                     disabled={!parsedValue}
                   >
-                    Collapse all
+                    {t("actions.collapseAll")}
                   </SecondaryButton>
                 </>
               ) : null}
@@ -412,10 +417,18 @@ export default function JsonFormatterTool() {
                   isLast
                   collapsedPaths={collapsedPaths}
                   onToggle={togglePath}
+                  summaryLabels={{
+                    array: t("summary.array"),
+                    object: t("summary.object"),
+                  }}
+                  ariaLabels={{
+                    expand: t("aria.expand"),
+                    collapse: t("aria.collapse"),
+                  }}
                 />
               ) : (
                 <p className="text-[color:var(--text-secondary)]">
-                  Formatted JSON appears here.
+                  {t("placeholders.output")}
                 </p>
               )}
             </div>
@@ -424,7 +437,7 @@ export default function JsonFormatterTool() {
               value={output}
               readOnly
               spellCheck={false}
-              placeholder="Formatted JSON appears here."
+              placeholder={t("placeholders.output")}
               className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
             />
           )}

@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button, GhostButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
 
 type Mode = "encode" | "decode";
-
-const SAMPLE_TEXT = "Hello, Zenith!";
 
 const encodeBase64 = (value: string) => {
   const bytes = new TextEncoder().encode(value);
@@ -26,17 +25,19 @@ const decodeBase64 = (value: string) => {
 };
 
 export default function Base64Tool() {
+  const t = useTranslations("tools.base64.ui");
+  const sampleText = t("sample");
   const [mode, setMode] = useState<Mode>("encode");
-  const [input, setInput] = useState(SAMPLE_TEXT);
+  const [input, setInput] = useState(sampleText);
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const status = useMemo(() => {
     if (error) return error;
-    if (copied) return "Copied to clipboard.";
-    return mode === "encode" ? "Ready to encode." : "Ready to decode.";
-  }, [copied, error, mode]);
+    if (copied) return t("status.copied");
+    return mode === "encode" ? t("status.readyEncode") : t("status.readyDecode");
+  }, [copied, error, mode, t]);
 
   const run = (nextMode: Mode, value: string) => {
     try {
@@ -46,10 +47,8 @@ export default function Base64Tool() {
       setOutput(nextOutput);
       setError(null);
       setCopied(false);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Invalid Base64 input.";
-      setError(message);
+    } catch {
+      setError(t("errors.invalid"));
       setCopied(false);
       setOutput("");
       setMode(nextMode);
@@ -77,7 +76,7 @@ export default function Base64Tool() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
-      setError("Clipboard unavailable. Copy manually.");
+      setError(t("errors.clipboard"));
     }
   };
 
@@ -90,24 +89,24 @@ export default function Base64Tool() {
             onClick={() => run("encode", input)}
             className="font-semibold"
           >
-            Encode
+            {t("actions.encode")}
           </Button>
           <Button
             variant={mode === "decode" ? "primary" : "secondary"}
             onClick={() => run("decode", input)}
             className="font-semibold"
           >
-            Decode
+            {t("actions.decode")}
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <SecondaryButton onClick={swap} disabled={!output}>
-            Swap
+            {t("actions.swap")}
           </SecondaryButton>
           <SecondaryButton onClick={copyOutput} disabled={!output}>
-            Copy
+            {t("actions.copy")}
           </SecondaryButton>
-          <GhostButton onClick={clearAll}>Clear</GhostButton>
+          <GhostButton onClick={clearAll}>{t("actions.clear")}</GhostButton>
         </div>
       </div>
       <p
@@ -122,7 +121,7 @@ export default function Base64Tool() {
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            Input
+            {t("labels.input")}
           </p>
           <textarea
             value={input}
@@ -131,20 +130,20 @@ export default function Base64Tool() {
               setError(null);
               setCopied(false);
             }}
-            placeholder="Paste text or Base64..."
+            placeholder={t("placeholders.input")}
             spellCheck={false}
             className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
         </div>
         <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            Output
+            {t("labels.output")}
           </p>
           <textarea
             value={output}
             readOnly
             spellCheck={false}
-            placeholder="Converted output appears here."
+            placeholder={t("placeholders.output")}
             className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
         </div>

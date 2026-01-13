@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
@@ -9,10 +10,10 @@ type Rgb = { r: number; g: number; b: number };
 type Hsl = { h: number; s: number; l: number };
 
 const PRESETS = [
-  { name: "Coral", hex: "#FF6B6B" },
-  { name: "Sky", hex: "#4DA3FF" },
-  { name: "Mint", hex: "#34C759" },
-  { name: "Amber", hex: "#FF9500" },
+  { key: "coral", hex: "#FF6B6B" },
+  { key: "sky", hex: "#4DA3FF" },
+  { key: "mint", hex: "#34C759" },
+  { key: "amber", hex: "#FF9500" },
 ];
 
 const clamp = (value: number, min: number, max: number) =>
@@ -137,6 +138,7 @@ type InputRowProps = {
   label: string;
   value: string;
   placeholder: string;
+  copyLabel: string;
   onChange: (value: string) => void;
   onCopy: () => void;
 };
@@ -145,6 +147,7 @@ function InputRow({
   label,
   value,
   placeholder,
+  copyLabel,
   onChange,
   onCopy,
 }: InputRowProps) {
@@ -155,7 +158,7 @@ function InputRow({
           {label}
         </p>
         <SecondaryButton size="sm" onClick={onCopy}>
-          Copy
+          {copyLabel}
         </SecondaryButton>
       </div>
       <input
@@ -172,6 +175,7 @@ function InputRow({
 const initialRgb: Rgb = { r: 255, g: 107, b: 107 };
 
 export default function ColorConverterTool() {
+  const t = useTranslations("tools.color-converter.ui");
   const [rgb, setRgb] = useState<Rgb>(initialRgb);
   const [hexInput, setHexInput] = useState(() => formatHex(initialRgb));
   const [rgbInput, setRgbInput] = useState(() => formatRgbInput(initialRgb));
@@ -208,7 +212,7 @@ export default function ColorConverterTool() {
         setStatus(null);
         return;
       }
-      setStatus("Invalid hex value.");
+      setStatus(t("errors.invalidHex"));
       return;
     }
     setStatus(null);
@@ -225,7 +229,7 @@ export default function ColorConverterTool() {
     }
     const parsed = parseRgb(cleaned);
     if (!parsed) {
-      setStatus("Invalid RGB value.");
+      setStatus(t("errors.invalidRgb"));
       return;
     }
     setStatus(null);
@@ -242,7 +246,7 @@ export default function ColorConverterTool() {
     }
     const parsed = parseHsl(cleaned);
     if (!parsed) {
-      setStatus("Invalid HSL value.");
+      setStatus(t("errors.invalidHsl"));
       return;
     }
     setStatus(null);
@@ -264,7 +268,7 @@ export default function ColorConverterTool() {
       setError(null);
       window.setTimeout(() => setCopied(null), 1400);
     } catch {
-      setError("Clipboard unavailable. Copy manually.");
+      setError(t("errors.clipboard"));
     }
   };
 
@@ -297,11 +301,11 @@ export default function ColorConverterTool() {
         <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map((preset) => (
             <SecondaryButton
-              key={preset.name}
+              key={preset.key}
               size="sm"
               onClick={() => applyPreset(preset.hex)}
             >
-              {preset.name}
+              {t(`presets.${preset.key}`)}
             </SecondaryButton>
           ))}
           <Button
@@ -309,7 +313,7 @@ export default function ColorConverterTool() {
             onClick={randomize}
             className="bg-[color:var(--accent-orange)] font-semibold text-white shadow-[0_12px_24px_-14px_rgba(255,149,0,0.6)]"
           >
-            Random
+            {t("actions.random")}
           </Button>
         </div>
         <p
@@ -321,7 +325,8 @@ export default function ColorConverterTool() {
           )}
           aria-live="polite"
         >
-          {error ?? (copied ? `Copied ${copied}.` : "Paste or type a color.")}
+          {error ??
+            (copied ? t("status.copied", { label: copied }) : t("status.ready"))}
         </p>
       </div>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
@@ -329,7 +334,7 @@ export default function ColorConverterTool() {
           <div className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                Color Picker
+                {t("labels.colorPicker")}
               </p>
               <span className="text-xs text-[color:var(--text-secondary)]">
                 {hexValue}
@@ -340,7 +345,7 @@ export default function ColorConverterTool() {
                 type="color"
                 value={hexValue.toLowerCase()}
                 onChange={(event) => handlePickerChange(event.target.value)}
-                aria-label="Pick a color"
+                aria-label={t("aria.pickColor")}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
               <div className="flex items-center justify-between gap-4 rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-4 py-3">
@@ -351,10 +356,10 @@ export default function ColorConverterTool() {
                   />
                   <div>
                     <p className="text-sm font-semibold text-[color:var(--text-primary)]">
-                      Pick a color
+                      {t("labels.pickColor")}
                     </p>
                     <p className="text-xs text-[color:var(--text-secondary)]">
-                      Click to open the picker
+                      {t("labels.pickerHint")}
                     </p>
                   </div>
                 </div>
@@ -365,31 +370,34 @@ export default function ColorConverterTool() {
             </div>
           </div>
           <InputRow
-            label="Hex"
+            label={t("labels.hex")}
             value={hexInput}
-            placeholder="#FF6B6B"
+            placeholder={t("placeholders.hex")}
+            copyLabel={t("actions.copy")}
             onChange={handleHexChange}
-            onCopy={() => copyValue("Hex", formatHex(rgb))}
+            onCopy={() => copyValue(t("labels.hex"), formatHex(rgb))}
           />
           <InputRow
-            label="RGB"
+            label={t("labels.rgb")}
             value={rgbInput}
-            placeholder="255, 107, 107"
+            placeholder={t("placeholders.rgb")}
+            copyLabel={t("actions.copy")}
             onChange={handleRgbChange}
-            onCopy={() => copyValue("RGB", formatRgbCopy(rgb))}
+            onCopy={() => copyValue(t("labels.rgb"), formatRgbCopy(rgb))}
           />
           <InputRow
-            label="HSL"
+            label={t("labels.hsl")}
             value={hslInput}
-            placeholder="0, 100%, 71%"
+            placeholder={t("placeholders.hsl")}
+            copyLabel={t("actions.copy")}
             onChange={handleHslChange}
-            onCopy={() => copyValue("HSL", formatHslCopy(hsl))}
+            onCopy={() => copyValue(t("labels.hsl"), formatHslCopy(hsl))}
           />
         </div>
         <div className="flex min-h-[240px] flex-1 flex-col justify-between rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-5 shadow-[var(--glass-shadow)] lg:max-w-[260px]">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Preview
+              {t("labels.preview")}
             </p>
             <span className="text-xs text-[color:var(--text-secondary)]">
               {hexValue}

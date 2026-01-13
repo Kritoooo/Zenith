@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { MoonIcon, SunIcon } from "@/components/Icons";
 import { cn } from "@/lib/cn";
@@ -14,6 +15,7 @@ type ThemeToggleProps = {
 const STORAGE_KEY = "zenith-theme";
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
+  const t = useTranslations("theme");
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof document !== "undefined") {
       const current = document.documentElement.dataset.theme;
@@ -52,7 +54,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     <button
       type="button"
       onClick={toggle}
-      aria-label="Toggle theme"
+      aria-label={t("toggle")}
       className={cn(
         "flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] backdrop-blur-[16px]",
         "transition-colors hover:bg-[color:var(--glass-hover-bg)]",

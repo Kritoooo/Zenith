@@ -3,10 +3,22 @@ import "server-only";
 import { readFile } from "fs/promises";
 import path from "path";
 
-const DOC_FILES = ["docs.md", "README.md"] as const;
+const BASE_DOC_FILES = ["docs.md", "README.md"] as const;
 
-export async function getToolDocs(slug: string): Promise<string | null> {
-  for (const filename of DOC_FILES) {
+const getDocCandidates = (locale?: string) => {
+  if (!locale) return BASE_DOC_FILES;
+  return [
+    `docs.${locale}.md`,
+    `README.${locale}.md`,
+    ...BASE_DOC_FILES,
+  ];
+};
+
+export async function getToolDocs(
+  slug: string,
+  locale?: string
+): Promise<string | null> {
+  for (const filename of getDocCandidates(locale)) {
     const filePath = path.join(process.cwd(), "src", "tools", slug, filename);
     try {
       const contents = await readFile(filePath, "utf8");

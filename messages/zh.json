@@ -1,0 +1,1042 @@
+{
+  "brand": {
+    "name": "Zenith"
+  },
+  "home": {
+    "tagline": "简单直接高效",
+    "description": "Apple 风格的玻璃拟态工具面板。",
+    "footer": "(c) 2025 Zenith。为专注与冷静而生。"
+  },
+  "commandPalette": {
+    "triggerLabel": "搜索",
+    "closeLabel": "关闭搜索",
+    "dialogLabel": "搜索工具",
+    "placeholder": "搜索工具…",
+    "emptyState": "没有匹配的工具。"
+  },
+  "toolShell": {
+    "backToHome": "返回首页"
+  },
+  "toolDocs": {
+    "title": "文档"
+  },
+  "theme": {
+    "toggle": "切换主题"
+  },
+  "locale": {
+    "toggle": "切换语言"
+  },
+  "tool": {
+    "notFoundTitle": "工具未找到 | Zenith"
+  },
+  "toolNotFound": {
+    "title": "工具未找到",
+    "description": "你请求的工具可能已移动或尚未注册。",
+    "back": "返回面板"
+  },
+  "tools": {
+    "json-formatter": {
+      "title": "JSON 格式化",
+      "description": "美化、校验并查看 JSON 数据。",
+      "badge": "置顶",
+      "highlights": [
+        "严格模式",
+        "Schema 提示",
+        "支持 Diff"
+      ],
+      "ui": {
+        "actions": {
+          "format": "格式化",
+          "minify": "最小化",
+          "copy": "复制",
+          "collapseAll": "全部折叠",
+          "expandAll": "全部展开"
+        },
+        "view": {
+          "tree": "树形",
+          "raw": "原始"
+        },
+        "aria": {
+          "expand": "展开",
+          "collapse": "折叠"
+        },
+        "errors": {
+          "invalid": "JSON 无效。",
+          "clipboard": "复制失败。"
+        },
+        "indent": {
+          "label": "缩进"
+        },
+        "labels": {
+          "input": "输入",
+          "output": "输出"
+        },
+        "placeholders": {
+          "input": "在此粘贴 JSON…",
+          "output": "格式化结果显示在这里。"
+        },
+        "sample": "{\n  \"name\": \"Zenith\",\n  \"active\": true,\n  \"tags\": [\"tooling\", \"design\"]\n}",
+        "status": {
+          "copied": "已复制到剪贴板。"
+        },
+        "summary": {
+          "array": "数组",
+          "object": "对象"
+        }
+      }
+    },
+    "class-to-json": {
+      "title": "类转 JSON",
+      "description": "从类定义生成 JSON 模板与模拟数据。",
+      "highlights": [
+        "Java/Go/Python",
+        "模板 JSON",
+        "Mock 样例"
+      ],
+      "ui": {
+        "actions": {
+          "generate": "生成",
+          "sample": "示例",
+          "copy": "复制",
+          "clear": "清空"
+        },
+        "errors": {
+          "clipboard": "复制失败。",
+          "noFields": "未检测到字段。"
+        },
+        "labels": {
+          "input": "类定义",
+          "template": "JSON 模板",
+          "mockData": "模拟数据",
+          "mockRows": "模拟行数"
+        },
+        "placeholders": {
+          "input": "粘贴字段或类定义…",
+          "template": "生成的模板会显示在这里。",
+          "mock": "模拟数据会显示在这里。"
+        },
+        "languages": {
+          "java": "Java",
+          "go": "Go",
+          "python": "Python"
+        },
+        "status": {
+          "ready": "就绪。",
+          "templateCopied": "模板已复制。",
+          "mockCopied": "模拟数据已复制。"
+        }
+      }
+    },
+    "code-compare": {
+      "title": "代码对比",
+      "description": "实时行级 Diff，支持高亮与图片导出。",
+      "badge": "实时",
+      "highlights": [
+        "实时 Diff",
+        "分屏视图",
+        "导出图片"
+      ],
+      "ui": {
+        "actions": {
+          "compare": "对比",
+          "swap": "交换",
+          "clear": "清空",
+          "export": "导出",
+          "exporting": "导出中…",
+          "splitView": "分栏",
+          "inlineView": "内联",
+          "realtime": "实时"
+        },
+        "errors": {
+          "export": "导出失败。"
+        },
+        "labels": {
+          "original": "原始",
+          "updated": "更新",
+          "diff": "差异",
+          "sideBySide": "左右分栏",
+          "inline": "内联"
+        },
+        "placeholders": {
+          "left": "粘贴原始文本…",
+          "right": "粘贴更新文本…"
+        },
+        "summary": {
+          "none": "没有差异。",
+          "stats": "变更 {changed}，新增 {added}，删除 {removed}。"
+        }
+      }
+    },
+    "downgit": {
+      "title": "DownGit",
+      "description": "将 GitHub 文件或文件夹打包下载。",
+      "highlights": [
+        "文件夹打包",
+        "可选 Token",
+        "支持分支/标签"
+      ],
+      "ui": {
+        "actions": {
+          "check": "检查",
+          "download": "下载",
+          "cancel": "取消",
+          "clear": "清空",
+          "viewOnGitHub": "在 GitHub 查看"
+        },
+        "cards": {
+          "files": {
+            "title": "支持文件或文件夹",
+            "detail": "粘贴包含 /blob/ 或 /tree/ 的 GitHub 链接。"
+          },
+          "public": {
+            "title": "公开仓库体验最佳",
+            "detail": "遇到限流或私有仓库可使用 Token。"
+          },
+          "structure": {
+            "title": "保持目录结构",
+            "detail": "按所选路径打包为 zip 下载。"
+          }
+        },
+        "errors": {
+          "emptyUrl": "请先粘贴 GitHub 链接。",
+          "invalidUrl": "请输入有效的 URL。",
+          "missingOwnerRepo": "GitHub 链接需包含 owner 和 repo。",
+          "missingRef": "该链接缺少分支或标签名。",
+          "missingFilePath": "Blob 链接必须包含文件路径。",
+          "missingRawParts": "Raw 链接必须包含 owner、repo、ref 和 path。",
+          "rawFileOnly": "Raw 链接必须指向文件。",
+          "unsupportedApi": "不支持的 GitHub API 链接。",
+          "contentsOnly": "仅支持 contents API 链接。",
+          "githubOnly": "目前仅支持 github.com 链接。",
+          "unsupportedTarget": "不支持的目标类型（符号链接或子模块）。",
+          "expectedDirectory": "期望目录，但找到文件。",
+          "noFiles": "该目录下没有文件。",
+          "folderTooLarge": "文件夹过大，无法打包为 zip。",
+          "downloadFailed": "下载失败。",
+          "downloadPath": "无法下载 {path}。",
+          "githubUnavailable": "无法连接 GitHub。",
+          "zipFailed": "Zip worker 失败。",
+          "zipMessage": "Zip worker 消息无法反序列化。",
+          "refHintOverride": "尝试填写 Ref 覆盖。",
+          "refHintToken": "如果是私有仓库，请添加 Token 或手动设置 Ref。",
+          "refResolution": "无法从该链接解析分支或标签。{hint}"
+        },
+        "hints": {
+          "waiting": "等待 GitHub 链接…",
+          "paste": "粘贴仓库、文件或文件夹链接。",
+          "source": "来源：{source}",
+          "resolved": "解析为 {type}（{name}）。",
+          "checkUrl": "下载前可先检查链接类型。",
+          "concurrency": "自动使用约 75% CPU 核心（最小 {min}，最大 {max}）。实际：{effective}。",
+          "token": "Token 仅保存在当前浏览器会话中。"
+        },
+        "labels": {
+          "githubUrl": "GitHub 链接",
+          "target": "目标",
+          "status": "状态",
+          "options": "选项",
+          "output": "输出",
+          "auth": "鉴权",
+          "ref": "Ref",
+          "defaultBranch": "默认分支",
+          "refOverride": "Ref 覆盖（分支/标签/提交）",
+          "outputFilename": "输出文件名",
+          "concurrentDownloads": "并发下载",
+          "token": "GitHub Token（可选）",
+          "file": "文件",
+          "folder": "文件夹",
+          "noToken": "未提供 Token",
+          "tokenProvided": "已提供 Token",
+          "concurrencyAuto": "自动（{count}）",
+          "concurrencyManual": "手动（{count}）"
+        },
+        "placeholders": {
+          "defaultRef": "main",
+          "output": "example.zip",
+          "concurrencyAuto": "自动（{count}）",
+          "token": "私有仓库可选"
+        },
+        "status": {
+          "ready": "就绪。",
+          "needUrl": "请先粘贴 GitHub 链接。",
+          "checking": "正在检查 GitHub…",
+          "checkCanceled": "检查已取消。",
+          "checkFailed": "检查失败。",
+          "resolving": "解析目标中…",
+          "scanning": "扫描文件中…",
+          "downloadingFile": "下载文件中…",
+          "downloadingFiles": "下载文件 {completed}/{total}…",
+          "buildingZip": "打包 zip 中…",
+          "buildingZipProgress": "打包 {completed}/{total}…",
+          "downloaded": "已下载 {name}。",
+          "downloadFailed": "下载失败。",
+          "downloadCanceled": "下载已取消。",
+          "cancelling": "取消中…",
+          "readyType": "就绪（{type}）。"
+        }
+      }
+    },
+    "yt-dlp": {
+      "title": "YT-DLP",
+      "description": "生成 yt-dlp 命令，下载视频或音频。",
+      "badge": "命令行",
+      "highlights": [
+        "命令生成器",
+        "提取音频",
+        "字幕"
+      ],
+      "ui": {
+        "actions": {
+          "video": "视频",
+          "audio": "音频",
+          "sampleUrl": "示例链接",
+          "reset": "重置",
+          "applyRecommended": "应用推荐",
+          "copy": "复制",
+          "noPlaylist": "不下载播放列表",
+          "subtitlesManual": "手动字幕",
+          "subtitlesAuto": "自动字幕",
+          "subtitlesEmbed": "嵌入字幕",
+          "thumbnailsEmbed": "嵌入缩略图",
+          "thumbnailsSave": "保存缩略图",
+          "viewRepo": "查看 GitHub"
+        },
+        "formatPresets": {
+          "recommended": "推荐",
+          "best": "最佳",
+          "small": "小体积",
+          "custom": "自定义"
+        },
+        "mergeFormats": {
+          "auto": "自动",
+          "mp4": "MP4",
+          "mkv": "MKV",
+          "webm": "WebM"
+        },
+        "hints": {
+          "customFormat": "使用 yt-dlp 格式选择器，如 bv*+ba/b。",
+          "mergeFormat": "当需要合并音视频时选择封装格式。",
+          "audioQuality": "0-10 或 best。",
+          "outputFolder": "留空则使用当前目录。",
+          "rateLimit": "示例：2M、500K。",
+          "cookiesFile": "需要登录时使用 Cookies 文件。",
+          "downloadArchive": "记录已下载的 ID，避免重复。",
+          "extraArgs": "追加到末尾的额外参数。",
+          "command": "复制并在终端运行该命令。",
+          "quickStart": "安装 yt-dlp 后粘贴命令。",
+          "ffmpeg": "合并、字幕、缩略图需要 FFmpeg。"
+        },
+        "labels": {
+          "sourceUrl": "源链接",
+          "supports": "YouTube、Bilibili、TikTok 等",
+          "profile": "配置",
+          "profileRecommended": "推荐",
+          "profileCustom": "自定义",
+          "format": "格式",
+          "mergeFormat": "合并格式",
+          "audioFormat": "音频格式",
+          "audioQuality": "音质",
+          "outputTemplate": "输出模板",
+          "outputFolder": "输出目录",
+          "playlist": "播放列表",
+          "rateLimit": "限速",
+          "subtitles": "字幕",
+          "subtitleLangs": "字幕语言",
+          "thumbnails": "缩略图",
+          "cookiesFile": "Cookies 文件",
+          "downloadArchive": "下载记录",
+          "extraArgs": "附加参数",
+          "command": "命令",
+          "quickStart": "快速开始"
+        },
+        "placeholders": {
+          "url": "https://...",
+          "audioQuality": "0-10 或 best",
+          "outputFolder": "/path/to/folder",
+          "rateLimit": "2M",
+          "subtitleLangs": "en.*,zh.*",
+          "cookiesFile": "cookies.txt",
+          "downloadArchive": "archive.txt",
+          "extraArgs": "--add-metadata"
+        },
+        "status": {
+          "ready": "就绪。",
+          "copied": "已复制到剪贴板。",
+          "needUrl": "请先粘贴链接。",
+          "customFormatEmpty": "自定义格式为空。"
+        }
+      }
+    },
+    "color-converter": {
+      "title": "颜色转换",
+      "description": "一站式转换 Hex / RGB / HSL。",
+      "ui": {
+        "actions": {
+          "copy": "复制",
+          "random": "随机"
+        },
+        "aria": {
+          "pickColor": "选择颜色"
+        },
+        "errors": {
+          "clipboard": "复制失败。",
+          "invalidHex": "HEX 值无效。",
+          "invalidRgb": "RGB 值无效。",
+          "invalidHsl": "HSL 值无效。"
+        },
+        "labels": {
+          "colorPicker": "颜色选择器",
+          "pickColor": "选择颜色",
+          "pickerHint": "选择或粘贴颜色值。",
+          "preview": "预览",
+          "hex": "HEX",
+          "rgb": "RGB",
+          "hsl": "HSL"
+        },
+        "placeholders": {
+          "hex": "#12ab34",
+          "rgb": "255, 255, 255",
+          "hsl": "210, 50%, 60%"
+        },
+        "presets": {
+          "coral": "珊瑚",
+          "sky": "晴空",
+          "mint": "薄荷",
+          "amber": "琥珀"
+        },
+        "status": {
+          "copied": "已复制到剪贴板。",
+          "ready": "就绪。"
+        }
+      }
+    },
+    "anime-upscale": {
+      "title": "动漫放大",
+      "description": "使用 Hugging Face Xenova 模型进行动漫图像超分。",
+      "badge": "HF",
+      "highlights": [
+        "2x/4x 模型",
+        "本地运行",
+        "Hugging Face"
+      ],
+      "ui": {
+        "actions": {
+          "clear": "清空",
+          "download": "下载",
+          "upscale": "放大",
+          "upscaling": "放大中…",
+          "view": "查看",
+          "close": "关闭"
+        },
+        "aria": {
+          "openPreview": "打开{label}预览",
+          "previewAlt": "{label} 预览",
+          "closePreview": "关闭预览",
+          "viewer": "图片查看器",
+          "prevImage": "上一张",
+          "nextImage": "下一张"
+        },
+        "diagnostics": {
+          "crossOrigin": "跨源隔离",
+          "sharedArrayBuffer": "SharedArrayBuffer",
+          "webgpu": "WebGPU",
+          "webgpuF16": "WebGPU F16 支持",
+          "webgpuF16Enabled": "WebGPU F16 已启用",
+          "hardwareThreads": "硬件线程",
+          "wasmThreads": "WASM 线程"
+        },
+        "drop": {
+          "choose": "选择图片",
+          "dropHere": "拖放图片到这里",
+          "release": "松开以上传",
+          "replace": "替换图片",
+          "formats": "PNG、JPG、WebP",
+          "formatsHint": "PNG、JPG、WebP · 拖拽或点击"
+        },
+        "errors": {
+          "selectImage": "请选择图片文件。",
+          "readImage": "无法读取图片。",
+          "canvas": "Canvas 不可用。",
+          "renderOutput": "无法渲染输出图片。",
+          "webgpuUnavailable": "当前浏览器不支持 WebGPU，请切换到 WASM。",
+          "workerCrashed": "Worker 崩溃。",
+          "workerMessage": "Worker 消息无法反序列化。",
+          "upscaleFailed": "放大失败。"
+        },
+        "hints": {
+          "firstRun": "首次运行会从 Hugging Face 下载模型。",
+          "runtimeAvailable": "WebGPU 使用 GPU 加速；WASM 在支持时使用多线程 CPU。",
+          "runtimeUnavailable": "当前浏览器不支持 WebGPU；WASM 在支持时使用多线程 CPU。",
+          "dataType": "Q4 速度最快，Q4F16 适用于 WebGPU，FP32 细节最好，UINT8 在 CPU 上最快。",
+          "memory": "自动释放会在每次运行后卸载权重以降低内存占用。",
+          "tiled": "分块模式将图片拆分为小块以降低内存。",
+          "previewOriginal": "加载图片后可预览。",
+          "previewUpscaledReady": "已生成放大结果。",
+          "previewUpscaledEmpty": "点击放大生成输出。",
+          "runtimeDiagnostics": "WASM 多线程需要跨源隔离（COOP/COEP）。",
+          "viewer": "可用方向键或点击左右边缘切换图片。"
+        },
+        "labels": {
+          "source": "来源",
+          "original": "原图",
+          "upscaled": "放大后",
+          "run": "运行",
+          "dimensions": "尺寸",
+          "originalSize": "原图大小",
+          "noFile": "暂无文件",
+          "modelBadge": "倍率 {scale}x",
+          "tileSummary": "{size}px 分块 · {overlap}px 重叠",
+          "tileFull": "完整图片",
+          "outputSummary": "输出 {dimensions}",
+          "expectedSummary": "预计 {dimensions}",
+          "noOutput": "暂无输出",
+          "modelSettings": "模型设置",
+          "modelSource": "模型来源（Hugging Face）",
+          "runtimeDiagnostics": "运行诊断",
+          "runtime": "运行时",
+          "runtimeDetailGpu": "GPU",
+          "runtimeDetailCpu": "CPU",
+          "runtimeDetailUnavailable": "不可用",
+          "dataType": "数据类型",
+          "dataTypeWebgpuOnly": "仅 WebGPU",
+          "dataTypeUnavailable": "不可用",
+          "dataTypeChecking": "检测中…",
+          "dataTypeUnsupported": "不支持",
+          "memory": "内存",
+          "tiledUpscale": "分块放大",
+          "tileSize": "分块尺寸",
+          "overlap": "重叠",
+          "upscaleModel": "放大模型",
+          "loadedDetail": "{model} · {precision} · {device} · {dtype}",
+          "yes": "是",
+          "no": "否",
+          "threadMulti": "{count}（多线程）",
+          "threadSingle": "1（单线程）",
+          "none": "—"
+        },
+        "status": {
+          "preparingWorker": "准备 Worker…",
+          "loadingModel": "加载模型中…",
+          "upscaling": "放大中…",
+          "loaded": "已加载：{label}",
+          "ready": "模型已就绪。",
+          "modelFailed": "模型加载失败。",
+          "q4f16Blocked": "Q4F16 需要 WebGPU 且支持 F16。",
+          "modelReleased": "已释放模型以节省内存。",
+          "readyToLoad": "准备加载模型。",
+          "needImage": "加载图片开始。"
+        },
+        "models": {
+          "2x": {
+            "label": "2x RRDB GAN",
+            "summary": "更锐利的线稿，轻度纹理清理。"
+          },
+          "4x": {
+            "label": "4x GRL GAN",
+            "summary": "适合海报与打印的高倍率放大。"
+          }
+        },
+        "precision": {
+          "fp32": {
+            "label": "质量优先",
+            "summary": "全精度，细节最佳。"
+          },
+          "q4": {
+            "label": "极速",
+            "summary": "4 位权重，整体最快。"
+          },
+          "uint8": {
+            "label": "CPU 快",
+            "summary": "CPU 运行最快的 8 位权重。"
+          },
+          "q4f16": {
+            "label": "GPU 增强",
+            "summary": "4 位权重 + WebGPU F16 累加。"
+          }
+        },
+        "memory": {
+          "auto": {
+            "label": "运行后释放",
+            "detail": "更省内存",
+            "summary": "输出完成后卸载模型。"
+          },
+          "keep": {
+            "label": "保持加载",
+            "detail": "更快重跑",
+            "summary": "保留模型以便快速重复。"
+          }
+        },
+        "tile": {
+          "full": {
+            "label": "完整图片",
+            "summary": "小图可一次完成。"
+          },
+          "tiled": {
+            "label": "分块",
+            "summary": "拆分为小块降低内存占用。"
+          },
+          "size": {
+            "256": "占用最低。",
+            "384": "中等尺寸更均衡。",
+            "512": "速度与内存的默认平衡。",
+            "768": "分块更少，内存更多。",
+            "1024": "适合大显存 GPU。"
+          },
+          "overlap": {
+            "16": "速度最快，可能有拼接痕迹。",
+            "32": "默认缝隙缓解。",
+            "48": "过渡更平滑。",
+            "64": "适合复杂纹理。"
+          }
+        },
+        "runtime": {
+          "webgpu": {
+            "summary": "支持 GPU 时速度最快。"
+          },
+          "wasm": {
+            "summary": "CPU 运行，支持时可多线程。"
+          }
+        }
+      }
+    },
+    "paddleocr-onnx": {
+      "title": "WebGPU OCR",
+      "description": "在浏览器中运行 PaddleOCR ONNX 模型提取文字。",
+      "badge": "WebGPU",
+      "highlights": [
+        "PaddleOCR",
+        "本地运行",
+        "WebGPU"
+      ],
+      "ui": {
+        "actions": {
+          "recognize": "识别",
+          "copy": "复制文本",
+          "copied": "已复制",
+          "clear": "清空",
+          "unload": "卸载",
+          "filterLow": "筛选 <{threshold}",
+          "showAll": "显示全部",
+          "showLess": "收起"
+        },
+        "aria": {
+          "uploadPreview": "上传预览",
+          "lowConfidenceThreshold": "低置信度阈值"
+        },
+        "errors": {
+          "workerUnavailable": "Worker 不可用。",
+          "workerCrashed": "Worker 崩溃。",
+          "readImage": "无法读取图片。",
+          "canvas": "Canvas 不可用。",
+          "noImage": "请先上传图片再识别。",
+          "webgpuUnavailable": "当前浏览器不支持 WebGPU。",
+          "ocrFailed": "识别失败，请重试。",
+          "copyFailed": "复制失败。"
+        },
+        "hints": {
+          "run": "运行 OCR 以提取文字。"
+        },
+        "labels": {
+          "language": "语言",
+          "webgpu": "WebGPU {status}",
+          "webgpuStatus": {
+            "checking": "检测中",
+            "ready": "可用",
+            "needed": "需要"
+          },
+          "model": "模型 {status}",
+          "modelWarm": "已预热",
+          "modelIdle": "空闲",
+          "input": "输入",
+          "result": "结果",
+          "overall": "整体",
+          "confidence": "置信度",
+          "lines": "行",
+          "line": "第 {index} 行",
+          "threshold": "阈值",
+          "showBoxes": "显示框",
+          "boxCount": "{count} 个框",
+          "noBoxes": "暂无框",
+          "segments": "{count} 段",
+          "noLowLines": "没有低置信度行",
+          "lowOfTotal": "低置信度 {low}/{total}",
+          "showingLow": "显示 {visible}/{low} 低置信度",
+          "totalLines": "{count} 行",
+          "showingLines": "显示 {visible}/{total}",
+          "uploadPrompt": "拖入图片或点击上传",
+          "uploadHint": "PNG、JPG、WEBP 效果最佳。",
+          "modelSource": "模型来源（Hugging Face）",
+          "detection": "检测",
+          "recognition": "识别",
+          "usageNotes": "使用说明",
+          "usageNote1": "需要 WebGPU，请使用启用 WebGPU 的 Chromium 浏览器。",
+          "usageNote2": "首次下载较慢，模型会在浏览器中缓存。",
+          "usageNote3": "框位置为近似值，置信度仅供参考。",
+          "none": "—",
+          "confidenceUnknown": "未知",
+          "confidenceHigh": "高",
+          "confidenceMedium": "中",
+          "confidenceLow": "低"
+        },
+        "stats": {
+          "avg": "平均 {value}",
+          "range": "范围 {min}–{max}",
+          "counts": "高 {high} · 中 {medium} · 低 {low}"
+        },
+        "status": {
+          "needImage": "拖入图片或点击上传。",
+          "loadingBase": "加载模型",
+          "loading": "{status}{progress}…",
+          "running": "识别中…",
+          "complete": "{ms} ms 完成。",
+          "ready": "准备识别。"
+        },
+        "languages": {
+          "english": {
+            "label": "英语",
+            "summary": "拉丁字母、数字与标点"
+          },
+          "latin": {
+            "label": "拉丁语系",
+            "summary": "法/德/西/意/葡"
+          },
+          "chinese": {
+            "label": "中文 / 日文",
+            "summary": "中日韩 + 拉丁混合"
+          },
+          "korean": {
+            "label": "韩语",
+            "summary": "韩文 + 拉丁"
+          },
+          "greek": {
+            "label": "希腊语",
+            "summary": "希腊文 + 拉丁"
+          },
+          "thai": {
+            "label": "泰语",
+            "summary": "泰文 + 拉丁"
+          },
+          "cyrillic": {
+            "label": "斯拉夫语系",
+            "summary": "俄/乌/保/白"
+          },
+          "arabic": {
+            "label": "阿拉伯 / 乌尔都 / 波斯",
+            "summary": "PP-OCRv3 识别"
+          },
+          "hindi": {
+            "label": "印地 / 马拉地 / 尼泊尔",
+            "summary": "PP-OCRv3 识别"
+          },
+          "tamil": {
+            "label": "泰米尔",
+            "summary": "PP-OCRv3 识别"
+          },
+          "telugu": {
+            "label": "泰卢固",
+            "summary": "PP-OCRv3 识别"
+          }
+        }
+      }
+    },
+    "image-compress": {
+      "title": "图片压缩",
+      "description": "减小体积而不丢失细节。",
+      "ui": {
+        "actions": {
+          "clear": "清空",
+          "compress": "压缩",
+          "compressing": "压缩中…",
+          "download": "下载"
+        },
+        "aria": {
+          "originalPreview": "原图预览",
+          "compressedPreview": "压缩预览"
+        },
+        "drop": {
+          "choose": "选择图片",
+          "dropHere": "拖放图片到这里",
+          "release": "松开以上传",
+          "replace": "替换图片",
+          "formats": "PNG、JPG、WebP",
+          "formatsHint": "PNG、JPG、WebP · 拖拽或点击"
+        },
+        "errors": {
+          "read": "无法读取图片。",
+          "selectImage": "请选择图片文件。",
+          "dropImage": "请拖入图片文件。",
+          "canvas": "Canvas 不可用。",
+          "compress": "压缩失败。"
+        },
+        "helpers": {
+          "original": "加载图片后可预览。",
+          "compressed": "压缩结果会显示在这里。"
+        },
+        "labels": {
+          "source": "来源",
+          "settings": "设置",
+          "format": "格式",
+          "quality": "质量",
+          "lossless": "无损",
+          "maxWidth": "最大宽度",
+          "maxHeight": "最大高度",
+          "original": "原图",
+          "compressed": "压缩后"
+        },
+        "placeholders": {
+          "auto": "自动"
+        },
+        "presets": {
+          "crisp": "高清",
+          "balanced": "均衡",
+          "small": "小体积"
+        },
+        "stats": {
+          "original": "原始",
+          "target": "目标 {size}",
+          "dimensions": "尺寸",
+          "smaller": "{percent}% 更小",
+          "larger": "{percent}% 更大",
+          "empty": "—",
+          "noOutput": "暂无输出"
+        },
+        "status": {
+          "pending": "等待压缩…",
+          "adjust": "调整输出…",
+          "onDevice": "本地压缩"
+        }
+      }
+    },
+    "base64": {
+      "title": "Base64",
+      "description": "即时编码或解码。",
+      "ui": {
+        "actions": {
+          "encode": "编码",
+          "decode": "解码",
+          "swap": "交换",
+          "copy": "复制",
+          "clear": "清空"
+        },
+        "errors": {
+          "invalid": "Base64 输入无效。",
+          "clipboard": "复制失败。"
+        },
+        "labels": {
+          "input": "输入",
+          "output": "输出"
+        },
+        "placeholders": {
+          "input": "在此粘贴文本或 Base64…",
+          "output": "结果会显示在这里。"
+        },
+        "sample": "你好，Zenith",
+        "status": {
+          "copied": "已复制到剪贴板。",
+          "readyEncode": "准备编码。",
+          "readyDecode": "准备解码。"
+        }
+      }
+    },
+    "aigc-detector": {
+      "title": "AIGC 检测",
+      "description": "使用本地推理检测中文 AI 生成文本。",
+      "highlights": [
+        "中文",
+        "本地运行",
+        "ONNX"
+      ],
+      "ui": {
+        "actions": {
+          "analyze": "分析",
+          "sample": "示例",
+          "clear": "清空",
+          "unload": "卸载"
+        },
+        "errors": {
+          "empty": "请输入文本。",
+          "failed": "分析失败。",
+          "worker": "Worker 不可用。",
+          "workerCrashed": "Worker 崩溃。"
+        },
+        "hints": {
+          "chunked": "文本会按 {size} 分段（最大 {max}）。"
+        },
+        "labels": {
+          "input": "输入",
+          "result": "结果",
+          "charCount": "{count} 字符",
+          "chunk": "分段",
+          "chars": "字符",
+          "model": "模型 {status}",
+          "loaded": "已加载",
+          "modelIdle": "未加载",
+          "topLabel": "最高标签",
+          "unknown": "未知",
+          "labelPrefix": "标签",
+          "analyzed": "分析 {count} 字符",
+          "modelSource": "模型来源",
+          "modelNote": "完全本地运行。",
+          "usageNotes": "使用说明",
+          "usageNote1": "适合中文文本检测。",
+          "usageNote2": "长文本会自动分段。",
+          "usageNote3": "结果为概率判断。"
+        },
+        "placeholders": {
+          "input": "粘贴中文文本进行分析…"
+        },
+        "sample": "这是一段示例文本，用于检测 AI 生成概率。",
+        "status": {
+          "idle": "就绪。",
+          "loading": "加载模型",
+          "running": "分析中…",
+          "complete": "{ms} ms 完成。",
+          "noResult": "暂无结果。"
+        }
+      }
+    },
+    "uuid": {
+      "title": "UUID 生成器",
+      "description": "生成唯一标识符。",
+      "ui": {
+        "actions": {
+          "generate": "生成",
+          "copy": "复制",
+          "hyphens": "连字符",
+          "uppercase": "大写"
+        },
+        "errors": {
+          "clipboard": "复制失败。",
+          "generate": "生成 UUID 失败。",
+          "rng": "安全随机数不可用。"
+        },
+        "labels": {
+          "count": "数量",
+          "output": "输出"
+        },
+        "status": {
+          "copied": "已复制到剪贴板。",
+          "ready": "准备生成。"
+        }
+      }
+    },
+    "local-time": {
+      "title": "本地时间",
+      "description": "快速预览小组件。",
+      "badge": "小组件",
+      "ui": {
+        "actions": {
+          "copyTime": "复制时间",
+          "copyIso": "复制 ISO",
+          "seconds": "秒",
+          "hour24": "24 小时"
+        },
+        "errors": {
+          "clipboard": "复制失败。"
+        },
+        "labels": {
+          "localTime": "本地时间",
+          "time": "时间",
+          "iso": "ISO",
+          "isoTimestamp": "ISO 时间戳",
+          "timeZone": "时区",
+          "widgetNote": "时区跟随系统设置。"
+        },
+        "zones": {
+          "utc": "UTC",
+          "newYork": "纽约",
+          "tokyo": "东京"
+        },
+        "status": {
+          "ready": "就绪。",
+          "copied": "已复制到剪贴板。"
+        }
+      }
+    },
+    "address-generator": {
+      "title": "地址生成器",
+      "description": "生成包含姓名和电话的真实地址。",
+      "highlights": [
+        "OpenStreetMap",
+        "可直接复制",
+        "已保存列表"
+      ],
+      "ui": {
+        "actions": {
+          "generate": "生成",
+          "generating": "生成中…",
+          "copy": "复制",
+          "copyAll": "复制全部",
+          "save": "保存",
+          "saveAddress": "保存地址",
+          "openMap": "打开地图",
+          "delete": "删除",
+          "clearAll": "清空全部"
+        },
+        "errors": {
+          "generate": "生成地址失败。",
+          "lookup": "获取位置数据失败。",
+          "incomplete": "地址信息不完整。",
+          "clipboard": "复制失败。"
+        },
+        "gender": {
+          "male": "男",
+          "female": "女"
+        },
+        "countries": {
+          "US": "美国",
+          "UK": "英国",
+          "FR": "法国",
+          "DE": "德国",
+          "CN": "中国",
+          "TW": "台湾",
+          "HK": "香港",
+          "JP": "日本",
+          "IN": "印度",
+          "AU": "澳大利亚",
+          "BR": "巴西",
+          "CA": "加拿大",
+          "RU": "俄罗斯",
+          "ZA": "南非",
+          "MX": "墨西哥",
+          "KR": "韩国",
+          "IT": "意大利",
+          "ES": "西班牙",
+          "TR": "土耳其",
+          "SA": "沙特阿拉伯",
+          "AR": "阿根廷",
+          "EG": "埃及",
+          "NG": "尼日利亚",
+          "ID": "印度尼西亚"
+        },
+        "labels": {
+          "country": "国家",
+          "profile": "档案",
+          "name": "姓名",
+          "gender": "性别",
+          "phone": "电话",
+          "address": "地址",
+          "notes": "备注",
+          "notePrefix": "备注：{note}",
+          "allFields": "全部字段",
+          "mapPreview": "地图预览",
+          "coordinates": "坐标",
+          "saved": "已保存",
+          "savedEntry": "已保存条目"
+        },
+        "placeholders": {
+          "note": "为该地址添加备注"
+        },
+        "status": {
+          "ready": "就绪。",
+          "loading": "加载中…",
+          "copied": "已复制 {label}。",
+          "waiting": "等待定位…",
+          "retryHint": "若地图未显示请重试。",
+          "mapPlaceholder": "地图预览不可用。",
+          "noSaved": "暂无保存的地址。"
+        }
+      }
+    }
+  }
+}

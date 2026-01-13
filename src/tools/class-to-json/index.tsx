@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { GhostButton, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
@@ -676,6 +677,7 @@ const parseDefinition = (source: string, language: Language): ParseResult => {
 };
 
 export default function ClassToJsonTool() {
+  const t = useTranslations("tools.class-to-json.ui");
   const [language, setLanguage] = useState<Language>("java");
   const [input, setInput] = useState(SAMPLE_INPUTS.java);
   const [templateOutput, setTemplateOutput] = useState("");
@@ -686,15 +688,15 @@ export default function ClassToJsonTool() {
 
   const status = useMemo(() => {
     if (error) return error;
-    if (copied === "template") return "Template copied to clipboard.";
-    if (copied === "mock") return "Mock data copied to clipboard.";
-    return "Ready to generate.";
-  }, [copied, error]);
+    if (copied === "template") return t("status.templateCopied");
+    if (copied === "mock") return t("status.mockCopied");
+    return t("status.ready");
+  }, [copied, error, t]);
 
   const generate = () => {
     const { fields, classMap } = parseDefinition(input, language);
     if (!fields.length) {
-      setError("No fields detected. Check the class definition.");
+      setError(t("errors.noFields"));
       setTemplateOutput("");
       setMockOutput("");
       setCopied(null);
@@ -740,7 +742,7 @@ export default function ClassToJsonTool() {
       setCopied(mode);
       window.setTimeout(() => setCopied(null), 1400);
     } catch {
-      setError("Clipboard unavailable. Copy manually.");
+      setError(t("errors.clipboard"));
     }
   };
 
@@ -748,9 +750,9 @@ export default function ClassToJsonTool() {
     <div className="flex h-full flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <PrimaryButton onClick={generate}>Generate</PrimaryButton>
-          <SecondaryButton onClick={loadSample}>Sample</SecondaryButton>
-          <GhostButton onClick={clearAll}>Clear</GhostButton>
+          <PrimaryButton onClick={generate}>{t("actions.generate")}</PrimaryButton>
+          <SecondaryButton onClick={loadSample}>{t("actions.sample")}</SecondaryButton>
+          <GhostButton onClick={clearAll}>{t("actions.clear")}</GhostButton>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-1 text-[11px] text-[color:var(--text-secondary)] shadow-[var(--glass-shadow)]">
@@ -766,13 +768,13 @@ export default function ClassToJsonTool() {
                     : "hover:bg-[color:var(--glass-hover-bg)]"
                 )}
               >
-                {value}
+                {t(`languages.${value}`)}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2 text-sm shadow-[var(--glass-shadow)]">
             <span className="text-xs text-[color:var(--text-secondary)]">
-              Mock rows
+              {t("labels.mockRows")}
             </span>
             <input
               type="number"
@@ -801,7 +803,7 @@ export default function ClassToJsonTool() {
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            Input
+            {t("labels.input")}
           </p>
           <textarea
             value={input}
@@ -811,46 +813,46 @@ export default function ClassToJsonTool() {
               if (copied) setCopied(null);
             }}
             spellCheck={false}
-            placeholder="Paste Java, Go, or Python class definitions..."
+            placeholder={t("placeholders.input")}
             className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
         </div>
         <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col gap-4">
           <div className="flex flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              <p>JSON Template</p>
+              <p>{t("labels.template")}</p>
               <SecondaryButton
                 size="sm"
                 onClick={() => copyOutput("template")}
                 disabled={!templateOutput}
               >
-                Copy
+                {t("actions.copy")}
               </SecondaryButton>
             </div>
             <textarea
               value={templateOutput}
               readOnly
               spellCheck={false}
-              placeholder="Generated JSON template appears here."
+              placeholder={t("placeholders.template")}
               className="mt-3 min-h-[200px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
             />
           </div>
           <div className="flex flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              <p>Mock Data</p>
+              <p>{t("labels.mockData")}</p>
               <SecondaryButton
                 size="sm"
                 onClick={() => copyOutput("mock")}
                 disabled={!mockOutput}
               >
-                Copy
+                {t("actions.copy")}
               </SecondaryButton>
             </div>
             <textarea
               value={mockOutput}
               readOnly
               spellCheck={false}
-              placeholder="Mock JSON data appears here."
+              placeholder={t("placeholders.mock")}
               className="mt-3 min-h-[200px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
             />
           </div>

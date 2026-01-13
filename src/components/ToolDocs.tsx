@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -33,6 +34,7 @@ type ToolDocsProps = {
 };
 
 export function ToolDocs({ slug, content, className }: ToolDocsProps) {
+  const t = useTranslations("toolDocs");
   const [hasOpened, setHasOpened] = useState(false);
 
   if (!content.trim()) return null;
@@ -48,7 +50,7 @@ export function ToolDocs({ slug, content, className }: ToolDocsProps) {
         }}
       >
         <summary className="cursor-pointer select-none text-sm font-semibold text-[color:var(--text-primary)]">
-          文档
+          {t("title")}
         </summary>
         <div className="mt-4 space-y-4 text-sm leading-relaxed text-[color:var(--text-primary)]">
           {hasOpened ? (

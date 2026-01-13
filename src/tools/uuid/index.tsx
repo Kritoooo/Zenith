@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { cn } from "@/lib/cn";
@@ -16,7 +17,7 @@ const createUuid = () => {
     return cryptoRef.randomUUID();
   }
   if (!cryptoRef || typeof cryptoRef.getRandomValues !== "function") {
-    throw new Error("Secure random generator is unavailable.");
+    throw new Error("RNG_UNAVAILABLE");
   }
   const bytes = new Uint8Array(16);
   cryptoRef.getRandomValues(bytes);
@@ -29,6 +30,7 @@ const createUuid = () => {
 };
 
 export default function UuidTool() {
+  const t = useTranslations("tools.uuid.ui");
   const [count, setCount] = useState(3);
   const [uppercase, setUppercase] = useState(false);
   const [withHyphens, setWithHyphens] = useState(true);
@@ -56,11 +58,13 @@ export default function UuidTool() {
       setCopied(false);
       setError(null);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to generate UUIDs.";
-      setError(message);
+      if (err instanceof Error && err.message === "RNG_UNAVAILABLE") {
+        setError(t("errors.rng"));
+      } else {
+        setError(t("errors.generate"));
+      }
     }
-  }, [formatUuid, normalizedCount]);
+  }, [formatUuid, normalizedCount, t]);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -76,7 +80,7 @@ export default function UuidTool() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
-      setError("Clipboard unavailable. Copy manually.");
+      setError(t("errors.clipboard"));
     }
   };
 
@@ -85,7 +89,9 @@ export default function UuidTool() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2 text-sm shadow-[var(--glass-shadow)]">
-            <span className="text-xs text-[color:var(--text-secondary)]">Count</span>
+            <span className="text-xs text-[color:var(--text-secondary)]">
+              {t("labels.count")}
+            </span>
             <input
               type="number"
               min={1}
@@ -110,21 +116,21 @@ export default function UuidTool() {
             size="sm"
             onClick={() => setWithHyphens((prev) => !prev)}
           >
-            Hyphens
+            {t("actions.hyphens")}
           </Button>
           <Button
             variant={uppercase ? "primary" : "secondary"}
             size="sm"
             onClick={() => setUppercase((prev) => !prev)}
           >
-            Uppercase
+            {t("actions.uppercase")}
           </Button>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <PrimaryButton onClick={generate}>Generate</PrimaryButton>
+        <PrimaryButton onClick={generate}>{t("actions.generate")}</PrimaryButton>
         <SecondaryButton onClick={copyAll} disabled={!uuids.length}>
-          Copy
+          {t("actions.copy")}
         </SecondaryButton>
         <p
           className={cn(
@@ -133,12 +139,12 @@ export default function UuidTool() {
           )}
           aria-live="polite"
         >
-          {error ? error : copied ? "Copied to clipboard." : "v4 UUIDs"}
+          {error ? error : copied ? t("status.copied") : t("status.ready")}
         </p>
       </div>
       <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-          Output
+          {t("labels.output")}
         </p>
         <textarea
           value={uuids.join("\n")}

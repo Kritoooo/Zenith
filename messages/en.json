@@ -1,0 +1,1042 @@
+{
+  "brand": {
+    "name": "Zenith"
+  },
+  "home": {
+    "tagline": "Simple. Direct. Efficient.",
+    "description": "Apple-style bento grid for precision tools.",
+    "footer": "(c) 2025 Zenith. Crafted for calm focus."
+  },
+  "commandPalette": {
+    "triggerLabel": "Search",
+    "closeLabel": "Close search",
+    "dialogLabel": "Search tools",
+    "placeholder": "Search tools...",
+    "emptyState": "No tools match that query."
+  },
+  "toolShell": {
+    "backToHome": "Back to home"
+  },
+  "toolDocs": {
+    "title": "Docs"
+  },
+  "theme": {
+    "toggle": "Toggle theme"
+  },
+  "locale": {
+    "toggle": "Switch language"
+  },
+  "tool": {
+    "notFoundTitle": "Tool not found | Zenith"
+  },
+  "toolNotFound": {
+    "title": "Tool not found",
+    "description": "The tool you requested may have moved or is not registered yet.",
+    "back": "Back to dashboard"
+  },
+  "tools": {
+    "json-formatter": {
+      "title": "JSON Formatter",
+      "description": "Prettify, validate, and inspect payloads.",
+      "badge": "Pinned",
+      "highlights": [
+        "Strict mode",
+        "Schema hints",
+        "Diff ready"
+      ],
+      "ui": {
+        "actions": {
+          "format": "Format",
+          "minify": "Minify",
+          "copy": "Copy",
+          "collapseAll": "Collapse all",
+          "expandAll": "Expand all"
+        },
+        "view": {
+          "tree": "Tree",
+          "raw": "Raw"
+        },
+        "aria": {
+          "expand": "Expand",
+          "collapse": "Collapse"
+        },
+        "errors": {
+          "invalid": "Invalid JSON.",
+          "clipboard": "Failed to copy."
+        },
+        "indent": {
+          "label": "Indent"
+        },
+        "labels": {
+          "input": "Input",
+          "output": "Output"
+        },
+        "placeholders": {
+          "input": "Paste JSON here...",
+          "output": "Formatted JSON will appear here."
+        },
+        "sample": "{\n  \"name\": \"Zenith\",\n  \"active\": true,\n  \"tags\": [\"tooling\", \"design\"]\n}",
+        "status": {
+          "copied": "Copied to clipboard."
+        },
+        "summary": {
+          "array": "Array",
+          "object": "Object"
+        }
+      }
+    },
+    "class-to-json": {
+      "title": "Class to JSON",
+      "description": "Generate JSON templates and mock data from class definitions.",
+      "highlights": [
+        "Java/Go/Python",
+        "Template JSON",
+        "Mock samples"
+      ],
+      "ui": {
+        "actions": {
+          "generate": "Generate",
+          "sample": "Sample",
+          "copy": "Copy",
+          "clear": "Clear"
+        },
+        "errors": {
+          "clipboard": "Failed to copy.",
+          "noFields": "No fields detected."
+        },
+        "labels": {
+          "input": "Class definition",
+          "template": "JSON template",
+          "mockData": "Mock data",
+          "mockRows": "Mock rows"
+        },
+        "placeholders": {
+          "input": "Paste class fields or definitions...",
+          "template": "Generated template will appear here.",
+          "mock": "Mock data will appear here."
+        },
+        "languages": {
+          "java": "Java",
+          "go": "Go",
+          "python": "Python"
+        },
+        "status": {
+          "ready": "Ready.",
+          "templateCopied": "Template copied.",
+          "mockCopied": "Mock data copied."
+        }
+      }
+    },
+    "code-compare": {
+      "title": "Code Compare",
+      "description": "Realtime line diff viewer with inline highlights and image export.",
+      "badge": "Live",
+      "highlights": [
+        "Realtime diff",
+        "Split view",
+        "Export image"
+      ],
+      "ui": {
+        "actions": {
+          "compare": "Compare",
+          "swap": "Swap",
+          "clear": "Clear",
+          "export": "Export",
+          "exporting": "Exporting...",
+          "splitView": "Split",
+          "inlineView": "Inline",
+          "realtime": "Realtime"
+        },
+        "errors": {
+          "export": "Export failed."
+        },
+        "labels": {
+          "original": "Original",
+          "updated": "Updated",
+          "diff": "Diff",
+          "sideBySide": "Side by side",
+          "inline": "Inline"
+        },
+        "placeholders": {
+          "left": "Paste original text...",
+          "right": "Paste updated text..."
+        },
+        "summary": {
+          "none": "No differences found.",
+          "stats": "Changed {changed}, added {added}, removed {removed}."
+        }
+      }
+    },
+    "downgit": {
+      "title": "DownGit",
+      "description": "Download GitHub files or folders as a zip.",
+      "highlights": [
+        "Folder zip",
+        "Token optional",
+        "Ref aware"
+      ],
+      "ui": {
+        "actions": {
+          "check": "Check",
+          "download": "Download",
+          "cancel": "Cancel",
+          "clear": "Clear",
+          "viewOnGitHub": "View on GitHub"
+        },
+        "cards": {
+          "files": {
+            "title": "Supports files or folders",
+            "detail": "Paste a GitHub link with /blob/ or /tree/ paths."
+          },
+          "public": {
+            "title": "Public repos work best",
+            "detail": "Use a token when hitting rate limits or private repos."
+          },
+          "structure": {
+            "title": "Keeps folder structure",
+            "detail": "Downloads as a zip with the selected path."
+          }
+        },
+        "errors": {
+          "emptyUrl": "Paste a GitHub URL to get started.",
+          "invalidUrl": "Enter a valid URL.",
+          "missingOwnerRepo": "GitHub URLs must include owner and repo.",
+          "missingRef": "This URL is missing a branch or tag name.",
+          "missingFilePath": "Blob URLs must include a file path.",
+          "missingRawParts": "Raw URLs must include owner, repo, ref, and path.",
+          "rawFileOnly": "Raw URLs must point to a file.",
+          "unsupportedApi": "Unsupported GitHub API URL.",
+          "contentsOnly": "Only contents API URLs are supported.",
+          "githubOnly": "Only github.com URLs are supported right now.",
+          "unsupportedTarget": "Unsupported target type (symlink or submodule).",
+          "expectedDirectory": "Expected a directory but found a file.",
+          "noFiles": "No files found in this directory.",
+          "folderTooLarge": "This folder is too large to package as a zip.",
+          "downloadFailed": "Download failed.",
+          "downloadPath": "Unable to download {path}.",
+          "githubUnavailable": "Unable to reach GitHub.",
+          "zipFailed": "Zip worker failed.",
+          "zipMessage": "Zip worker message could not be deserialized.",
+          "refHintOverride": "Try the Ref override.",
+          "refHintToken": "If this is a private repo, add a token or set Ref manually.",
+          "refResolution": "Unable to resolve branch or tag from this URL. {hint}"
+        },
+        "hints": {
+          "waiting": "Waiting for a GitHub URL.",
+          "paste": "Paste a repo, file, or folder link.",
+          "source": "Source: {source}",
+          "resolved": "Resolved as a {type} ({name}).",
+          "checkUrl": "Check the URL to confirm file or folder before downloading.",
+          "concurrency": "Auto uses ~75% of CPU cores (min {min}, max {max}). Effective: {effective}.",
+          "token": "Token stays in your browser session and is never stored."
+        },
+        "labels": {
+          "githubUrl": "GitHub URL",
+          "target": "Target",
+          "status": "Status",
+          "options": "Options",
+          "output": "Output",
+          "auth": "Auth",
+          "ref": "Ref",
+          "defaultBranch": "default branch",
+          "refOverride": "Ref override (branch, tag, commit)",
+          "outputFilename": "Output filename",
+          "concurrentDownloads": "Concurrent downloads",
+          "token": "GitHub token (optional)",
+          "file": "file",
+          "folder": "folder",
+          "noToken": "No token",
+          "tokenProvided": "Token provided",
+          "concurrencyAuto": "Auto ({count})",
+          "concurrencyManual": "Manual ({count})"
+        },
+        "placeholders": {
+          "defaultRef": "main",
+          "output": "example.zip",
+          "concurrencyAuto": "Auto ({count})",
+          "token": "Optional for private repos"
+        },
+        "status": {
+          "ready": "Ready.",
+          "needUrl": "Paste a GitHub URL to continue.",
+          "checking": "Checking GitHub...",
+          "checkCanceled": "Check canceled.",
+          "checkFailed": "Check failed.",
+          "resolving": "Resolving target...",
+          "scanning": "Scanning files...",
+          "downloadingFile": "Downloading file...",
+          "downloadingFiles": "Downloading files {completed}/{total}...",
+          "buildingZip": "Building zip...",
+          "buildingZipProgress": "Building zip {completed}/{total}...",
+          "downloaded": "Downloaded {name}.",
+          "downloadFailed": "Download failed.",
+          "downloadCanceled": "Download canceled.",
+          "cancelling": "Cancelling...",
+          "readyType": "Ready ({type})."
+        }
+      }
+    },
+    "yt-dlp": {
+      "title": "YT-DLP",
+      "description": "Build yt-dlp commands for video or audio downloads.",
+      "badge": "CLI",
+      "highlights": [
+        "Command builder",
+        "Audio extract",
+        "Subtitles"
+      ],
+      "ui": {
+        "actions": {
+          "video": "Video",
+          "audio": "Audio",
+          "sampleUrl": "Sample URL",
+          "reset": "Reset",
+          "applyRecommended": "Apply recommended",
+          "copy": "Copy",
+          "noPlaylist": "No playlist",
+          "subtitlesManual": "Manual subtitles",
+          "subtitlesAuto": "Auto subtitles",
+          "subtitlesEmbed": "Embed subtitles",
+          "thumbnailsEmbed": "Embed thumbnail",
+          "thumbnailsSave": "Save thumbnail",
+          "viewRepo": "View GitHub repo"
+        },
+        "formatPresets": {
+          "recommended": "Recommended",
+          "best": "Best",
+          "small": "Small",
+          "custom": "Custom"
+        },
+        "mergeFormats": {
+          "auto": "Auto",
+          "mp4": "MP4",
+          "mkv": "MKV",
+          "webm": "WebM"
+        },
+        "hints": {
+          "customFormat": "Use yt-dlp format selectors like bv*+ba/b.",
+          "mergeFormat": "Choose a container when video+audio needs merging.",
+          "audioQuality": "0-10 or 'best'.",
+          "outputFolder": "Leave blank to use the current folder.",
+          "rateLimit": "Example: 2M, 500K.",
+          "cookiesFile": "Use when downloads require login cookies.",
+          "downloadArchive": "Tracks downloaded IDs to skip repeats.",
+          "extraArgs": "Additional flags to append at the end.",
+          "command": "Copy and run this command in your terminal.",
+          "quickStart": "Install yt-dlp and paste the command.",
+          "ffmpeg": "FFmpeg is required for merging, subtitles, and thumbnails."
+        },
+        "labels": {
+          "sourceUrl": "Source URL",
+          "supports": "YouTube, Bilibili, TikTok, more",
+          "profile": "Profile",
+          "profileRecommended": "Recommended",
+          "profileCustom": "Custom",
+          "format": "Format",
+          "mergeFormat": "Merge format",
+          "audioFormat": "Audio format",
+          "audioQuality": "Audio quality",
+          "outputTemplate": "Output template",
+          "outputFolder": "Output folder",
+          "playlist": "Playlist",
+          "rateLimit": "Rate limit",
+          "subtitles": "Subtitles",
+          "subtitleLangs": "Subtitle languages",
+          "thumbnails": "Thumbnails",
+          "cookiesFile": "Cookies file",
+          "downloadArchive": "Download archive",
+          "extraArgs": "Extra args",
+          "command": "Command",
+          "quickStart": "Quick start"
+        },
+        "placeholders": {
+          "url": "https://...",
+          "audioQuality": "0-10 or best",
+          "outputFolder": "/path/to/folder",
+          "rateLimit": "2M",
+          "subtitleLangs": "en.*,zh.*",
+          "cookiesFile": "cookies.txt",
+          "downloadArchive": "archive.txt",
+          "extraArgs": "--add-metadata"
+        },
+        "status": {
+          "ready": "Ready.",
+          "copied": "Copied to clipboard.",
+          "needUrl": "Paste a URL to begin.",
+          "customFormatEmpty": "Custom format is empty."
+        }
+      }
+    },
+    "color-converter": {
+      "title": "Color Converter",
+      "description": "Hex, RGB, and HSL in one place.",
+      "ui": {
+        "actions": {
+          "copy": "Copy",
+          "random": "Random"
+        },
+        "aria": {
+          "pickColor": "Pick a color"
+        },
+        "errors": {
+          "clipboard": "Failed to copy.",
+          "invalidHex": "Invalid HEX value.",
+          "invalidRgb": "Invalid RGB value.",
+          "invalidHsl": "Invalid HSL value."
+        },
+        "labels": {
+          "colorPicker": "Color picker",
+          "pickColor": "Pick color",
+          "pickerHint": "Pick or paste a color value.",
+          "preview": "Preview",
+          "hex": "HEX",
+          "rgb": "RGB",
+          "hsl": "HSL"
+        },
+        "placeholders": {
+          "hex": "#12ab34",
+          "rgb": "255, 255, 255",
+          "hsl": "210, 50%, 60%"
+        },
+        "presets": {
+          "coral": "Coral",
+          "sky": "Sky",
+          "mint": "Mint",
+          "amber": "Amber"
+        },
+        "status": {
+          "copied": "Copied to clipboard.",
+          "ready": "Ready."
+        }
+      }
+    },
+    "anime-upscale": {
+      "title": "Anime Upscale",
+      "description": "Upscale anime art with Hugging Face Xenova models.",
+      "badge": "HF",
+      "highlights": [
+        "2x/4x models",
+        "On-device",
+        "Hugging Face"
+      ],
+      "ui": {
+        "actions": {
+          "clear": "Clear",
+          "download": "Download",
+          "upscale": "Upscale",
+          "upscaling": "Upscaling...",
+          "view": "View",
+          "close": "Close"
+        },
+        "aria": {
+          "openPreview": "Open {label} preview",
+          "previewAlt": "{label} preview",
+          "closePreview": "Close preview",
+          "viewer": "Image viewer",
+          "prevImage": "Previous image",
+          "nextImage": "Next image"
+        },
+        "diagnostics": {
+          "crossOrigin": "Cross-origin isolated",
+          "sharedArrayBuffer": "SharedArrayBuffer",
+          "webgpu": "WebGPU",
+          "webgpuF16": "WebGPU F16 support",
+          "webgpuF16Enabled": "WebGPU F16 enabled",
+          "hardwareThreads": "Hardware threads",
+          "wasmThreads": "WASM threads"
+        },
+        "drop": {
+          "choose": "Choose an image",
+          "dropHere": "Drop image here",
+          "release": "Release to upload",
+          "replace": "Replace image",
+          "formats": "PNG, JPG, WebP",
+          "formatsHint": "PNG, JPG, WebP · drag & drop or click"
+        },
+        "errors": {
+          "selectImage": "Please select an image file.",
+          "readImage": "Unable to read this image.",
+          "canvas": "Canvas is not available.",
+          "renderOutput": "Unable to render output image.",
+          "webgpuUnavailable": "WebGPU is not available in this browser. Switch to WASM.",
+          "workerCrashed": "Worker crashed.",
+          "workerMessage": "Worker message could not be deserialized.",
+          "upscaleFailed": "Upscale failed."
+        },
+        "hints": {
+          "firstRun": "First run downloads the model from Hugging Face.",
+          "runtimeAvailable": "WebGPU uses GPU acceleration. WASM uses multi-threaded CPU when available.",
+          "runtimeUnavailable": "WebGPU not available in this browser. WASM uses multi-threaded CPU when available.",
+          "dataType": "Q4 is the fastest overall. Q4F16 targets WebGPU, FP32 keeps the best detail, and UINT8 is fastest on CPU.",
+          "memory": "Auto release keeps memory low by unloading weights after each run.",
+          "tiled": "Tiled mode processes the image in smaller chunks to reduce memory.",
+          "previewOriginal": "Load an image to preview it.",
+          "previewUpscaledReady": "Upscaled output ready.",
+          "previewUpscaledEmpty": "Click upscale to generate output.",
+          "runtimeDiagnostics": "WASM multi-threading requires cross-origin isolation (COOP/COEP).",
+          "viewer": "Use the arrow keys or click the left/right edges to switch images."
+        },
+        "labels": {
+          "source": "Source",
+          "original": "Original",
+          "upscaled": "Upscaled",
+          "run": "Run",
+          "dimensions": "Dimensions",
+          "originalSize": "Original size",
+          "noFile": "No file yet",
+          "modelBadge": "Scale {scale}x",
+          "tileSummary": "{size}px tiles · {overlap}px overlap",
+          "tileFull": "Full image",
+          "outputSummary": "Output {dimensions}",
+          "expectedSummary": "Expected {dimensions}",
+          "noOutput": "No output yet",
+          "modelSettings": "Model settings",
+          "modelSource": "Model source (Hugging Face)",
+          "runtimeDiagnostics": "Runtime diagnostics",
+          "runtime": "Runtime",
+          "runtimeDetailGpu": "GPU",
+          "runtimeDetailCpu": "CPU",
+          "runtimeDetailUnavailable": "Unavailable",
+          "dataType": "Data type",
+          "dataTypeWebgpuOnly": "WebGPU only",
+          "dataTypeUnavailable": "Unavailable",
+          "dataTypeChecking": "Checking...",
+          "dataTypeUnsupported": "Unsupported",
+          "memory": "Memory",
+          "tiledUpscale": "Tiled upscale",
+          "tileSize": "Tile size",
+          "overlap": "Overlap",
+          "upscaleModel": "Upscale model",
+          "loadedDetail": "{model} · {precision} · {device} · {dtype}",
+          "yes": "Yes",
+          "no": "No",
+          "threadMulti": "{count} (multi)",
+          "threadSingle": "1 (single)",
+          "none": "—"
+        },
+        "status": {
+          "preparingWorker": "Preparing worker...",
+          "loadingModel": "Loading model...",
+          "upscaling": "Upscaling image...",
+          "loaded": "Loaded: {label}",
+          "ready": "Model loaded and ready.",
+          "modelFailed": "Model failed to load.",
+          "q4f16Blocked": "Q4F16 requires WebGPU with F16 support.",
+          "modelReleased": "Model unloaded to save memory.",
+          "readyToLoad": "Ready to load the model.",
+          "needImage": "Load an image to begin."
+        },
+        "models": {
+          "2x": {
+            "label": "2x RRDB GAN",
+            "summary": "Sharper line art with light texture cleanup."
+          },
+          "4x": {
+            "label": "4x GRL GAN",
+            "summary": "Heavy upscale for posters and print output."
+          }
+        },
+        "precision": {
+          "fp32": {
+            "label": "Quality",
+            "summary": "Full precision for best detail."
+          },
+          "q4": {
+            "label": "Ultra Fast",
+            "summary": "Fastest overall with 4-bit weights."
+          },
+          "uint8": {
+            "label": "CPU Fast",
+            "summary": "Fastest on CPU runtimes with 8-bit weights."
+          },
+          "q4f16": {
+            "label": "GPU Boost",
+            "summary": "4-bit weights with F16 accumulation on WebGPU."
+          }
+        },
+        "memory": {
+          "auto": {
+            "label": "Release after run",
+            "detail": "Lower memory",
+            "summary": "Unload the model once the output is ready."
+          },
+          "keep": {
+            "label": "Keep model loaded",
+            "detail": "Faster reruns",
+            "summary": "Hold the model in memory for quick repeats."
+          }
+        },
+        "tile": {
+          "full": {
+            "label": "Full image",
+            "summary": "Single pass for smaller images."
+          },
+          "tiled": {
+            "label": "Tiled",
+            "summary": "Split into tiles to reduce memory use."
+          },
+          "size": {
+            "256": "Lowest memory use.",
+            "384": "Balanced for mid-size images.",
+            "512": "Default balance of speed and memory.",
+            "768": "Fewer tiles, more memory.",
+            "1024": "Best for large GPUs."
+          },
+          "overlap": {
+            "16": "Fastest, may show seams.",
+            "32": "Default seam reduction.",
+            "48": "Smoother transitions.",
+            "64": "Best for heavy textures."
+          }
+        },
+        "runtime": {
+          "webgpu": {
+            "summary": "Fastest on supported GPUs."
+          },
+          "wasm": {
+            "summary": "CPU runtime with multi-threading when available."
+          }
+        }
+      }
+    },
+    "paddleocr-onnx": {
+      "title": "WebGPU OCR",
+      "description": "Extract text with PaddleOCR ONNX models running in the browser.",
+      "badge": "WebGPU",
+      "highlights": [
+        "PaddleOCR",
+        "On-device",
+        "WebGPU"
+      ],
+      "ui": {
+        "actions": {
+          "recognize": "Recognize",
+          "copy": "Copy text",
+          "copied": "Copied",
+          "clear": "Clear",
+          "unload": "Unload",
+          "filterLow": "Filter <{threshold}",
+          "showAll": "Show all",
+          "showLess": "Show less"
+        },
+        "aria": {
+          "uploadPreview": "Uploaded preview",
+          "lowConfidenceThreshold": "Low confidence threshold"
+        },
+        "errors": {
+          "workerUnavailable": "Worker unavailable.",
+          "workerCrashed": "Worker crashed.",
+          "readImage": "Unable to read this image.",
+          "canvas": "Canvas is not available.",
+          "noImage": "Upload an image before running OCR.",
+          "webgpuUnavailable": "WebGPU is not available in this browser.",
+          "ocrFailed": "OCR failed. Please try again.",
+          "copyFailed": "Copy failed."
+        },
+        "hints": {
+          "run": "Run OCR to extract text."
+        },
+        "labels": {
+          "language": "Language",
+          "webgpu": "WebGPU {status}",
+          "webgpuStatus": {
+            "checking": "checking",
+            "ready": "ready",
+            "needed": "needed"
+          },
+          "model": "Model {status}",
+          "modelWarm": "warm",
+          "modelIdle": "idle",
+          "input": "Input",
+          "result": "Result",
+          "overall": "Overall",
+          "confidence": "Confidence",
+          "lines": "Lines",
+          "line": "Line {index}",
+          "threshold": "Threshold",
+          "showBoxes": "Show boxes",
+          "boxCount": "{count, plural, one {# box} other {# boxes}}",
+          "noBoxes": "No boxes yet",
+          "segments": "{count, plural, one {# segment} other {# segments}}",
+          "noLowLines": "No low-confidence lines",
+          "lowOfTotal": "{low} low of {total}",
+          "showingLow": "Showing {visible} of {low} low",
+          "totalLines": "{count} lines",
+          "showingLines": "Showing {visible} of {total}",
+          "uploadPrompt": "Drop an image, or click to upload",
+          "uploadHint": "PNG, JPG, or WEBP works best.",
+          "modelSource": "Model source (Hugging Face)",
+          "detection": "Detection",
+          "recognition": "Recognition",
+          "usageNotes": "Usage notes",
+          "usageNote1": "WebGPU is required. Use a Chromium browser with WebGPU enabled.",
+          "usageNote2": "Larger models take longer to download the first time. Files are cached by the browser after the initial run.",
+          "usageNote3": "Line boxes are approximate. Use confidence as a heuristic, not a guarantee.",
+          "none": "—",
+          "confidenceUnknown": "Unknown",
+          "confidenceHigh": "High",
+          "confidenceMedium": "Medium",
+          "confidenceLow": "Low"
+        },
+        "stats": {
+          "avg": "Avg {value}",
+          "range": "Range {min}–{max}",
+          "counts": "High {high} · Mid {medium} · Low {low}"
+        },
+        "status": {
+          "needImage": "Drop an image or click to upload.",
+          "loadingBase": "Loading model",
+          "loading": "{status}{progress}...",
+          "running": "Running OCR...",
+          "complete": "OCR complete in {ms} ms.",
+          "ready": "Ready to recognize text."
+        },
+        "languages": {
+          "english": {
+            "label": "English",
+            "summary": "Latin letters, numbers, punctuation"
+          },
+          "latin": {
+            "label": "Latin",
+            "summary": "FR / DE / ES / IT / PT"
+          },
+          "chinese": {
+            "label": "Chinese / Japanese",
+            "summary": "CJK with mixed Latin"
+          },
+          "korean": {
+            "label": "Korean",
+            "summary": "Hangul + Latin"
+          },
+          "greek": {
+            "label": "Greek",
+            "summary": "Greek + Latin"
+          },
+          "thai": {
+            "label": "Thai",
+            "summary": "Thai + Latin"
+          },
+          "cyrillic": {
+            "label": "Cyrillic",
+            "summary": "RU / UA / BG / BY"
+          },
+          "arabic": {
+            "label": "Arabic / Urdu / Persian",
+            "summary": "PP-OCRv3 recognition"
+          },
+          "hindi": {
+            "label": "Hindi / Marathi / Nepali",
+            "summary": "PP-OCRv3 recognition"
+          },
+          "tamil": {
+            "label": "Tamil",
+            "summary": "PP-OCRv3 recognition"
+          },
+          "telugu": {
+            "label": "Telugu",
+            "summary": "PP-OCRv3 recognition"
+          }
+        }
+      }
+    },
+    "image-compress": {
+      "title": "Image Compress",
+      "description": "Shrink assets without losing detail.",
+      "ui": {
+        "actions": {
+          "clear": "Clear",
+          "compress": "Compress",
+          "compressing": "Compressing...",
+          "download": "Download"
+        },
+        "aria": {
+          "originalPreview": "Original preview",
+          "compressedPreview": "Compressed preview"
+        },
+        "drop": {
+          "choose": "Choose an image",
+          "dropHere": "Drop image here",
+          "release": "Release to upload",
+          "replace": "Replace image",
+          "formats": "PNG, JPG, WebP",
+          "formatsHint": "PNG, JPG, WebP · drag & drop or click"
+        },
+        "errors": {
+          "read": "Unable to read this image.",
+          "selectImage": "Please select an image file.",
+          "dropImage": "Please drop an image file.",
+          "canvas": "Canvas is not available.",
+          "compress": "Compression failed."
+        },
+        "helpers": {
+          "original": "Load an image to preview it.",
+          "compressed": "Compressed output will appear here."
+        },
+        "labels": {
+          "source": "Source",
+          "settings": "Settings",
+          "format": "Format",
+          "quality": "Quality",
+          "lossless": "Lossless",
+          "maxWidth": "Max width",
+          "maxHeight": "Max height",
+          "original": "Original",
+          "compressed": "Compressed"
+        },
+        "placeholders": {
+          "auto": "Auto"
+        },
+        "presets": {
+          "crisp": "Crisp",
+          "balanced": "Balanced",
+          "small": "Small"
+        },
+        "stats": {
+          "original": "Original",
+          "target": "Target {size}",
+          "dimensions": "Dimensions",
+          "smaller": "{percent}% smaller",
+          "larger": "{percent}% larger",
+          "empty": "—",
+          "noOutput": "No output yet"
+        },
+        "status": {
+          "pending": "Waiting for compression...",
+          "adjust": "Adjusting output...",
+          "onDevice": "On-device compression"
+        }
+      }
+    },
+    "base64": {
+      "title": "Base64",
+      "description": "Encode or decode instantly.",
+      "ui": {
+        "actions": {
+          "encode": "Encode",
+          "decode": "Decode",
+          "swap": "Swap",
+          "copy": "Copy",
+          "clear": "Clear"
+        },
+        "errors": {
+          "invalid": "Invalid Base64 input.",
+          "clipboard": "Failed to copy."
+        },
+        "labels": {
+          "input": "Input",
+          "output": "Output"
+        },
+        "placeholders": {
+          "input": "Paste text or Base64 here...",
+          "output": "Result will appear here."
+        },
+        "sample": "Hello from Zenith",
+        "status": {
+          "copied": "Copied to clipboard.",
+          "readyEncode": "Ready to encode.",
+          "readyDecode": "Ready to decode."
+        }
+      }
+    },
+    "aigc-detector": {
+      "title": "AIGC Detector",
+      "description": "Detect AI-generated Chinese text with on-device inference.",
+      "highlights": [
+        "Chinese",
+        "On-device",
+        "ONNX"
+      ],
+      "ui": {
+        "actions": {
+          "analyze": "Analyze",
+          "sample": "Sample",
+          "clear": "Clear",
+          "unload": "Unload"
+        },
+        "errors": {
+          "empty": "Please enter some text.",
+          "failed": "Analysis failed.",
+          "worker": "Worker unavailable.",
+          "workerCrashed": "Worker crashed."
+        },
+        "hints": {
+          "chunked": "Text will be split into chunks of {size} (max {max})."
+        },
+        "labels": {
+          "input": "Input",
+          "result": "Result",
+          "charCount": "{count} chars",
+          "chunk": "Chunk",
+          "chars": "chars",
+          "model": "Model {status}",
+          "loaded": "loaded",
+          "modelIdle": "idle",
+          "topLabel": "Top label",
+          "unknown": "Unknown",
+          "labelPrefix": "Label",
+          "analyzed": "Analyzed {count} chars",
+          "modelSource": "Model source",
+          "modelNote": "Runs fully on-device.",
+          "usageNotes": "Usage notes",
+          "usageNote1": "Best for Chinese text detection.",
+          "usageNote2": "Long texts are chunked automatically.",
+          "usageNote3": "Results are probabilistic."
+        },
+        "placeholders": {
+          "input": "Paste Chinese text to analyze..."
+        },
+        "sample": "这是一段示例文本，用于检测 AI 生成概率。",
+        "status": {
+          "idle": "Ready.",
+          "loading": "Loading model",
+          "running": "Analyzing...",
+          "complete": "Complete in {ms} ms.",
+          "noResult": "No result yet."
+        }
+      }
+    },
+    "uuid": {
+      "title": "UUID Generator",
+      "description": "Generate unique identifiers.",
+      "ui": {
+        "actions": {
+          "generate": "Generate",
+          "copy": "Copy",
+          "hyphens": "Hyphens",
+          "uppercase": "Uppercase"
+        },
+        "errors": {
+          "clipboard": "Failed to copy.",
+          "generate": "Failed to generate UUIDs.",
+          "rng": "Secure RNG is unavailable."
+        },
+        "labels": {
+          "count": "Count",
+          "output": "Output"
+        },
+        "status": {
+          "copied": "Copied to clipboard.",
+          "ready": "Ready to generate."
+        }
+      }
+    },
+    "local-time": {
+      "title": "Local Time",
+      "description": "Quick glance widget preview.",
+      "badge": "Widget",
+      "ui": {
+        "actions": {
+          "copyTime": "Copy time",
+          "copyIso": "Copy ISO",
+          "seconds": "Seconds",
+          "hour24": "24-hour"
+        },
+        "errors": {
+          "clipboard": "Failed to copy."
+        },
+        "labels": {
+          "localTime": "Local time",
+          "time": "Time",
+          "iso": "ISO",
+          "isoTimestamp": "ISO timestamp",
+          "timeZone": "Time zone",
+          "widgetNote": "Timezone follows your system settings."
+        },
+        "zones": {
+          "utc": "UTC",
+          "newYork": "New York",
+          "tokyo": "Tokyo"
+        },
+        "status": {
+          "ready": "Ready.",
+          "copied": "Copied to clipboard."
+        }
+      }
+    },
+    "address-generator": {
+      "title": "Address Generator",
+      "description": "Generate realistic addresses with names and phone numbers.",
+      "highlights": [
+        "OpenStreetMap",
+        "Copy ready",
+        "Saved list"
+      ],
+      "ui": {
+        "actions": {
+          "generate": "Generate",
+          "generating": "Generating...",
+          "copy": "Copy",
+          "copyAll": "Copy all",
+          "save": "Save",
+          "saveAddress": "Save address",
+          "openMap": "Open map",
+          "delete": "Delete",
+          "clearAll": "Clear all"
+        },
+        "errors": {
+          "generate": "Failed to generate address.",
+          "lookup": "Failed to fetch location data.",
+          "incomplete": "Address data is incomplete.",
+          "clipboard": "Failed to copy."
+        },
+        "gender": {
+          "male": "Male",
+          "female": "Female"
+        },
+        "countries": {
+          "US": "United States",
+          "UK": "United Kingdom",
+          "FR": "France",
+          "DE": "Germany",
+          "CN": "China",
+          "TW": "Taiwan",
+          "HK": "Hong Kong",
+          "JP": "Japan",
+          "IN": "India",
+          "AU": "Australia",
+          "BR": "Brazil",
+          "CA": "Canada",
+          "RU": "Russia",
+          "ZA": "South Africa",
+          "MX": "Mexico",
+          "KR": "South Korea",
+          "IT": "Italy",
+          "ES": "Spain",
+          "TR": "Turkey",
+          "SA": "Saudi Arabia",
+          "AR": "Argentina",
+          "EG": "Egypt",
+          "NG": "Nigeria",
+          "ID": "Indonesia"
+        },
+        "labels": {
+          "country": "Country",
+          "profile": "Profile",
+          "name": "Name",
+          "gender": "Gender",
+          "phone": "Phone",
+          "address": "Address",
+          "notes": "Notes",
+          "notePrefix": "Note: {note}",
+          "allFields": "All fields",
+          "mapPreview": "Map preview",
+          "coordinates": "Coordinates",
+          "saved": "Saved",
+          "savedEntry": "Saved entry"
+        },
+        "placeholders": {
+          "note": "Add a note for this address"
+        },
+        "status": {
+          "ready": "Ready.",
+          "loading": "Loading...",
+          "copied": "Copied {label}.",
+          "waiting": "Waiting for a location...",
+          "retryHint": "Retry if the map doesn't load.",
+          "mapPlaceholder": "Map preview unavailable.",
+          "noSaved": "No saved addresses yet."
+        }
+      }
+    }
+  }
+}

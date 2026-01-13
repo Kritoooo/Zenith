@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import NextImage from "next/image";
 
 import { ArrowLeftIcon, UploadIcon } from "@/components/Icons";
@@ -20,11 +21,11 @@ type TileConfig = {
 
 type ModelOption = {
   id: UpscaleModelId;
-  label: string;
+  labelKey: string;
   scale: number;
   modelId: string;
   sourceUrl: string;
-  summary: string;
+  summaryKey: string;
 };
 
 type RawImage = {
@@ -100,164 +101,164 @@ type RuntimeDiagnostics = {
 const MODEL_OPTIONS: ModelOption[] = [
   {
     id: "2x",
-    label: "2x RRDB GAN",
+    labelKey: "models.2x.label",
     scale: 2,
     modelId: "Xenova/2x_APISR_RRDB_GAN_generator-onnx",
     sourceUrl: "https://huggingface.co/Xenova/2x_APISR_RRDB_GAN_generator-onnx",
-    summary: "Sharper line art with light texture cleanup.",
+    summaryKey: "models.2x.summary",
   },
   {
     id: "4x",
-    label: "4x GRL GAN",
+    labelKey: "models.4x.label",
     scale: 4,
     modelId: "Xenova/4x_APISR_GRL_GAN_generator-onnx",
     sourceUrl: "https://huggingface.co/Xenova/4x_APISR_GRL_GAN_generator-onnx",
-    summary: "Heavy upscale for posters and print output.",
+    summaryKey: "models.4x.summary",
   },
 ];
 
 const PRECISION_OPTIONS: Array<{
   id: PrecisionMode;
-  label: string;
+  labelKey: string;
   detail: string;
-  summary: string;
+  summaryKey: string;
 }> = [
   {
     id: "fp32",
-    label: "Quality",
+    labelKey: "precision.fp32.label",
     detail: "FP32",
-    summary: "Full precision for best detail.",
+    summaryKey: "precision.fp32.summary",
   },
   {
     id: "q4",
-    label: "Ultra Fast",
+    labelKey: "precision.q4.label",
     detail: "Q4",
-    summary: "Fastest overall with 4-bit weights.",
+    summaryKey: "precision.q4.summary",
   },
   {
     id: "uint8",
-    label: "CPU Fast",
+    labelKey: "precision.uint8.label",
     detail: "UINT8",
-    summary: "Fastest on CPU runtimes with 8-bit weights.",
+    summaryKey: "precision.uint8.summary",
   },
   {
     id: "q4f16",
-    label: "GPU Boost",
+    labelKey: "precision.q4f16.label",
     detail: "Q4F16",
-    summary: "4-bit weights with F16 accumulation on WebGPU.",
+    summaryKey: "precision.q4f16.summary",
   },
 ];
 
 const MEMORY_OPTIONS: Array<{
   id: MemoryMode;
-  label: string;
-  detail: string;
-  summary: string;
+  labelKey: string;
+  detailKey: string;
+  summaryKey: string;
 }> = [
   {
     id: "auto",
-    label: "Release after run",
-    detail: "Lower memory",
-    summary: "Unload the model once the output is ready.",
+    labelKey: "memory.auto.label",
+    detailKey: "memory.auto.detail",
+    summaryKey: "memory.auto.summary",
   },
   {
     id: "keep",
-    label: "Keep model loaded",
-    detail: "Faster reruns",
-    summary: "Hold the model in memory for quick repeats.",
+    labelKey: "memory.keep.label",
+    detailKey: "memory.keep.detail",
+    summaryKey: "memory.keep.summary",
   },
 ];
 
 const TILE_MODE_OPTIONS: Array<{
   id: TileMode;
-  label: string;
-  summary: string;
+  labelKey: string;
+  summaryKey: string;
 }> = [
   {
     id: "full",
-    label: "Full image",
-    summary: "Single pass for smaller images.",
+    labelKey: "tile.full.label",
+    summaryKey: "tile.full.summary",
   },
   {
     id: "tiled",
-    label: "Tiled",
-    summary: "Split into tiles to reduce memory use.",
+    labelKey: "tile.tiled.label",
+    summaryKey: "tile.tiled.summary",
   },
 ];
 
 const TILE_SIZE_OPTIONS: Array<{
   value: number;
   label: string;
-  summary: string;
+  summaryKey: string;
 }> = [
   {
     value: 256,
     label: "256px",
-    summary: "Lowest memory use.",
+    summaryKey: "tile.size.256",
   },
   {
     value: 384,
     label: "384px",
-    summary: "Balanced for mid-size images.",
+    summaryKey: "tile.size.384",
   },
   {
     value: 512,
     label: "512px",
-    summary: "Default balance of speed and memory.",
+    summaryKey: "tile.size.512",
   },
   {
     value: 768,
     label: "768px",
-    summary: "Fewer tiles, more memory.",
+    summaryKey: "tile.size.768",
   },
   {
     value: 1024,
     label: "1024px",
-    summary: "Best for large GPUs.",
+    summaryKey: "tile.size.1024",
   },
 ];
 
 const TILE_OVERLAP_OPTIONS: Array<{
   value: number;
   label: string;
-  summary: string;
+  summaryKey: string;
 }> = [
   {
     value: 16,
     label: "16px",
-    summary: "Fastest, may show seams.",
+    summaryKey: "tile.overlap.16",
   },
   {
     value: 32,
     label: "32px",
-    summary: "Default seam reduction.",
+    summaryKey: "tile.overlap.32",
   },
   {
     value: 48,
     label: "48px",
-    summary: "Smoother transitions.",
+    summaryKey: "tile.overlap.48",
   },
   {
     value: 64,
     label: "64px",
-    summary: "Best for heavy textures.",
+    summaryKey: "tile.overlap.64",
   },
 ];
 
 const RUNTIME_OPTIONS: Array<{
   id: RuntimeMode;
   label: string;
-  summary: string;
+  summaryKey: string;
 }> = [
   {
     id: "webgpu",
     label: "WebGPU",
-    summary: "Fastest on supported GPUs.",
+    summaryKey: "runtime.webgpu.summary",
   },
   {
     id: "wasm",
     label: "WASM",
-    summary: "CPU runtime with multi-threading when available.",
+    summaryKey: "runtime.wasm.summary",
   },
 ];
 
@@ -269,8 +270,11 @@ const formatBytes = (bytes: number) => {
   return `${(bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`;
 };
 
-const formatDimensions = (dimensions: { width: number; height: number } | null) => {
-  if (!dimensions) return "-";
+const formatDimensions = (
+  dimensions: { width: number; height: number } | null,
+  placeholder = "-"
+) => {
+  if (!dimensions) return placeholder;
   return `${dimensions.width} x ${dimensions.height}px`;
 };
 
@@ -278,8 +282,11 @@ type PreviewCardProps = {
   label: string;
   src: string | null;
   sizeLabel?: string;
-  helper?: string;
+  helper: string;
   onOpen?: () => void;
+  ariaLabel?: string;
+  alt?: string;
+  viewLabel: string;
 };
 
 type PreviewItem = {
@@ -290,7 +297,16 @@ type PreviewItem = {
   helper: string;
 };
 
-function PreviewCard({ label, src, sizeLabel, helper, onOpen }: PreviewCardProps) {
+function PreviewCard({
+  label,
+  src,
+  sizeLabel,
+  helper,
+  onOpen,
+  ariaLabel,
+  alt,
+  viewLabel,
+}: PreviewCardProps) {
   const isInteractive = Boolean(onOpen);
   return (
     <div className="flex min-h-[300px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 sm:min-h-[340px] lg:min-h-[420px]">
@@ -302,7 +318,7 @@ function PreviewCard({ label, src, sizeLabel, helper, onOpen }: PreviewCardProps
         type="button"
         onClick={onOpen}
         disabled={!isInteractive}
-        aria-label={isInteractive ? `Open ${label.toLowerCase()} preview` : undefined}
+        aria-label={isInteractive ? ariaLabel : undefined}
         className={cn(
           "group relative mt-3 flex flex-1 items-center justify-center rounded-[14px] bg-[color:var(--glass-recessed-bg)] p-3 text-left transition-colors disabled:cursor-default disabled:opacity-100",
           isInteractive
@@ -313,7 +329,7 @@ function PreviewCard({ label, src, sizeLabel, helper, onOpen }: PreviewCardProps
         {src ? (
           <NextImage
             src={src}
-            alt={`${label} preview`}
+            alt={alt ?? label}
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
             className="rounded-[12px] object-contain"
@@ -321,12 +337,12 @@ function PreviewCard({ label, src, sizeLabel, helper, onOpen }: PreviewCardProps
           />
         ) : (
           <p className="text-sm text-[color:var(--text-secondary)]">
-            {helper ?? "No preview yet."}
+            {helper}
           </p>
         )}
         {isInteractive ? (
           <span className="absolute bottom-3 right-3 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[color:var(--text-secondary)] opacity-0 transition-opacity group-hover:opacity-100">
-            View
+            {viewLabel}
           </span>
         ) : null}
       </button>
@@ -357,10 +373,6 @@ const checkWebGpuFp16Support = async () => {
   }
 };
 
-const formatBoolean = (value: boolean | null) => {
-  if (value === null) return "-";
-  return value ? "Yes" : "No";
-};
 
 const formatErrorMessage = (err: unknown, fallback: string) => {
   if (err instanceof Error && err.message) return err.message;
@@ -377,10 +389,6 @@ const formatErrorMessage = (err: unknown, fallback: string) => {
   return fallback;
 };
 
-const formatThreadLabel = (value: number | null) => {
-  if (value === null) return "-";
-  return value > 1 ? `${value} (multi)` : "1 (single)";
-};
 
 const getDtypeForPrecision = (
   precision: PrecisionMode
@@ -388,7 +396,7 @@ const getDtypeForPrecision = (
 
 const createUpscaleWorker = () => new Worker(new URL("./worker.ts", import.meta.url));
 
-const MODEL_RELEASE_MESSAGE = "Model unloaded to save memory.";
+const MODEL_RELEASE_MESSAGE = "MODEL_RELEASED";
 
 const getPipelineKey = (
   modelId: UpscaleModelId,
@@ -470,6 +478,7 @@ const loadImageDataFromUrl = async (url: string) => {
 };
 
 export default function AnimeUpscaleTool() {
+  const t = useTranslations("tools.anime-upscale.ui");
   const [inputUrl, setInputUrl] = useState<string | null>(null);
   const [inputSize, setInputSize] = useState<number | null>(null);
   const [inputDimensions, setInputDimensions] = useState<{
@@ -525,6 +534,33 @@ export default function AnimeUpscaleTool() {
     (runtimeMode !== "webgpu" ||
       !hasWebGPU ||
       runtimeDiagnostics.webgpuFp16 === false);
+  const noneLabel = t("labels.none");
+  const errorMap = useMemo<Record<string, string>>(
+    () => ({
+      "Please select an image file.": t("errors.selectImage"),
+      "Unable to read this image.": t("errors.readImage"),
+      "Canvas is not available.": t("errors.canvas"),
+      "Unable to render output image.": t("errors.renderOutput"),
+      "WebGPU is not available in this browser. Switch to WASM.": t(
+        "errors.webgpuUnavailable"
+      ),
+      "Worker crashed.": t("errors.workerCrashed"),
+      "Worker message could not be deserialized.": t("errors.workerMessage"),
+      "Upscale failed.": t("errors.upscaleFailed"),
+    }),
+    [t]
+  );
+  const localizeError = (message: string) => errorMap[message] ?? message;
+  const formatBoolean = (value: boolean | null) => {
+    if (value === null) return noneLabel;
+    return value ? t("labels.yes") : t("labels.no");
+  };
+  const formatThreadLabel = (value: number | null) => {
+    if (value === null) return noneLabel;
+    return value > 1
+      ? t("labels.threadMulti", { count: value })
+      : t("labels.threadSingle");
+  };
 
   useEffect(() => {
     if (!inputUrl) return;
@@ -623,45 +659,71 @@ export default function AnimeUpscaleTool() {
   }, [tileMode, tileOverlap, tileSize]);
 
   const tileSummaryLabel = tileSettings
-    ? `${tileSettings.size}px tiles · ${tileSettings.overlap}px overlap`
-    : "Full image";
+    ? t("labels.tileSummary", {
+        size: tileSettings.size,
+        overlap: tileSettings.overlap,
+      })
+    : t("labels.tileFull");
 
   const outputSummary = outputDimensions
-    ? `Output ${formatDimensions(outputDimensions)}`
+    ? t("labels.outputSummary", {
+        dimensions: formatDimensions(outputDimensions, noneLabel),
+      })
     : expectedDimensions
-      ? `Expected ${formatDimensions(expectedDimensions)}`
-      : "No output yet";
+      ? t("labels.expectedSummary", {
+          dimensions: formatDimensions(expectedDimensions, noneLabel),
+        })
+      : t("labels.noOutput");
 
   const loadedLabel = useMemo(() => {
     if (!loadedInfo) return null;
-    const modelLabel =
-      MODEL_OPTIONS.find((model) => model.id === loadedInfo.modelId)?.label ??
-      loadedInfo.modelId;
-    const precisionLabel =
-      PRECISION_OPTIONS.find((option) => option.id === loadedInfo.precision)
-        ?.label ?? loadedInfo.precision;
+    const modelOption = MODEL_OPTIONS.find(
+      (model) => model.id === loadedInfo.modelId
+    );
+    const precisionOption = PRECISION_OPTIONS.find(
+      (option) => option.id === loadedInfo.precision
+    );
+    const modelLabel = modelOption ? t(modelOption.labelKey) : loadedInfo.modelId;
+    const precisionLabel = precisionOption
+      ? t(precisionOption.labelKey)
+      : loadedInfo.precision;
     const deviceLabel = formatDeviceLabel(loadedInfo.device);
     const dtypeLabel = formatDtypeLabel(loadedInfo.dtype);
-    return `${modelLabel} · ${precisionLabel} · ${deviceLabel} · ${dtypeLabel}`;
-  }, [loadedInfo]);
+    return t("labels.loadedDetail", {
+      model: modelLabel,
+      precision: precisionLabel,
+      device: deviceLabel,
+      dtype: dtypeLabel,
+    });
+  }, [loadedInfo, t]);
 
   const statusLabel = useMemo(() => {
     if (isUpscaling) {
       if (modelMessage && modelMessage !== MODEL_RELEASE_MESSAGE) return modelMessage;
-      return "Upscaling image...";
+      return t("status.upscaling");
     }
     if (modelStatus === "loading") {
       const progressLabel =
         modelProgress !== null ? ` (${Math.min(modelProgress, 100)}%)` : "";
-      return `${modelMessage ?? "Loading model..."}${progressLabel}`;
+      const baseMessage =
+        modelMessage && modelMessage !== MODEL_RELEASE_MESSAGE
+          ? modelMessage
+          : t("status.loadingModel");
+      return `${baseMessage}${progressLabel}`;
     }
     if (modelStatus === "ready") {
-      return loadedLabel ? `Loaded: ${loadedLabel}` : "Model loaded and ready.";
+      return loadedLabel
+        ? t("status.loaded", { label: loadedLabel })
+        : t("status.ready");
     }
-    if (modelStatus === "error") return "Model failed to load.";
-    if (q4f16Blocked) return "Q4F16 requires WebGPU with F16 support.";
-    if (modelMessage) return modelMessage;
-    return inputUrl ? "Ready to load the model." : "Load an image to begin.";
+    if (modelStatus === "error") return t("status.modelFailed");
+    if (q4f16Blocked) return t("status.q4f16Blocked");
+    if (modelMessage) {
+      return modelMessage === MODEL_RELEASE_MESSAGE
+        ? t("status.modelReleased")
+        : modelMessage;
+    }
+    return inputUrl ? t("status.readyToLoad") : t("status.needImage");
   }, [
     inputUrl,
     isUpscaling,
@@ -670,23 +732,26 @@ export default function AnimeUpscaleTool() {
     modelProgress,
     modelStatus,
     q4f16Blocked,
+    t,
   ]);
 
   const previewItems = useMemo<PreviewItem[]>(
     () => [
       {
-        label: "Original",
+        label: t("labels.original"),
         src: inputUrl,
         sizeLabel: inputSize ? formatBytes(inputSize) : undefined,
         dimensions: inputDimensions,
-        helper: "Load an image to preview it.",
+        helper: t("hints.previewOriginal"),
       },
       {
-        label: "Upscaled",
+        label: t("labels.upscaled"),
         src: outputUrl,
         sizeLabel: outputSize ? formatBytes(outputSize) : undefined,
         dimensions: outputDimensions ?? expectedDimensions,
-        helper: outputUrl ? "Upscaled output ready." : "Click upscale to generate output.",
+        helper: outputUrl
+          ? t("hints.previewUpscaledReady")
+          : t("hints.previewUpscaledEmpty"),
       },
     ],
     [
@@ -697,6 +762,7 @@ export default function AnimeUpscaleTool() {
       outputDimensions,
       outputSize,
       outputUrl,
+      t,
     ]
   );
 
@@ -816,7 +882,7 @@ export default function AnimeUpscaleTool() {
 
   const loadFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file.");
+      setError(t("errors.selectImage"));
       return;
     }
     resetOutput();
@@ -832,7 +898,7 @@ export default function AnimeUpscaleTool() {
       setInputDimensions({ width: image.width, height: image.height });
     };
     image.onerror = () => {
-      setError("Unable to read this image.");
+      setError(t("errors.readImage"));
     };
     image.src = url;
   };
@@ -857,10 +923,10 @@ export default function AnimeUpscaleTool() {
     runtime: RuntimeMode
   ) => {
     if (runtime === "webgpu" && !hasWebGPU) {
-      throw new Error("WebGPU is not available in this browser. Switch to WASM.");
+      throw new Error(t("errors.webgpuUnavailable"));
     }
     setModelStatus("loading");
-    setModelMessage("Preparing worker...");
+    setModelMessage(t("status.preparingWorker"));
     setModelProgress(null);
     const imageData = await loadImageDataFromUrl(url);
     const runId = workerRunIdRef.current + 1;
@@ -888,22 +954,8 @@ export default function AnimeUpscaleTool() {
       const handleError = (event: Event | ErrorEvent) => {
         cleanup(true);
         const errorEvent = event as ErrorEvent;
-        const errorObject =
-          errorEvent?.error instanceof Error ? errorEvent.error : null;
-        const parts = [
-          errorEvent?.message ? `message: ${errorEvent.message}` : null,
-          errorObject?.message ? `error: ${errorObject.message}` : null,
-          errorEvent?.filename ? `file: ${errorEvent.filename}` : null,
-          typeof errorEvent?.lineno === "number"
-            ? `line: ${errorEvent.lineno}`
-            : null,
-          typeof errorEvent?.colno === "number"
-            ? `col: ${errorEvent.colno}`
-            : null,
-        ].filter(Boolean);
-        const details = parts.length ? `Worker error (${parts.join(", ")})` : "Worker crashed.";
-        console.error("Worker error event", event, errorObject?.stack ?? errorObject);
-        reject(new Error(details));
+        console.error("Worker error event", event, errorEvent?.message);
+        reject(new Error("Worker crashed."));
       };
       const handleMessage = (event: MessageEvent<WorkerResponseMessage>) => {
         const data = event.data;
@@ -996,7 +1048,9 @@ export default function AnimeUpscaleTool() {
         });
       }
     } catch (err) {
-      const message = formatErrorMessage(err, "Upscale failed.");
+      const message = localizeError(
+        formatErrorMessage(err, "Upscale failed.")
+      );
       console.error("Upscale failed", err);
       setError(message);
       setModelStatus("error");
@@ -1019,47 +1073,47 @@ export default function AnimeUpscaleTool() {
   };
 
   const dropTitle = isDragActive
-    ? "Drop image here"
+    ? t("drop.dropHere")
     : inputUrl
-      ? "Replace image"
-      : "Choose an image";
+      ? t("drop.replace")
+      : t("drop.choose");
   const dropSubtitle = isDragActive
-    ? "Release to upload"
+    ? t("drop.release")
     : inputUrl
-      ? "PNG, JPG, WebP"
-      : "PNG, JPG, WebP · drag & drop or click";
+      ? t("drop.formats")
+      : t("drop.formatsHint");
 
-  const modelBadge = `Scale ${selectedModel.scale}x`;
+  const modelBadge = t("labels.modelBadge", { scale: selectedModel.scale });
   const diagnosticItems = [
     {
-      label: "Cross-origin isolated",
+      label: t("diagnostics.crossOrigin"),
       value: formatBoolean(runtimeDiagnostics.crossOriginIsolated),
     },
     {
-      label: "SharedArrayBuffer",
+      label: t("diagnostics.sharedArrayBuffer"),
       value: formatBoolean(runtimeDiagnostics.sharedArrayBuffer),
     },
     {
-      label: "WebGPU",
+      label: t("diagnostics.webgpu"),
       value: formatBoolean(runtimeDiagnostics.hasWebGPU),
     },
     {
-      label: "WebGPU F16 support",
+      label: t("diagnostics.webgpuF16"),
       value: formatBoolean(runtimeDiagnostics.webgpuFp16),
     },
     {
-      label: "WebGPU F16 enabled",
+      label: t("diagnostics.webgpuF16Enabled"),
       value: formatBoolean(runtimeDiagnostics.webgpuFp16Enabled),
     },
     {
-      label: "Hardware threads",
+      label: t("diagnostics.hardwareThreads"),
       value:
         runtimeDiagnostics.hardwareConcurrency !== null
           ? `${runtimeDiagnostics.hardwareConcurrency}`
-          : "-",
+          : noneLabel,
     },
     {
-      label: "WASM threads",
+      label: t("diagnostics.wasmThreads"),
       value: formatThreadLabel(runtimeDiagnostics.wasmThreads),
     },
   ];
@@ -1071,14 +1125,14 @@ export default function AnimeUpscaleTool() {
           <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                Source
+                {t("labels.source")}
               </p>
               <button
                 type="button"
                 onClick={clearAll}
                 className="text-xs text-[color:var(--text-secondary)] transition-colors hover:text-[color:var(--text-primary)]"
               >
-                Clear
+                {t("actions.clear")}
               </button>
             </div>
             <label
@@ -1133,14 +1187,18 @@ export default function AnimeUpscaleTool() {
               </span>
             </label>
             <div className="flex flex-wrap gap-3 text-xs text-[color:var(--text-secondary)]">
-              <span>Original: {inputSize ? formatBytes(inputSize) : "-"}</span>
-              <span>Dimensions: {formatDimensions(inputDimensions)}</span>
+              <span>
+                {t("labels.originalSize")}: {inputSize ? formatBytes(inputSize) : noneLabel}
+              </span>
+              <span>
+                {t("labels.dimensions")}: {formatDimensions(inputDimensions, noneLabel)}
+              </span>
             </div>
             {error ? (
               <p className="text-xs text-rose-500/80">{error}</p>
             ) : (
               <p className="text-xs text-[color:var(--text-secondary)]">
-                First run downloads the model from Hugging Face.
+                {t("hints.firstRun")}
               </p>
             )}
           </div>
@@ -1148,7 +1206,7 @@ export default function AnimeUpscaleTool() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                  Run
+                  {t("labels.run")}
                 </p>
                 <p
                   className="text-xs text-[color:var(--text-secondary)]"
@@ -1169,7 +1227,7 @@ export default function AnimeUpscaleTool() {
                   {outputSummary}
                 </span>
                 <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2.5 py-1">
-                  {outputSize ? formatBytes(outputSize) : "No file yet"}
+                  {outputSize ? formatBytes(outputSize) : t("labels.noFile")}
                 </span>
               </div>
             </div>
@@ -1187,7 +1245,7 @@ export default function AnimeUpscaleTool() {
                     : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
                 )}
               >
-                {isUpscaling ? "Upscaling..." : "Upscale"}
+                {isUpscaling ? t("actions.upscaling") : t("actions.upscale")}
               </button>
               <button
                 type="button"
@@ -1200,7 +1258,7 @@ export default function AnimeUpscaleTool() {
                     : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
                 )}
               >
-                Download
+                {t("actions.download")}
               </button>
             </div>
             {(modelStatus === "loading" || isUpscaling) && modelProgress !== null ? (
@@ -1219,6 +1277,9 @@ export default function AnimeUpscaleTool() {
             src={previewItems[0].src}
             sizeLabel={previewItems[0].sizeLabel}
             helper={previewItems[0].helper}
+            viewLabel={t("actions.view")}
+            ariaLabel={t("aria.openPreview", { label: previewItems[0].label })}
+            alt={t("aria.previewAlt", { label: previewItems[0].label })}
             onOpen={canOpenViewer ? () => openViewerAt(0) : undefined}
           />
           <PreviewCard
@@ -1226,23 +1287,26 @@ export default function AnimeUpscaleTool() {
             src={previewItems[1].src}
             sizeLabel={previewItems[1].sizeLabel}
             helper={previewItems[1].helper}
+            viewLabel={t("actions.view")}
+            ariaLabel={t("aria.openPreview", { label: previewItems[1].label })}
+            alt={t("aria.previewAlt", { label: previewItems[1].label })}
             onOpen={canOpenViewer ? () => openViewerAt(1) : undefined}
           />
         </div>
         <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 lg:col-span-2">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Model settings
+              {t("labels.modelSettings")}
             </p>
             <span className="text-xs text-[color:var(--text-secondary)]">
-              {selectedModel.label}
+              {t(selectedModel.labelKey)}
             </span>
           </div>
           <div className="grid gap-4 xl:grid-cols-2">
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                  Runtime
+                  {t("labels.runtime")}
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {RUNTIME_OPTIONS.map((option) => {
@@ -1251,7 +1315,11 @@ export default function AnimeUpscaleTool() {
                     const isDisabled =
                       isUpscaling || modelStatus === "loading" || isUnavailable;
                     const detail =
-                      option.id === "webgpu" ? (hasWebGPU ? "GPU" : "Unavailable") : "CPU";
+                      option.id === "webgpu"
+                        ? hasWebGPU
+                          ? t("labels.runtimeDetailGpu")
+                          : t("labels.runtimeDetailUnavailable")
+                        : t("labels.runtimeDetailCpu");
                     return (
                       <button
                         key={option.id}
@@ -1295,7 +1363,7 @@ export default function AnimeUpscaleTool() {
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                          {option.summary}
+                          {t(option.summaryKey)}
                         </p>
                       </button>
                     );
@@ -1303,13 +1371,13 @@ export default function AnimeUpscaleTool() {
                 </div>
                 <p className="text-xs text-[color:var(--text-secondary)]">
                   {hasWebGPU
-                    ? "WebGPU uses GPU acceleration. WASM uses multi-threaded CPU when available."
-                    : "WebGPU not available in this browser. WASM uses multi-threaded CPU when available."}
+                    ? t("hints.runtimeAvailable")
+                    : t("hints.runtimeUnavailable")}
                 </p>
               </div>
               <div className="grid gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                  Data type
+                  {t("labels.dataType")}
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {PRECISION_OPTIONS.map((option) => {
@@ -1326,14 +1394,14 @@ export default function AnimeUpscaleTool() {
                       q4f16Unavailable;
                     const detail = isQ4F16
                       ? runtimeMode !== "webgpu"
-                        ? "WebGPU only"
+                        ? t("labels.dataTypeWebgpuOnly")
                         : !hasWebGPU
-                          ? "Unavailable"
+                          ? t("labels.dataTypeUnavailable")
                           : runtimeDiagnostics.webgpuFp16 === null
-                            ? "Checking..."
+                            ? t("labels.dataTypeChecking")
                             : runtimeDiagnostics.webgpuFp16
                               ? option.detail
-                              : "Unsupported"
+                              : t("labels.dataTypeUnsupported")
                       : option.detail;
                     return (
                       <button
@@ -1359,29 +1427,28 @@ export default function AnimeUpscaleTool() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-semibold text-[color:var(--text-primary)]">
-                            {option.label}
+                            {t(option.labelKey)}
                           </span>
                           <span className="text-xs text-[color:var(--text-secondary)]">
                             {detail}
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                          {option.summary}
+                          {t(option.summaryKey)}
                         </p>
                       </button>
                     );
                   })}
                 </div>
                 <p className="text-xs text-[color:var(--text-secondary)]">
-                  Q4 is the fastest overall. Q4F16 targets WebGPU, FP32 keeps the best
-                  detail, and UINT8 is fastest on CPU.
+                  {t("hints.dataType")}
                 </p>
               </div>
             </div>
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                  Memory
+                  {t("labels.memory")}
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {MEMORY_OPTIONS.map((option) => {
@@ -1411,26 +1478,26 @@ export default function AnimeUpscaleTool() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-semibold text-[color:var(--text-primary)]">
-                            {option.label}
+                            {t(option.labelKey)}
                           </span>
                           <span className="text-xs text-[color:var(--text-secondary)]">
-                            {option.detail}
+                            {t(option.detailKey)}
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                          {option.summary}
+                          {t(option.summaryKey)}
                         </p>
                       </button>
                     );
                   })}
                 </div>
                 <p className="text-xs text-[color:var(--text-secondary)]">
-                  Auto release keeps memory low by unloading weights after each run.
+                  {t("hints.memory")}
                 </p>
               </div>
               <div className="grid gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                  Tiled upscale
+                  {t("labels.tiledUpscale")}
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {TILE_MODE_OPTIONS.map((option) => {
@@ -1459,11 +1526,11 @@ export default function AnimeUpscaleTool() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-semibold text-[color:var(--text-primary)]">
-                            {option.label}
+                            {t(option.labelKey)}
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                          {option.summary}
+                          {t(option.summaryKey)}
                         </p>
                       </button>
                     );
@@ -1473,7 +1540,7 @@ export default function AnimeUpscaleTool() {
                   <div className="mt-2 grid gap-3">
                     <div className="grid gap-2">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                        Tile size
+                        {t("labels.tileSize")}
                       </p>
                       <div className="grid gap-2 sm:grid-cols-2">
                         {TILE_SIZE_OPTIONS.map((option) => {
@@ -1499,23 +1566,23 @@ export default function AnimeUpscaleTool() {
                                   : "border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]",
                                 isDisabled && "cursor-not-allowed opacity-60"
                               )}
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="text-sm font-semibold text-[color:var(--text-primary)]">
-                                  {option.label}
-                                </span>
-                              </div>
-                              <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                                {option.summary}
-                              </p>
-                            </button>
-                          );
-                        })}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-sm font-semibold text-[color:var(--text-primary)]">
+                                    {option.label}
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                                  {t(option.summaryKey)}
+                                </p>
+                              </button>
+                            );
+                          })}
                       </div>
                     </div>
                     <div className="grid gap-2">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                        Overlap
+                        {t("labels.overlap")}
                       </p>
                       <div className="grid gap-2 sm:grid-cols-2">
                         {TILE_OVERLAP_OPTIONS.map((option) => {
@@ -1541,29 +1608,29 @@ export default function AnimeUpscaleTool() {
                                   : "border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]",
                                 isDisabled && "cursor-not-allowed opacity-60"
                               )}
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="text-sm font-semibold text-[color:var(--text-primary)]">
-                                  {option.label}
-                                </span>
-                              </div>
-                              <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                                {option.summary}
-                              </p>
-                            </button>
-                          );
-                        })}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-sm font-semibold text-[color:var(--text-primary)]">
+                                    {option.label}
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                                  {t(option.summaryKey)}
+                                </p>
+                              </button>
+                            );
+                          })}
                       </div>
                     </div>
                   </div>
                 ) : null}
                 <p className="text-xs text-[color:var(--text-secondary)]">
-                  Tiled mode processes the image in smaller chunks to reduce memory.
+                  {t("hints.tiled")}
                 </p>
               </div>
               <div className="grid gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                  Upscale model
+                  {t("labels.upscaleModel")}
                 </p>
                 <div className="grid gap-3">
                   {MODEL_OPTIONS.map((model) => {
@@ -1597,14 +1664,14 @@ export default function AnimeUpscaleTool() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-semibold text-[color:var(--text-primary)]">
-                            {model.label}
+                            {t(model.labelKey)}
                           </span>
                           <span className="text-xs text-[color:var(--text-secondary)]">
                             {model.scale}x
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                          {model.summary}
+                          {t(model.summaryKey)}
                         </p>
                       </button>
                     );
@@ -1616,7 +1683,7 @@ export default function AnimeUpscaleTool() {
           <div className="grid gap-4 border-t border-[color:var(--glass-border)] pt-4 lg:grid-cols-2">
             <div className="rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-xs text-[color:var(--text-secondary)]">
               <p className="font-semibold uppercase tracking-wide text-[10px] text-[color:var(--text-secondary)]">
-                Runtime diagnostics
+                {t("labels.runtimeDiagnostics")}
               </p>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {diagnosticItems.map((item) => (
@@ -1632,12 +1699,12 @@ export default function AnimeUpscaleTool() {
                 ))}
               </div>
               <p className="mt-2 text-[10px] text-[color:var(--text-secondary)]">
-                WASM multi-threading requires cross-origin isolation (COOP/COEP).
+                {t("hints.runtimeDiagnostics")}
               </p>
             </div>
             <div className="rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-xs text-[color:var(--text-secondary)]">
               <p className="font-semibold uppercase tracking-wide text-[10px] text-[color:var(--text-secondary)]">
-                Model source (Hugging Face)
+                {t("labels.modelSource")}
               </p>
               <div className="mt-2 flex flex-col gap-1">
                 {MODEL_OPTIONS.map((model) => (
@@ -1662,13 +1729,13 @@ export default function AnimeUpscaleTool() {
             type="button"
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setViewerOpen(false)}
-            aria-label="Close preview"
+            aria-label={t("aria.closePreview")}
           />
           <div
             className="relative flex h-full w-full max-w-6xl flex-col gap-3 rounded-[24px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 shadow-[0_24px_60px_-40px_rgba(15,20,25,0.65)] backdrop-blur-[24px]"
             role="dialog"
             aria-modal="true"
-            aria-label="Image viewer"
+            aria-label={t("aria.viewer")}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1677,8 +1744,8 @@ export default function AnimeUpscaleTool() {
                   {activePreview.label}
                 </p>
                 <p className="text-sm text-[color:var(--text-secondary)]">
-                  {activePreview.sizeLabel ?? "No file yet"} -{" "}
-                  {formatDimensions(activePreview.dimensions)}
+                  {activePreview.sizeLabel ?? t("labels.noFile")} -{" "}
+                  {formatDimensions(activePreview.dimensions, noneLabel)}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1686,7 +1753,7 @@ export default function AnimeUpscaleTool() {
                   type="button"
                   onClick={handleViewerPrev}
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] transition-transform hover:-translate-y-0.5"
-                  aria-label="Previous image"
+                  aria-label={t("aria.prevImage")}
                 >
                   <ArrowLeftIcon className="h-4 w-4" />
                 </button>
@@ -1694,7 +1761,7 @@ export default function AnimeUpscaleTool() {
                   type="button"
                   onClick={handleViewerNext}
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] transition-transform hover:-translate-y-0.5"
-                  aria-label="Next image"
+                  aria-label={t("aria.nextImage")}
                 >
                   <ArrowLeftIcon className="h-4 w-4 rotate-180" />
                 </button>
@@ -1703,7 +1770,7 @@ export default function AnimeUpscaleTool() {
                   onClick={() => setViewerOpen(false)}
                   className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-4 py-2 text-xs font-semibold text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
                 >
-                  Close
+                  {t("actions.close")}
                 </button>
               </div>
             </div>
@@ -1711,7 +1778,7 @@ export default function AnimeUpscaleTool() {
               {activePreview.src ? (
                 <NextImage
                   src={activePreview.src}
-                  alt={`${activePreview.label} preview`}
+                  alt={t("aria.previewAlt", { label: activePreview.label })}
                   fill
                   sizes="100vw"
                   className="object-contain"
@@ -1726,7 +1793,7 @@ export default function AnimeUpscaleTool() {
                 type="button"
                 onClick={handleViewerPrev}
                 className="group absolute inset-y-0 left-0 flex w-1/4 items-center justify-start text-[color:var(--text-primary)] transition-colors hover:bg-black/20"
-                aria-label="Previous image"
+                aria-label={t("aria.prevImage")}
               >
                 <span className="ml-3 flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] shadow-[var(--glass-shadow)] opacity-0 transition-opacity group-hover:opacity-100">
                   <ArrowLeftIcon className="h-4 w-4" />
@@ -1736,7 +1803,7 @@ export default function AnimeUpscaleTool() {
                 type="button"
                 onClick={handleViewerNext}
                 className="group absolute inset-y-0 right-0 flex w-1/4 items-center justify-end text-[color:var(--text-primary)] transition-colors hover:bg-black/20"
-                aria-label="Next image"
+                aria-label={t("aria.nextImage")}
               >
                 <span className="mr-3 flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] shadow-[var(--glass-shadow)] opacity-0 transition-opacity group-hover:opacity-100">
                   <ArrowLeftIcon className="h-4 w-4 rotate-180" />
@@ -1744,7 +1811,7 @@ export default function AnimeUpscaleTool() {
               </button>
             </div>
             <p className="text-xs text-[color:var(--text-secondary)]">
-              Use the arrow keys or click the left/right edges to switch images.
+              {t("hints.viewer")}
             </p>
           </div>
         </div>

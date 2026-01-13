@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { locales } from "@/i18n/config";
+
 const RELOAD_KEY = "zenith-coi-reload";
 const COI_TOOL_PATHS = [
   "/tool/anime-upscale",
@@ -14,12 +16,23 @@ const getBasePath = () => {
   return basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
 };
 
+const stripLocalePrefix = (pathname: string) => {
+  const segments = pathname.split("/");
+  const maybeLocale = segments[1];
+  if (locales.includes(maybeLocale as (typeof locales)[number])) {
+    const rest = segments.slice(2).join("/");
+    return rest ? `/${rest}` : "/";
+  }
+  return pathname;
+};
+
 const normalizePathname = (pathname: string, basePath: string) => {
   if (basePath && pathname.startsWith(basePath)) {
     const trimmed = pathname.slice(basePath.length);
-    return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    const withSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return stripLocalePrefix(withSlash);
   }
-  return pathname;
+  return stripLocalePrefix(pathname);
 };
 
 const getActiveScope = (pathname: string, basePath: string) => {

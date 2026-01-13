@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { ArrowLeftIcon } from "@/components/Icons";
 import { GlassCard } from "@/components/GlassCard";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/cn";
 
 type ToolShellProps = {
@@ -10,6 +11,7 @@ type ToolShellProps = {
   description?: string;
   children: ReactNode;
   className?: string;
+  locale?: string;
 };
 
 export function ToolShell({
@@ -17,14 +19,18 @@ export function ToolShell({
   description,
   children,
   className,
+  locale,
 }: ToolShellProps) {
+  const t = useTranslations("toolShell");
+
   return (
     <GlassCard className={cn("flex flex-1 flex-col p-5 sm:p-7", className)}>
       <div className="flex items-center gap-3">
         <Link
           href="/"
+          locale={locale}
           className="flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] backdrop-blur-[16px] transition-transform hover:-translate-y-0.5"
-          aria-label="Back to home"
+          aria-label={t("backToHome")}
         >
           <ArrowLeftIcon className="h-4 w-4" />
         </Link>
