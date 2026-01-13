@@ -27,6 +27,7 @@
 - Registration: import and append `meta` in `src/tools/catalog.ts`; add a dynamic import in `src/tools/registry.ts`.
 - Categories: if you add a new category, update both `src/tools/types.ts` and `src/tools/palette.ts`.
 - Assets & styles: place static assets in `public/`. Prefer glassmorphism tokens in `src/app/globals.css` and Tailwind utilities.
+- COI tools: add the tool slug to `src/tools/coi-slugs.json`, then run `npm run coi:sync` to update `public/_headers` and `vercel.json`.
 
 ## i18n Rules
 - All translation keys referenced in code must exist in every locale file under `messages/` (validated by `npm run i18n:check`).

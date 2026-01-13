@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -11,11 +14,14 @@ const crossOriginHeaders = [
   { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
 ];
 
-const coiToolPaths = [
-  '/tool/anime-upscale/:path*',
-  '/tool/aigc-detector/:path*',
-  '/tool/paddleocr-onnx/:path*',
-];
+const coiToolSlugs = JSON.parse(
+  fs.readFileSync(
+    path.join(process.cwd(), "src", "tools", "coi-slugs.json"),
+    "utf8"
+  )
+) as string[];
+
+const coiToolPaths = coiToolSlugs.map((slug) => `/tool/${slug}/:path*`);
 
 const coiToolSources = [
   ...coiToolPaths,

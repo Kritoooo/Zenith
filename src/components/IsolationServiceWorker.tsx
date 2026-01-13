@@ -3,14 +3,9 @@
 import { useEffect } from "react";
 
 import { locales } from "@/i18n/config";
+import { COI_TOOL_PATHS } from "@/tools/coi";
 
 const RELOAD_KEY = "zenith-coi-reload";
-const COI_TOOL_PATHS = [
-  "/tool/anime-upscale",
-  "/tool/aigc-detector",
-  "/tool/paddleocr-onnx",
-];
-
 const getBasePath = () => {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   return basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
