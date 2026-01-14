@@ -5,7 +5,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AppLayout } from "@/components/AppLayout";
 import { ToolDocs } from "@/components/ToolDocs";
 import { ToolShell } from "@/components/ToolShell";
-import { locales, type Locale } from "@/i18n/config";
+import { buildLocales } from "@/i18n/build-locales";
+import { type Locale } from "@/i18n/config";
 import { getToolMetaBySlug, toolMetas } from "@/tools/catalog";
 import { getToolDocs } from "@/tools/docs";
 import { localizeToolMeta } from "@/tools/i18n";
@@ -21,7 +22,7 @@ type ToolPageProps = {
 };
 
 export function generateStaticParams(): ToolPageParams[] {
-  return locales.flatMap((locale) =>
+  return buildLocales.flatMap((locale) =>
     toolMetas.map((meta) => ({ locale, slug: meta.slug }))
   );
 }

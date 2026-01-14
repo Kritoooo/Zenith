@@ -3,10 +3,11 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 
 import { HtmlLang } from "@/components/HtmlLang";
-import { locales, type Locale } from "@/i18n/config";
+import { buildLocales } from "@/i18n/build-locales";
+import { type Locale } from "@/i18n/config";
 
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+  return buildLocales.map((locale) => ({ locale }));
 }
 
 type LocaleLayoutProps = {

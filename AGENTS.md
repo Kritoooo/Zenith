@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `src/app`: Next.js App Router pages, layout, and dynamic tool routes (e.g., `src/app/tool/[slug]`).
+- `src/app`: Next.js App Router pages, layout, and dynamic tool routes (e.g., `src/app/[locale]/tool/[slug]`).
 - `src/components`: shared UI building blocks (glass cards, bento grid, command palette).
 - `src/tools`: plug-in style tools. Each tool lives in `src/tools/<slug>/` with `index.tsx` (UI/logic) and `meta.ts` (registration metadata). `src/tools/catalog.ts` powers discovery, and `src/tools/registry.ts` maps slugs to components.
 - `public`: static assets.
@@ -11,6 +11,7 @@
 - `npm install`: install dependencies.
 - `npm run dev`: run the local dev server (http://localhost:3000).
 - `npm run build`: create a production build.
+- `npm run build:locales`: build per-locale static output and merge into `out` (uses `DEFAULT_LOCALE` for the root redirect + HTML lang).
 - `npm run start`: serve the production build (run after `build`).
 - `npm run lint`: run ESLint checks.
 - `npm run i18n:check`: validate translation keys across locales (CI gate).
@@ -43,7 +44,7 @@
 - If you introduce tests, use `*.test.ts` / `*.test.tsx` (or `__tests__/`) under `src/`, and add scripts to `package.json` to run them.
 
 ## Required Verification
-- After completing any feature, run: `npm run lint`, `npm run build`, and `npm run i18n:check`.
+- After completing any feature, run: `npm run lint`, `npm run build:locales`, and `npm run i18n:check`.
 - Fix any errors from these checks before considering the task done.
 
 ## Commit & Pull Request Guidelines
@@ -51,4 +52,4 @@
 - PRs should include: a clear summary, linked issue (if any), screenshots for UI changes, and the commands run (e.g., `npm run lint`).
 
 ## Configuration & Security
-- No environment variables are required today. If you add any, use `.env.local` and avoid committing secrets.
+- Optional env vars: `DEFAULT_LOCALE`, `NEXT_PUBLIC_DEFAULT_LOCALE`, `BUILD_LOCALES`, `HTML_LANG_LOCALE`. If you add any new env vars, use `.env.local` and avoid committing secrets.

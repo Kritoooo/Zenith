@@ -10,6 +10,8 @@ type LocaleToggleProps = {
   className?: string;
 };
 
+const LOCALE_STORAGE_KEY = "zenith-locale";
+
 export function LocaleToggle({ className }: LocaleToggleProps) {
   const locale = useLocale();
   const t = useTranslations();
@@ -22,6 +24,11 @@ export function LocaleToggle({ className }: LocaleToggleProps) {
     const query =
       typeof window !== "undefined" ? window.location.search : "";
     const href = query ? `${pathname}${query}` : pathname;
+    try {
+      window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+    } catch {
+      // Ignore storage errors.
+    }
     router.replace(href, { locale: nextLocale });
   };
 

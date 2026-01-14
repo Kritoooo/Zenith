@@ -3,7 +3,17 @@ import Script from "next/script";
 
 import "./globals.css";
 import IsolationServiceWorker from "@/components/IsolationServiceWorker";
-import { defaultLocale, toHtmlLang } from "@/i18n/config";
+import { defaultLocale, locales, toHtmlLang, type Locale } from "@/i18n/config";
+
+const normalizeLocale = (value: string) => value.trim().toLowerCase();
+
+const resolveHtmlLangLocale = (): Locale => {
+  const fromEnv = normalizeLocale(process.env.HTML_LANG_LOCALE ?? "");
+  if (fromEnv && locales.includes(fromEnv as Locale)) {
+    return fromEnv as Locale;
+  }
+  return defaultLocale;
+};
 
 export const metadata: Metadata = {
   title: "Zenith",
@@ -15,7 +25,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const htmlLang = toHtmlLang(defaultLocale);
+  const htmlLang = toHtmlLang(resolveHtmlLangLocale());
 
   return (
     <html lang={htmlLang} suppressHydrationWarning>

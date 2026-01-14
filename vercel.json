@@ -1,5 +1,5 @@
 {
-    "buildCommand": "npm run build",
+    "buildCommand": "npm run build:locales",
     "outputDirectory": "out",
     "framework": null,
     "rewrites": [
