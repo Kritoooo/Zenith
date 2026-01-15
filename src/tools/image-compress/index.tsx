@@ -8,7 +8,9 @@ import NextImage from "next/image";
 import { PrimaryButton, SecondaryButton } from "@/components/Button";
 import { UploadIcon } from "@/components/Icons";
 import { Select } from "@/components/Select";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { formatBytes } from "@/lib/formatBytes";
 
 type OutputFormat = "image/jpeg" | "image/webp" | "image/png";
 
@@ -23,14 +25,6 @@ const QUICK_PRESETS = [
   { key: "balanced", quality: 0.82 },
   { key: "small", quality: 0.7 },
 ];
-
-const formatBytes = (bytes: number) => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`;
-};
 
 const parseLimit = (value: string) => {
   const parsed = Number.parseInt(value, 10);
@@ -48,11 +42,12 @@ type PreviewCardProps = {
 
 function PreviewCard({ label, alt, src, sizeLabel, helper }: PreviewCardProps) {
   return (
-    <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-      <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
-        <span className="font-semibold uppercase tracking-wide">{label}</span>
-        {sizeLabel ? <span>{sizeLabel}</span> : null}
-      </div>
+    <ToolPanel
+      title={label}
+      actions={sizeLabel ? <span>{sizeLabel}</span> : null}
+      headerClassName="flex items-center justify-between text-xs text-[color:var(--text-secondary)]"
+      className="min-h-[260px]"
+    >
       <div className="relative mt-3 flex flex-1 items-center justify-center rounded-[14px] bg-[color:var(--glass-recessed-bg)] p-3">
         {src ? (
           <NextImage
@@ -69,7 +64,7 @@ function PreviewCard({ label, alt, src, sizeLabel, helper }: PreviewCardProps) {
           </p>
         )}
       </div>
-    </div>
+    </ToolPanel>
   );
 }
 
@@ -258,11 +253,9 @@ export default function ImageCompressTool() {
   return (
     <div className="flex h-full flex-col gap-5">
       <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
-        <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              {t("labels.source")}
-            </p>
+        <ToolPanel
+          title={t("labels.source")}
+          actions={
             <button
               type="button"
               onClick={clearAll}
@@ -270,7 +263,10 @@ export default function ImageCompressTool() {
             >
               {t("actions.clear")}
             </button>
-          </div>
+          }
+          headerClassName="flex items-center justify-between"
+          className="flex flex-col gap-4"
+        >
           <label
             className={cn(
               "group flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-3 rounded-[16px] border border-dashed border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-4 text-center text-sm text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]",
@@ -339,12 +335,10 @@ export default function ImageCompressTool() {
                 : t("status.onDevice")}
             </p>
           )}
-        </div>
-        <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              {t("labels.settings")}
-            </p>
+        </ToolPanel>
+        <ToolPanel
+          title={t("labels.settings")}
+          actions={
             <div className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-secondary)]">
               <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2.5 py-1">
                 {t("stats.target", { size: targetSummary })}
@@ -353,7 +347,10 @@ export default function ImageCompressTool() {
                 {sizeSummary ?? t("stats.noOutput")}
               </span>
             </div>
-          </div>
+          }
+          headerClassName="flex flex-wrap items-center justify-between gap-2"
+          className="flex flex-col gap-4"
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="text-xs text-[color:var(--text-secondary)]">
               <span id="image-compress-format-label" className="block">
@@ -460,7 +457,7 @@ export default function ImageCompressTool() {
               </span>
             ) : null}
           </div>
-        </div>
+        </ToolPanel>
       </div>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <PreviewCard

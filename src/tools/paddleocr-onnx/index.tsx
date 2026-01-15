@@ -6,7 +6,9 @@ import { useTranslations } from "next-intl";
 
 import { Select } from "@/components/Select";
 import { UploadIcon } from "@/components/Icons";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 type DetectionVersion = "v5" | "v3";
 
@@ -309,7 +311,9 @@ export default function PaddleOcrTool() {
   );
   const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
   const [hasWorker, setHasWorker] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy, reset } = useClipboard({
+    onError: (err) => setError(localizeError(formatErrorMessage(err, "Copy failed."))),
+  });
   const workerRef = useRef<Worker | null>(null);
   const workerRunIdRef = useRef(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -376,12 +380,6 @@ export default function PaddleOcrTool() {
       }
     };
   }, [imageUrl]);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timeout = window.setTimeout(() => setCopied(false), 1400);
-    return () => window.clearTimeout(timeout);
-  }, [copied]);
 
   const statusLine = useMemo(() => {
     if (error) return error;
@@ -625,11 +623,10 @@ export default function PaddleOcrTool() {
 
   const copyText = async () => {
     if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-    } catch (err) {
-      setError(localizeError(formatErrorMessage(err, "Copy failed.")));
+    setError(null);
+    const ok = await copy(text);
+    if (!ok) {
+      reset();
     }
   };
 
@@ -808,17 +805,18 @@ export default function PaddleOcrTool() {
         ) : null}
       </div>
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="flex min-h-[280px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
-            <span className="font-semibold uppercase tracking-wide">
-              {t("labels.input")}
-            </span>
-            {imageSize ? (
+        <ToolPanel
+          title={t("labels.input")}
+          actions={
+            imageSize ? (
               <span>
                 {imageSize.width} x {imageSize.height}px
               </span>
-            ) : null}
-          </div>
+            ) : null
+          }
+          headerClassName="flex items-center justify-between text-xs text-[color:var(--text-secondary)]"
+          className="min-h-[280px]"
+        >
           <div
             onDrop={handleDrop}
             onDragOver={(event) => {
@@ -905,13 +903,11 @@ export default function PaddleOcrTool() {
             onChange={handleUpload}
             className="hidden"
           />
-        </div>
-        <div className="flex min-h-[280px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
-            <span className="font-semibold uppercase tracking-wide">
-              {t("labels.result")}
-            </span>
-            {confidence !== null ? (
+        </ToolPanel>
+        <ToolPanel
+          title={t("labels.result")}
+          actions={
+            confidence !== null ? (
               <span className="flex items-center gap-2">
                 <span className="text-[10px] uppercase tracking-wide text-[color:var(--text-secondary)]">
                   {t("labels.overall")}
@@ -923,8 +919,11 @@ export default function PaddleOcrTool() {
                   {formatPercent(confidence)}
                 </span>
               </span>
-            ) : null}
-          </div>
+            ) : null
+          }
+          headerClassName="flex items-center justify-between text-xs text-[color:var(--text-secondary)]"
+          className="min-h-[280px]"
+        >
           <div className="mt-3 flex flex-1 flex-col gap-3 rounded-[14px] bg-[color:var(--glass-recessed-bg)] p-3">
             {confidence !== null || lineStats ? (
               <div className="rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2">
@@ -1095,7 +1094,7 @@ export default function PaddleOcrTool() {
               </div>
             ) : null}
           </div>
-        </div>
+        </ToolPanel>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-xs text-[color:var(--text-secondary)]">

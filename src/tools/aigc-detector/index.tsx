@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
 
 type ClassificationResult = {
@@ -361,13 +362,12 @@ export default function AigcDetectorTool() {
         ) : null}
       </div>
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="flex min-h-[280px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
-            <span className="font-semibold uppercase tracking-wide">
-              {t("labels.input")}
-            </span>
-            <span>{t("labels.charCount", { count: charCount })}</span>
-          </div>
+        <ToolPanel
+          title={t("labels.input")}
+          actions={<span>{t("labels.charCount", { count: charCount })}</span>}
+          headerClassName="flex items-center justify-between text-xs text-[color:var(--text-secondary)]"
+          className="min-h-[280px]"
+        >
           <textarea
             value={input}
             onChange={(event) => {
@@ -390,14 +390,13 @@ export default function AigcDetectorTool() {
               })}
             </p>
           ) : null}
-        </div>
-        <div className="flex min-h-[280px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
-            <span className="font-semibold uppercase tracking-wide">
-              {t("labels.result")}
-            </span>
-            {analysisStats ? <span>{analysisStats.duration} ms</span> : null}
-          </div>
+        </ToolPanel>
+        <ToolPanel
+          title={t("labels.result")}
+          actions={analysisStats ? <span>{analysisStats.duration} ms</span> : null}
+          headerClassName="flex items-center justify-between text-xs text-[color:var(--text-secondary)]"
+          className="min-h-[280px]"
+        >
           <div className="mt-3 flex flex-1 flex-col gap-3 rounded-[14px] bg-[color:var(--glass-recessed-bg)] p-3">
             {topResult ? (
               <>
@@ -461,7 +460,7 @@ export default function AigcDetectorTool() {
               </p>
             )}
           </div>
-        </div>
+        </ToolPanel>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-xs text-[color:var(--text-secondary)]">

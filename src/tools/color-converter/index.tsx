@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button, SecondaryButton } from "@/components/Button";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 type Rgb = { r: number; g: number; b: number };
 type Hsl = { h: number; s: number; l: number };
@@ -152,15 +154,15 @@ function InputRow({
   onCopy,
 }: InputRowProps) {
   return (
-    <div className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-          {label}
-        </p>
+    <ToolPanel
+      title={label}
+      actions={
         <SecondaryButton size="sm" onClick={onCopy}>
           {copyLabel}
         </SecondaryButton>
-      </div>
+      }
+      headerClassName="flex items-center justify-between"
+    >
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -168,7 +170,7 @@ function InputRow({
         placeholder={placeholder}
         className="mt-3 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
       />
-    </div>
+    </ToolPanel>
   );
 }
 
@@ -183,7 +185,9 @@ export default function ColorConverterTool() {
     formatHslInput(rgbToHsl(initialRgb))
   );
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const { copied, copy, reset } = useClipboard<string>({
+    onError: () => setError(t("errors.clipboard")),
+  });
 
   const syncFromRgb = (nextRgb: Rgb) => {
     const nextHsl = rgbToHsl(nextRgb);
@@ -195,12 +199,12 @@ export default function ColorConverterTool() {
 
   const setStatus = (message: string | null) => {
     setError(message);
-    if (message) setCopied(null);
+    if (message) reset();
   };
 
   const handleHexChange = (value: string) => {
     setHexInput(value);
-    setCopied(null);
+    reset();
     const cleaned = value.trim();
     if (!cleaned) {
       setStatus(null);
@@ -221,7 +225,7 @@ export default function ColorConverterTool() {
 
   const handleRgbChange = (value: string) => {
     setRgbInput(value);
-    setCopied(null);
+    reset();
     const cleaned = value.trim();
     if (!cleaned) {
       setStatus(null);
@@ -238,7 +242,7 @@ export default function ColorConverterTool() {
 
   const handleHslChange = (value: string) => {
     setHslInput(value);
-    setCopied(null);
+    reset();
     const cleaned = value.trim();
     if (!cleaned) {
       setStatus(null);
@@ -257,26 +261,21 @@ export default function ColorConverterTool() {
     const parsed = parseHex(value);
     if (!parsed) return;
     setStatus(null);
-    setCopied(null);
+    reset();
     syncFromRgb(parsed);
   };
 
   const copyValue = async (label: string, value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(label);
-      setError(null);
-      window.setTimeout(() => setCopied(null), 1400);
-    } catch {
-      setError(t("errors.clipboard"));
-    }
+    if (!value) return;
+    setError(null);
+    await copy(value, label);
   };
 
   const applyPreset = (hex: string) => {
     const parsed = parseHex(hex);
     if (!parsed) return;
     setStatus(null);
-    setCopied(null);
+    reset();
     syncFromRgb(parsed);
   };
 
@@ -287,7 +286,7 @@ export default function ColorConverterTool() {
       b: Math.floor(Math.random() * 256),
     };
     setStatus(null);
-    setCopied(null);
+    reset();
     syncFromRgb(nextRgb);
   };
 
@@ -331,15 +330,15 @@ export default function ColorConverterTool() {
       </div>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <div className="flex flex-1 flex-col gap-4">
-          <div className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                {t("labels.colorPicker")}
-              </p>
+          <ToolPanel
+            title={t("labels.colorPicker")}
+            actions={
               <span className="text-xs text-[color:var(--text-secondary)]">
                 {hexValue}
               </span>
-            </div>
+            }
+            headerClassName="flex items-center justify-between"
+          >
             <div className="relative mt-3">
               <input
                 type="color"
@@ -368,7 +367,7 @@ export default function ColorConverterTool() {
                 </span>
               </div>
             </div>
-          </div>
+          </ToolPanel>
           <InputRow
             label={t("labels.hex")}
             value={hexInput}
@@ -394,15 +393,16 @@ export default function ColorConverterTool() {
             onCopy={() => copyValue(t("labels.hsl"), formatHslCopy(hsl))}
           />
         </div>
-        <div className="flex min-h-[240px] flex-1 flex-col justify-between rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-5 shadow-[var(--glass-shadow)] lg:max-w-[260px]">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              {t("labels.preview")}
-            </p>
+        <ToolPanel
+          title={t("labels.preview")}
+          actions={
             <span className="text-xs text-[color:var(--text-secondary)]">
               {hexValue}
             </span>
-          </div>
+          }
+          headerClassName="flex items-center justify-between"
+          className="min-h-[240px] justify-between p-5 shadow-[var(--glass-shadow)] lg:max-w-[260px]"
+        >
           <div className="mt-4 flex flex-1 items-center justify-center">
             <div
               className="h-28 w-28 rounded-[26px] shadow-[0_18px_30px_-18px_rgba(0,0,0,0.6)]"
@@ -420,7 +420,7 @@ export default function ColorConverterTool() {
               B {rgb.b}
             </div>
           </div>
-        </div>
+        </ToolPanel>
       </div>
     </div>
   );

@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 type ClockZone = {
   key: "utc" | "newYork" | "tokyo";
@@ -22,7 +24,10 @@ export default function LocalTimeTool() {
   const [now, setNow] = useState(() => new Date());
   const [is24h, setIs24h] = useState(true);
   const [showSeconds, setShowSeconds] = useState(true);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { copied, copy } = useClipboard<string>({
+    onError: () => setError(t("errors.clipboard")),
+  });
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -80,13 +85,8 @@ export default function LocalTimeTool() {
   const isoString = now.toISOString();
 
   const copyValue = async (label: string, value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(label);
-      window.setTimeout(() => setCopied(null), 1400);
-    } catch {
-      setCopied(t("errors.clipboard"));
-    }
+    setError(null);
+    await copy(value, label);
   };
 
   const formatZoneTime = (zone: ClockZone) =>
@@ -147,7 +147,11 @@ export default function LocalTimeTool() {
         </div>
       </div>
       <p className="text-xs text-[color:var(--text-secondary)]" aria-live="polite">
-        {copied ? t("status.copied", { label: copied }) : t("status.ready")}
+        {error
+          ? error
+          : copied
+            ? t("status.copied", { label: copied })
+            : t("status.ready")}
       </p>
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <div className="relative overflow-hidden rounded-[20px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-6 shadow-[var(--glass-shadow)]">
@@ -186,10 +190,7 @@ export default function LocalTimeTool() {
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {WORLD_CLOCKS.map((zone) => (
-          <div
-            key={zone.timeZone}
-            className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 text-sm"
-          >
+          <ToolPanel key={zone.timeZone} className="text-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
               {t(`zones.${zone.key}`)}
             </p>
@@ -199,7 +200,7 @@ export default function LocalTimeTool() {
             <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
               {zone.timeZone}
             </p>
-          </div>
+          </ToolPanel>
         ))}
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 
 import { Button, PrimaryButton, SecondaryButton } from "@/components/Button";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
 
 type DiffOp = { type: "equal" | "delete" | "insert"; value: string };
@@ -1362,15 +1363,16 @@ export default function CodeCompareTool() {
               {exportError}
             </p>
           ) : null}
-          <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                {t("labels.diff")}
-              </p>
+          <ToolPanel
+            title={t("labels.diff")}
+            actions={
               <span className="text-xs text-[color:var(--text-secondary)]">
                 {viewMode === "split" ? t("labels.sideBySide") : t("labels.inline")}
               </span>
-            </div>
+            }
+            headerClassName="flex items-center justify-between"
+            className="min-h-[260px]"
+          >
             <div
               className="mt-3 flex-1 overflow-auto"
               ref={diffContainerRef}
@@ -1482,7 +1484,7 @@ export default function CodeCompareTool() {
                 </div>
               )}
             </div>
-          </div>
+          </ToolPanel>
         </>
       ) : null}
       <div className="flex flex-wrap items-center justify-end gap-2">
@@ -1497,10 +1499,10 @@ export default function CodeCompareTool() {
         </Button>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex min-h-[clamp(260px,45vh,520px)] flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            {t("labels.original")}
-          </p>
+        <ToolPanel
+          title={t("labels.original")}
+          className="min-h-[clamp(260px,45vh,520px)]"
+        >
           <textarea
             value={left}
             onChange={(event) => setLeft(event.target.value)}
@@ -1508,11 +1510,11 @@ export default function CodeCompareTool() {
             placeholder={t("placeholders.left")}
             className="mt-3 min-h-[clamp(220px,38vh,480px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
-        </div>
-        <div className="flex min-h-[clamp(260px,45vh,520px)] flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            {t("labels.updated")}
-          </p>
+        </ToolPanel>
+        <ToolPanel
+          title={t("labels.updated")}
+          className="min-h-[clamp(260px,45vh,520px)]"
+        >
           <textarea
             value={right}
             onChange={(event) => setRight(event.target.value)}
@@ -1520,7 +1522,7 @@ export default function CodeCompareTool() {
             placeholder={t("placeholders.right")}
             className="mt-3 min-h-[clamp(220px,38vh,480px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
-        </div>
+        </ToolPanel>
       </div>
     </div>
   );

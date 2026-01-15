@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { GhostButton, PrimaryButton, SecondaryButton } from "@/components/Button";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 type Language = "java" | "go" | "python";
 
@@ -684,7 +686,9 @@ export default function ClassToJsonTool() {
   const [mockOutput, setMockOutput] = useState("");
   const [mockCount, setMockCount] = useState(3);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState<"template" | "mock" | null>(null);
+  const { copied, copy, reset } = useClipboard<"template" | "mock">({
+    onError: () => setError(t("errors.clipboard")),
+  });
 
   const status = useMemo(() => {
     if (error) return error;
@@ -699,7 +703,7 @@ export default function ClassToJsonTool() {
       setError(t("errors.noFields"));
       setTemplateOutput("");
       setMockOutput("");
-      setCopied(null);
+      reset();
       return;
     }
 
@@ -717,13 +721,13 @@ export default function ClassToJsonTool() {
     setTemplateOutput(JSON.stringify(templateObject, null, 2));
     setMockOutput(JSON.stringify(mockObjects, null, 2));
     setError(null);
-    setCopied(null);
+    reset();
   };
 
   const loadSample = () => {
     setInput(SAMPLE_INPUTS[language]);
     setError(null);
-    setCopied(null);
+    reset();
   };
 
   const clearAll = () => {
@@ -731,19 +735,13 @@ export default function ClassToJsonTool() {
     setTemplateOutput("");
     setMockOutput("");
     setError(null);
-    setCopied(null);
+    reset();
   };
 
   const copyOutput = async (mode: "template" | "mock") => {
     const value = mode === "template" ? templateOutput : mockOutput;
     if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(mode);
-      window.setTimeout(() => setCopied(null), 1400);
-    } catch {
-      setError(t("errors.clipboard"));
-    }
+    await copy(value, mode);
   };
 
   return (
@@ -784,7 +782,7 @@ export default function ClassToJsonTool() {
               onChange={(event) => {
                 const value = Math.max(1, Math.min(10, Number(event.target.value)));
                 setMockCount(Number.isNaN(value) ? 1 : value);
-                setCopied(null);
+                reset();
               }}
               className="w-12 bg-transparent text-sm text-[color:var(--text-primary)] outline-none"
             />
@@ -801,26 +799,26 @@ export default function ClassToJsonTool() {
         {status}
       </p>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
-        <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            {t("labels.input")}
-          </p>
+        <ToolPanel
+          title={t("labels.input")}
+          className="min-h-[clamp(360px,58vh,720px)]"
+        >
           <textarea
             value={input}
             onChange={(event) => {
               setInput(event.target.value);
               if (error) setError(null);
-              if (copied) setCopied(null);
+              if (copied) reset();
             }}
             spellCheck={false}
             placeholder={t("placeholders.input")}
             className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
-        </div>
+        </ToolPanel>
         <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col gap-4">
-          <div className="flex flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              <p>{t("labels.template")}</p>
+          <ToolPanel
+            title={t("labels.template")}
+            actions={
               <SecondaryButton
                 size="sm"
                 onClick={() => copyOutput("template")}
@@ -828,7 +826,9 @@ export default function ClassToJsonTool() {
               >
                 {t("actions.copy")}
               </SecondaryButton>
-            </div>
+            }
+            headerClassName="flex flex-wrap items-center justify-between gap-2"
+          >
             <textarea
               value={templateOutput}
               readOnly
@@ -836,10 +836,10 @@ export default function ClassToJsonTool() {
               placeholder={t("placeholders.template")}
               className="mt-3 min-h-[200px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
             />
-          </div>
-          <div className="flex flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              <p>{t("labels.mockData")}</p>
+          </ToolPanel>
+          <ToolPanel
+            title={t("labels.mockData")}
+            actions={
               <SecondaryButton
                 size="sm"
                 onClick={() => copyOutput("mock")}
@@ -847,7 +847,9 @@ export default function ClassToJsonTool() {
               >
                 {t("actions.copy")}
               </SecondaryButton>
-            </div>
+            }
+            headerClassName="flex flex-wrap items-center justify-between gap-2"
+          >
             <textarea
               value={mockOutput}
               readOnly
@@ -855,7 +857,7 @@ export default function ClassToJsonTool() {
               placeholder={t("placeholders.mock")}
               className="mt-3 min-h-[200px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
             />
-          </div>
+          </ToolPanel>
         </div>
       </div>
     </div>

@@ -50,7 +50,10 @@
           "minify": "最小化",
           "copy": "复制",
           "collapseAll": "全部折叠",
-          "expandAll": "全部展开"
+          "expandAll": "全部展开",
+          "forceTree": "强制树形",
+          "hideInput": "隐藏输入",
+          "showInput": "显示输入"
         },
         "view": {
           "tree": "树形",
@@ -65,7 +68,8 @@
           "clipboard": "复制失败。"
         },
         "indent": {
-          "label": "缩进"
+          "label": "缩进",
+          "option": "{count} 空格"
         },
         "labels": {
           "input": "输入",
@@ -77,11 +81,21 @@
         },
         "sample": "{\n  \"name\": \"Zenith\",\n  \"active\": true,\n  \"tags\": [\"tooling\", \"design\"]\n}",
         "status": {
-          "copied": "已复制到剪贴板。"
+          "copied": "已复制到剪贴板。",
+          "processing": "正在格式化...",
+          "treeGuardSize": "数据量较大，已自动切换为 Raw 模式，可按需强制渲染树形。",
+          "treeGuardNodes": "节点超过 {limit} 个，树形预览已暂停，可改用 Raw 或强制渲染。",
+          "sizeLabel": "~{size} KB",
+          "nodeLabel": "{count} 个节点",
+          "forcedTree": "已强制树形，可能稍有卡顿。",
+          "indentLabel": "缩进 {count} 空格"
         },
         "summary": {
           "array": "数组",
           "object": "对象"
+        },
+        "font": {
+          "label": "字号 {size}px"
         }
       }
     },

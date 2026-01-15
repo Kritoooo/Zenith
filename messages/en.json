@@ -50,7 +50,10 @@
           "minify": "Minify",
           "copy": "Copy",
           "collapseAll": "Collapse all",
-          "expandAll": "Expand all"
+          "expandAll": "Expand all",
+          "forceTree": "Force tree",
+          "hideInput": "Hide input",
+          "showInput": "Show input"
         },
         "view": {
           "tree": "Tree",
@@ -65,7 +68,8 @@
           "clipboard": "Failed to copy."
         },
         "indent": {
-          "label": "Indent"
+          "label": "Indent",
+          "option": "{count} spaces"
         },
         "labels": {
           "input": "Input",
@@ -77,11 +81,21 @@
         },
         "sample": "{\n  \"name\": \"Zenith\",\n  \"active\": true,\n  \"tags\": [\"tooling\", \"design\"]\n}",
         "status": {
-          "copied": "Copied to clipboard."
+          "copied": "Copied to clipboard.",
+          "processing": "Formatting...",
+          "treeGuardSize": "Tree view is disabled for large payloads. Use Raw mode or force rendering.",
+          "treeGuardNodes": "Tree view is paused over {limit} nodes. Use Raw mode or force rendering.",
+          "sizeLabel": "~{size} KB",
+          "nodeLabel": "{count} nodes",
+          "forcedTree": "Tree forced - may be slower.",
+          "indentLabel": "Indent {count} spaces"
         },
         "summary": {
           "array": "Array",
           "object": "Object"
+        },
+        "font": {
+          "label": "Text {size}px"
         }
       }
     },

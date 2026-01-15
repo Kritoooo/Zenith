@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button, GhostButton, SecondaryButton } from "@/components/Button";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 type Mode = "encode" | "decode";
 
@@ -31,7 +33,9 @@ export default function Base64Tool() {
   const [input, setInput] = useState(sampleText);
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy, reset } = useClipboard({
+    onError: () => setError(t("errors.clipboard")),
+  });
 
   const status = useMemo(() => {
     if (error) return error;
@@ -46,10 +50,10 @@ export default function Base64Tool() {
       setMode(nextMode);
       setOutput(nextOutput);
       setError(null);
-      setCopied(false);
+      reset();
     } catch {
       setError(t("errors.invalid"));
-      setCopied(false);
+      reset();
       setOutput("");
       setMode(nextMode);
     }
@@ -66,18 +70,12 @@ export default function Base64Tool() {
     setInput("");
     setOutput("");
     setError(null);
-    setCopied(false);
+    reset();
   };
 
   const copyOutput = async () => {
     if (!output) return;
-    try {
-      await navigator.clipboard.writeText(output);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      setError(t("errors.clipboard"));
-    }
+    await copy(output);
   };
 
   return (
@@ -119,26 +117,20 @@ export default function Base64Tool() {
         {status}
       </p>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
-        <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            {t("labels.input")}
-          </p>
+        <ToolPanel title={t("labels.input")} className="min-h-[260px]">
           <textarea
             value={input}
             onChange={(event) => {
               setInput(event.target.value);
               setError(null);
-              setCopied(false);
+              reset();
             }}
             placeholder={t("placeholders.input")}
             spellCheck={false}
             className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
-        </div>
-        <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            {t("labels.output")}
-          </p>
+        </ToolPanel>
+        <ToolPanel title={t("labels.output")} className="min-h-[260px]">
           <textarea
             value={output}
             readOnly
@@ -146,7 +138,7 @@ export default function Base64Tool() {
             placeholder={t("placeholders.output")}
             className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
-        </div>
+        </ToolPanel>
       </div>
     </div>
   );

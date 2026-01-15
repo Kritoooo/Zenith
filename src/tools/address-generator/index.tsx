@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { DangerButton, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { Select } from "@/components/Select";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 type Coordinates = {
   lat: number;
@@ -1045,12 +1046,14 @@ export default function AddressGeneratorTool() {
   const [current, setCurrent] = useState<AddressResult | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const { copied, copy, reset } = useClipboard<string>({
+    onError: () => setError(t("errors.clipboard")),
+    timeoutMs: 1600,
+  });
   const [note, setNote] = useState("");
   const [savedEntries, setSavedEntries] = useState<SavedEntry[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const copyTimerRef = useRef<number | null>(null);
 
   const generateAddress = useCallback(async (country: CountryCode) => {
     abortRef.current?.abort();
@@ -1058,7 +1061,7 @@ export default function AddressGeneratorTool() {
     abortRef.current = controller;
     setStatus("loading");
     setError(null);
-    setCopied(null);
+    reset();
 
     try {
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
@@ -1120,7 +1123,7 @@ export default function AddressGeneratorTool() {
       }
       setStatus("error");
     }
-  }, [locale, t]);
+  }, [locale, reset, t]);
 
   useEffect(() => {
     generateAddress(selectedCountry);
@@ -1153,28 +1156,10 @@ export default function AddressGeneratorTool() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(savedEntries));
   }, [hasLoaded, savedEntries]);
 
-  useEffect(() => {
-    return () => {
-      if (copyTimerRef.current) {
-        window.clearTimeout(copyTimerRef.current);
-      }
-    };
-  }, []);
-
   const copyValue = useCallback(async (label: string, value: string) => {
     if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(label);
-      if (copyTimerRef.current) {
-        window.clearTimeout(copyTimerRef.current);
-      }
-      copyTimerRef.current = window.setTimeout(() => setCopied(null), 1600);
-    } catch {
-      setError(t("errors.clipboard"));
-      setCopied(null);
-    }
-  }, [t]);
+    await copy(value, label);
+  }, [copy]);
 
   const copyAll = useCallback(() => {
     if (!current) return;

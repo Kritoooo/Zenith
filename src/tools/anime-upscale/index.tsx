@@ -6,7 +6,9 @@ import { useTranslations } from "next-intl";
 import NextImage from "next/image";
 
 import { ArrowLeftIcon, UploadIcon } from "@/components/Icons";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { formatBytes } from "@/lib/formatBytes";
 
 type UpscaleModelId = "2x" | "4x";
 type PipelineDtype = "fp32" | "q4" | "uint8" | "q4f16";
@@ -262,14 +264,6 @@ const RUNTIME_OPTIONS: Array<{
   },
 ];
 
-const formatBytes = (bytes: number) => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`;
-};
-
 const formatDimensions = (
   dimensions: { width: number; height: number } | null,
   placeholder = "-"
@@ -309,11 +303,12 @@ function PreviewCard({
 }: PreviewCardProps) {
   const isInteractive = Boolean(onOpen);
   return (
-    <div className="flex min-h-[300px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 sm:min-h-[340px] lg:min-h-[420px]">
-      <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
-        <span className="font-semibold uppercase tracking-wide">{label}</span>
-        {sizeLabel ? <span>{sizeLabel}</span> : null}
-      </div>
+    <ToolPanel
+      title={label}
+      actions={sizeLabel ? <span>{sizeLabel}</span> : null}
+      headerClassName="flex items-center justify-between text-xs text-[color:var(--text-secondary)]"
+      className="min-h-[300px] sm:min-h-[340px] lg:min-h-[420px]"
+    >
       <button
         type="button"
         onClick={onOpen}
@@ -346,7 +341,7 @@ function PreviewCard({
           </span>
         ) : null}
       </button>
-    </div>
+    </ToolPanel>
   );
 }
 
@@ -1122,11 +1117,9 @@ export default function AnimeUpscaleTool() {
     <div className="flex h-full flex-col gap-5">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                {t("labels.source")}
-              </p>
+          <ToolPanel
+            title={t("labels.source")}
+            actions={
               <button
                 type="button"
                 onClick={clearAll}
@@ -1134,7 +1127,10 @@ export default function AnimeUpscaleTool() {
               >
                 {t("actions.clear")}
               </button>
-            </div>
+            }
+            headerClassName="flex items-center justify-between"
+            className="flex flex-col gap-4"
+          >
             <label
               className={cn(
                 "group flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-3 rounded-[16px] border border-dashed border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-4 text-center text-sm text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]",
@@ -1201,8 +1197,8 @@ export default function AnimeUpscaleTool() {
                 {t("hints.firstRun")}
               </p>
             )}
-          </div>
-          <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+          </ToolPanel>
+          <ToolPanel className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
@@ -1269,7 +1265,7 @@ export default function AnimeUpscaleTool() {
                 />
               </div>
             ) : null}
-          </div>
+          </ToolPanel>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           <PreviewCard
@@ -1293,15 +1289,16 @@ export default function AnimeUpscaleTool() {
             onOpen={canOpenViewer ? () => openViewerAt(1) : undefined}
           />
         </div>
-        <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 lg:col-span-2">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              {t("labels.modelSettings")}
-            </p>
+        <ToolPanel
+          title={t("labels.modelSettings")}
+          actions={
             <span className="text-xs text-[color:var(--text-secondary)]">
               {t(selectedModel.labelKey)}
             </span>
-          </div>
+          }
+          headerClassName="flex items-center justify-between gap-2"
+          className="flex flex-col gap-4 lg:col-span-2"
+        >
           <div className="grid gap-4 xl:grid-cols-2">
             <div className="grid gap-4">
               <div className="grid gap-2">
@@ -1721,7 +1718,7 @@ export default function AnimeUpscaleTool() {
               </div>
             </div>
           </div>
-        </div>
+        </ToolPanel>
       </div>
       {viewerOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

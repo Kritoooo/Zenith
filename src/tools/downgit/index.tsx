@@ -9,6 +9,7 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from "@/components/Button";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
 
 const SAMPLE_URL = "https://github.com/Kritoooo/Zenith";
@@ -1019,7 +1020,7 @@ export default function DownGitTool() {
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+          <ToolPanel className="flex flex-col gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
                 {t("labels.target")}
@@ -1063,16 +1064,17 @@ export default function DownGitTool() {
                 {t("actions.viewOnGitHub")}
               </a>
             ) : null}
-          </div>
-          <div className="flex flex-col gap-3 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                {t("labels.status")}
-              </p>
+          </ToolPanel>
+          <ToolPanel
+            title={t("labels.status")}
+            actions={
               <span className="text-[11px] text-[color:var(--text-secondary)]">
                 {concurrencyLabel}
               </span>
-            </div>
+            }
+            headerClassName="flex items-center justify-between"
+            className="flex flex-col gap-3"
+          >
             <p
               className={cn(
                 "min-h-[1.25rem] text-xs",
@@ -1106,86 +1108,81 @@ export default function DownGitTool() {
                 </span>
               </div>
             </div>
-          </div>
+          </ToolPanel>
         </div>
-        <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              {t("labels.options")}
-            </p>
-            <div className="mt-3 flex flex-col gap-3">
-              <div>
-                <label className="text-xs text-[color:var(--text-secondary)]">
-                  {t("labels.refOverride")}
-                </label>
-                <input
-                  value={refOverride}
-                  onChange={(event) => {
-                    setRefOverride(event.target.value);
-                    setResolved(null);
-                    setError(null);
-                    setStatus(t("status.ready"));
-                  }}
-                  placeholder={parsedTarget?.ref ?? t("placeholders.defaultRef")}
-                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-[color:var(--text-secondary)]">
-                  {t("labels.outputFilename")}
-                </label>
-                <input
-                  value={outputName}
-                  onChange={(event) => setOutputName(event.target.value)}
-                  placeholder={
-                    resolved ? buildFileName(resolved) : t("placeholders.output")
-                  }
-                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-[color:var(--text-secondary)]">
-                  {t("labels.concurrentDownloads")}
-                </label>
-                <input
-                  value={concurrencyInput}
-                  onChange={(event) => setConcurrencyInput(event.target.value)}
-                  placeholder={t("placeholders.concurrencyAuto", {
-                    count: autoConcurrency,
-                  })}
-                  inputMode="numeric"
-                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-                />
-                <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                  {t("hints.concurrency", {
-                    min: MIN_CONCURRENCY,
-                    max: MAX_CONCURRENCY,
-                    effective: effectiveConcurrency,
-                  })}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-[color:var(--text-secondary)]">
-                  {t("labels.token")}
-                </label>
-                <input
-                  value={token}
-                  onChange={(event) => {
-                    setToken(event.target.value);
-                    setError(null);
-                    setStatus(t("status.ready"));
-                  }}
-                  placeholder={t("placeholders.token")}
-                  type="password"
-                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-                />
-                <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                  {t("hints.token")}
-                </p>
-              </div>
+        <ToolPanel title={t("labels.options")} className="flex flex-col gap-4">
+          <div className="mt-3 flex flex-col gap-3">
+            <div>
+              <label className="text-xs text-[color:var(--text-secondary)]">
+                {t("labels.refOverride")}
+              </label>
+              <input
+                value={refOverride}
+                onChange={(event) => {
+                  setRefOverride(event.target.value);
+                  setResolved(null);
+                  setError(null);
+                  setStatus(t("status.ready"));
+                }}
+                placeholder={parsedTarget?.ref ?? t("placeholders.defaultRef")}
+                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-[color:var(--text-secondary)]">
+                {t("labels.outputFilename")}
+              </label>
+              <input
+                value={outputName}
+                onChange={(event) => setOutputName(event.target.value)}
+                placeholder={
+                  resolved ? buildFileName(resolved) : t("placeholders.output")
+                }
+                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-[color:var(--text-secondary)]">
+                {t("labels.concurrentDownloads")}
+              </label>
+              <input
+                value={concurrencyInput}
+                onChange={(event) => setConcurrencyInput(event.target.value)}
+                placeholder={t("placeholders.concurrencyAuto", {
+                  count: autoConcurrency,
+                })}
+                inputMode="numeric"
+                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              />
+              <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
+                {t("hints.concurrency", {
+                  min: MIN_CONCURRENCY,
+                  max: MAX_CONCURRENCY,
+                  effective: effectiveConcurrency,
+                })}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs text-[color:var(--text-secondary)]">
+                {t("labels.token")}
+              </label>
+              <input
+                value={token}
+                onChange={(event) => {
+                  setToken(event.target.value);
+                  setError(null);
+                  setStatus(t("status.ready"));
+                }}
+                placeholder={t("placeholders.token")}
+                type="password"
+                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              />
+              <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
+                {t("hints.token")}
+              </p>
             </div>
           </div>
-        </div>
+        </ToolPanel>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {[
@@ -1202,15 +1199,15 @@ export default function DownGitTool() {
             detail: t("cards.structure.detail"),
           },
         ].map((item) => (
-          <div
+          <ToolPanel
             key={item.title}
-            className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 text-xs text-[color:var(--text-secondary)]"
+            className="text-xs text-[color:var(--text-secondary)]"
           >
             <p className="text-sm font-semibold text-[color:var(--text-primary)]">
               {item.title}
             </p>
             <p className="mt-2">{item.detail}</p>
-          </div>
+          </ToolPanel>
         ))}
       </div>
     </div>

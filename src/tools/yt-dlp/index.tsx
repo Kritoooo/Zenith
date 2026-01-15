@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 
 import { Button, GhostButton, SecondaryButton } from "@/components/Button";
 import { Select } from "@/components/Select";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 const SAMPLE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 const DEFAULT_OUTPUT_TEMPLATE = "%(title)s.%(ext)s";
@@ -141,7 +143,7 @@ export default function YtDlpTool() {
   );
   const [rateLimit, setRateLimit] = useState(RECOMMENDED_SETTINGS.rateLimit);
   const [customArgs, setCustomArgs] = useState(RECOMMENDED_SETTINGS.customArgs);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy, reset } = useClipboard();
 
   const resolvedFormat = useMemo(() => {
     if (formatPreset !== "custom") return formatPreset;
@@ -288,13 +290,7 @@ export default function YtDlpTool() {
   }, [copied, customFormat, formatPreset, mode, t, url]);
 
   const copyCommand = async () => {
-    try {
-      await navigator.clipboard.writeText(command);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      setCopied(false);
-    }
+    await copy(command);
   };
 
   const applyRecommended = () => {
@@ -317,7 +313,7 @@ export default function YtDlpTool() {
     setDownloadArchive(RECOMMENDED_SETTINGS.downloadArchive);
     setRateLimit(RECOMMENDED_SETTINGS.rateLimit);
     setCustomArgs(RECOMMENDED_SETTINGS.customArgs);
-    setCopied(false);
+    reset();
   };
 
   const resetAll = () => {
@@ -333,7 +329,7 @@ export default function YtDlpTool() {
             variant={mode === "video" ? "primary" : "secondary"}
             onClick={() => {
               setMode("video");
-              setCopied(false);
+              reset();
             }}
             className="font-semibold"
           >
@@ -343,7 +339,7 @@ export default function YtDlpTool() {
             variant={mode === "audio" ? "primary" : "secondary"}
             onClick={() => {
               setMode("audio");
-              setCopied(false);
+              reset();
             }}
             className="font-semibold"
           >
@@ -354,7 +350,7 @@ export default function YtDlpTool() {
           <SecondaryButton
             onClick={() => {
               setUrl(SAMPLE_URL);
-              setCopied(false);
+              reset();
             }}
           >
             {t("actions.sampleUrl")}
@@ -374,27 +370,31 @@ export default function YtDlpTool() {
         {status}
       </p>
       <div className="flex flex-col gap-4">
-        <section className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between">
-            <SectionLabel>{t("labels.sourceUrl")}</SectionLabel>
+        <ToolPanel
+          as="section"
+          title={t("labels.sourceUrl")}
+          actions={
             <span className="text-[11px] text-[color:var(--text-secondary)]">
               {t("labels.supports")}
             </span>
-          </div>
+          }
+          headerClassName="flex items-center justify-between"
+        >
           <input
             value={url}
             onChange={(event) => {
               setUrl(event.target.value);
-              setCopied(false);
+              reset();
             }}
             placeholder={t("placeholders.url")}
             spellCheck={false}
             className="mt-3 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
-        </section>
-        <section className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between">
-            <SectionLabel>{t("labels.profile")}</SectionLabel>
+        </ToolPanel>
+        <ToolPanel
+          as="section"
+          title={t("labels.profile")}
+          actions={
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-[color:var(--text-secondary)]">
                 {isRecommended ? t("labels.profileRecommended") : t("labels.profileCustom")}
@@ -405,13 +405,15 @@ export default function YtDlpTool() {
                 </SecondaryButton>
               ) : null}
             </div>
-          </div>
+          }
+          headerClassName="flex items-center justify-between"
+        >
           <div className="mt-3 flex flex-wrap gap-2">
             <ToggleButton
               active={mode === "video"}
               onClick={() => {
                 setMode("video");
-                setCopied(false);
+                reset();
               }}
               label={t("actions.video")}
             />
@@ -419,7 +421,7 @@ export default function YtDlpTool() {
               active={mode === "audio"}
               onClick={() => {
                 setMode("audio");
-                setCopied(false);
+                reset();
               }}
               label={t("actions.audio")}
             />
@@ -434,7 +436,7 @@ export default function YtDlpTool() {
                       value={formatPreset}
                       onChange={(event) => {
                         setFormatPreset(event.target.value as FormatPreset);
-                        setCopied(false);
+                        reset();
                       }}
                       className="mt-2"
                       buttonClassName="border-transparent"
@@ -451,7 +453,7 @@ export default function YtDlpTool() {
                           value={customFormat}
                           onChange={(event) => {
                             setCustomFormat(event.target.value);
-                            setCopied(false);
+                            reset();
                           }}
                           placeholder="bv*+ba/b"
                           spellCheck={false}
@@ -469,7 +471,7 @@ export default function YtDlpTool() {
                       value={mergeFormat}
                       onChange={(event) => {
                         setMergeFormat(event.target.value as MergeFormat);
-                        setCopied(false);
+                        reset();
                       }}
                       className="mt-2"
                       buttonClassName="border-transparent"
@@ -493,7 +495,7 @@ export default function YtDlpTool() {
                       value={audioFormat}
                       onChange={(event) => {
                         setAudioFormat(event.target.value as AudioFormat);
-                        setCopied(false);
+                        reset();
                       }}
                       className="mt-2"
                       buttonClassName="border-transparent"
@@ -511,7 +513,7 @@ export default function YtDlpTool() {
                       value={audioQuality}
                       onChange={(event) => {
                         setAudioQuality(event.target.value);
-                        setCopied(false);
+                        reset();
                       }}
                       spellCheck={false}
                       placeholder={t("placeholders.audioQuality")}
@@ -530,7 +532,7 @@ export default function YtDlpTool() {
                     value={outputTemplate}
                     onChange={(event) => {
                       setOutputTemplate(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
                     placeholder={DEFAULT_OUTPUT_TEMPLATE}
@@ -543,7 +545,7 @@ export default function YtDlpTool() {
                     value={outputPath}
                     onChange={(event) => {
                       setOutputPath(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
                     placeholder={t("placeholders.outputFolder")}
@@ -562,7 +564,7 @@ export default function YtDlpTool() {
                       active={noPlaylist}
                       onClick={() => {
                         setNoPlaylist((prev) => !prev);
-                        setCopied(false);
+                        reset();
                       }}
                       label={t("actions.noPlaylist")}
                     />
@@ -574,7 +576,7 @@ export default function YtDlpTool() {
                     value={rateLimit}
                     onChange={(event) => {
                       setRateLimit(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
                     placeholder={t("placeholders.rateLimit")}
@@ -600,7 +602,7 @@ export default function YtDlpTool() {
                         }
                         return next;
                       });
-                      setCopied(false);
+                      reset();
                     }}
                     label={t("actions.subtitlesManual")}
                   />
@@ -614,7 +616,7 @@ export default function YtDlpTool() {
                         }
                         return next;
                       });
-                      setCopied(false);
+                      reset();
                     }}
                     label={t("actions.subtitlesAuto")}
                   />
@@ -623,7 +625,7 @@ export default function YtDlpTool() {
                       active={embedSubtitles}
                       onClick={() => {
                         setEmbedSubtitles((prev) => !prev);
-                        setCopied(false);
+                        reset();
                       }}
                       label={t("actions.subtitlesEmbed")}
                     />
@@ -636,7 +638,7 @@ export default function YtDlpTool() {
                       value={subtitleLangs}
                       onChange={(event) => {
                         setSubtitleLangs(event.target.value);
-                        setCopied(false);
+                        reset();
                       }}
                       spellCheck={false}
                       placeholder={t("placeholders.subtitleLangs")}
@@ -652,7 +654,7 @@ export default function YtDlpTool() {
                     active={embedThumbnail}
                     onClick={() => {
                       setEmbedThumbnail((prev) => !prev);
-                      setCopied(false);
+                      reset();
                     }}
                     label={t("actions.thumbnailsEmbed")}
                   />
@@ -660,7 +662,7 @@ export default function YtDlpTool() {
                     active={writeThumbnail}
                     onClick={() => {
                       setWriteThumbnail((prev) => !prev);
-                      setCopied(false);
+                      reset();
                     }}
                     label={t("actions.thumbnailsSave")}
                   />
@@ -673,7 +675,7 @@ export default function YtDlpTool() {
                     value={cookiesFile}
                     onChange={(event) => {
                       setCookiesFile(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
                     placeholder={t("placeholders.cookiesFile")}
@@ -689,7 +691,7 @@ export default function YtDlpTool() {
                     value={downloadArchive}
                     onChange={(event) => {
                       setDownloadArchive(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
                     placeholder={t("placeholders.downloadArchive")}
@@ -706,7 +708,7 @@ export default function YtDlpTool() {
                   value={customArgs}
                   onChange={(event) => {
                     setCustomArgs(event.target.value);
-                    setCopied(false);
+                    reset();
                   }}
                   spellCheck={false}
                   placeholder={t("placeholders.extraArgs")}
@@ -718,15 +720,19 @@ export default function YtDlpTool() {
               </div>
             </div>
           </div>
-        </section>
+        </ToolPanel>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <section className="flex min-h-[220px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex items-center justify-between">
-              <SectionLabel>{t("labels.command")}</SectionLabel>
+          <ToolPanel
+            as="section"
+            title={t("labels.command")}
+            actions={
               <SecondaryButton size="sm" onClick={copyCommand}>
                 {t("actions.copy")}
               </SecondaryButton>
-            </div>
+            }
+            headerClassName="flex items-center justify-between"
+            className="min-h-[220px]"
+          >
             <textarea
               value={command}
               readOnly
@@ -736,9 +742,8 @@ export default function YtDlpTool() {
             <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
               {t("hints.command")}
             </p>
-          </section>
-          <section className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <SectionLabel>{t("labels.quickStart")}</SectionLabel>
+          </ToolPanel>
+          <ToolPanel as="section" title={t("labels.quickStart")}>
             <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
               {t("hints.quickStart")}
             </p>
@@ -766,7 +771,7 @@ export default function YtDlpTool() {
             >
               {t("actions.viewRepo")}
             </a>
-          </section>
+          </ToolPanel>
         </div>
       </div>
     </div>
