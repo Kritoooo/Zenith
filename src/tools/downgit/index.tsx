@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   DangerButton,
@@ -8,6 +9,7 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from "@/components/Button";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
 
 const SAMPLE_URL = "https://github.com/Kritoooo/Zenith";
@@ -376,13 +378,14 @@ const derivePathFromRefSegments = (segments: string[] | undefined, ref: string) 
 };
 
 export default function DownGitTool() {
+  const t = useTranslations("tools.downgit.ui");
   const [input, setInput] = useState(SAMPLE_URL);
   const [refOverride, setRefOverride] = useState("");
   const [token, setToken] = useState("");
   const [outputName, setOutputName] = useState("");
   const [concurrencyInput, setConcurrencyInput] = useState("");
   const [resolved, setResolved] = useState<ResolvedTarget | null>(null);
-  const [status, setStatus] = useState("Ready to download from GitHub.");
+  const [status, setStatus] = useState(t("status.ready"));
   const [error, setError] = useState<string | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(
@@ -393,9 +396,43 @@ export default function DownGitTool() {
   const zipRunIdRef = useRef(0);
   const zipRejectRef = useRef<((error: unknown) => void) | null>(null);
 
+  const errorMap = useMemo<Record<string, string>>(
+    () => ({
+      "Paste a GitHub URL to get started.": t("errors.emptyUrl"),
+      "Enter a valid URL.": t("errors.invalidUrl"),
+      "GitHub URLs must include owner and repo.": t("errors.missingOwnerRepo"),
+      "This URL is missing a branch or tag name.": t("errors.missingRef"),
+      "Blob URLs must include a file path.": t("errors.missingFilePath"),
+      "Raw URLs must include owner, repo, ref, and path.": t("errors.missingRawParts"),
+      "Raw URLs must point to a file.": t("errors.rawFileOnly"),
+      "Unsupported GitHub API URL.": t("errors.unsupportedApi"),
+      "Only contents API URLs are supported.": t("errors.contentsOnly"),
+      "Only github.com URLs are supported right now.": t("errors.githubOnly"),
+      "Unsupported target type (symlink or submodule).": t("errors.unsupportedTarget"),
+      "Expected a directory but found a file.": t("errors.expectedDirectory"),
+      "No files found in this directory.": t("errors.noFiles"),
+      "This folder is too large to package as a zip.": t("errors.folderTooLarge"),
+      "Download failed.": t("errors.downloadFailed"),
+      "Unable to reach GitHub.": t("errors.githubUnavailable"),
+      "Zip worker failed.": t("errors.zipFailed"),
+      "Zip worker message could not be deserialized.": t("errors.zipMessage"),
+    }),
+    [t]
+  );
+
+  const localizeError = (message: string) => {
+    if (errorMap[message]) return errorMap[message];
+    if (message.startsWith("Unable to download ") && message.endsWith(".")) {
+      const path = message.slice("Unable to download ".length, -1);
+      return t("errors.downloadPath", { path });
+    }
+    return message;
+  };
+
   const parseResult = useMemo(() => parseGithubUrl(input), [input]);
   const parsedTarget = parseResult.target;
   const parseError = parseResult.error;
+  const localizedParseError = parseError ? localizeError(parseError) : null;
   const autoConcurrency = useMemo(() => getConcurrentDownloads(), []);
   const manualConcurrency = useMemo(
     () => parseConcurrency(concurrencyInput.trim()),
@@ -425,9 +462,9 @@ export default function DownGitTool() {
     : "/";
   const displayRef = resolved?.ref ?? effectiveRef;
   const concurrencyLabel = manualConcurrency
-    ? `Manual (${manualConcurrency})`
-    : `Auto (${autoConcurrency})`;
-  const tokenStatus = token.trim() ? "Token provided" : "No token";
+    ? t("labels.concurrencyManual", { count: manualConcurrency })
+    : t("labels.concurrencyAuto", { count: autoConcurrency });
+  const tokenStatus = token.trim() ? t("labels.tokenProvided") : t("labels.noToken");
 
   useEffect(() => {
     return () => {
@@ -479,7 +516,12 @@ export default function DownGitTool() {
         if (!data || data.id !== runId) return;
         if (data.type === "progress") {
           setProgress({ current: data.completed, total: data.total });
-          setStatus(`Building zip ${data.completed}/${data.total}...`);
+          setStatus(
+            t("status.buildingZipProgress", {
+              completed: data.completed,
+              total: data.total,
+            })
+          );
           return;
         }
         if (data.type === "result") {
@@ -496,10 +538,10 @@ export default function DownGitTool() {
       const handleError = (event: Event | ErrorEvent) => {
         cleanup();
         const errorEvent = event as ErrorEvent;
-        const message = errorEvent?.message
-          ? `Zip worker error: ${errorEvent.message}`
-          : "Zip worker failed.";
-        reject(new Error(message));
+        if (errorEvent?.message) {
+          console.error("Zip worker error", errorEvent.message);
+        }
+        reject(new Error("Zip worker failed."));
       };
 
       const handleMessageError = () => {
@@ -538,7 +580,7 @@ export default function DownGitTool() {
     setOutputName("");
     setConcurrencyInput("");
     setResolved(null);
-    setStatus("Ready to download from GitHub.");
+    setStatus(t("status.ready"));
     setError(null);
     setProgress(null);
   };
@@ -599,7 +641,7 @@ export default function DownGitTool() {
 
   const resolveTarget = async (signal?: AbortSignal) => {
     if (!parsedTarget) {
-      throw new Error(parseError ?? "Enter a valid GitHub URL.");
+      throw new Error(parseError ?? "Enter a valid URL.");
     }
 
     const trimmedOverride = refOverride.trim();
@@ -633,9 +675,9 @@ export default function DownGitTool() {
         }
       }
       const hint = token.trim()
-        ? "Try the Ref override."
-        : "If this is a private repo, add a token or set Ref manually.";
-      throw new Error(`Unable to resolve branch or tag from this URL. ${hint}`);
+        ? t("errors.refHintOverride")
+        : t("errors.refHintToken");
+      throw new Error(t("errors.refResolution", { hint }));
     }
 
     return resolveTargetWithRef(parsedTarget, parsedTarget.path, effectiveRef, signal);
@@ -762,7 +804,7 @@ export default function DownGitTool() {
     terminateZipWorker();
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
-    setStatus("Cancelling...");
+    setStatus(t("status.cancelling"));
     setProgress(null);
   };
 
@@ -770,26 +812,27 @@ export default function DownGitTool() {
     setError(null);
     setProgress(null);
     if (!parsedTarget) {
-      setStatus("Paste a valid GitHub URL.");
+      setStatus(t("status.needUrl"));
       return;
     }
     abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
     setIsWorking(true);
-    setStatus("Checking the target on GitHub...");
+    setStatus(t("status.checking"));
     try {
       const next = await resolveTarget(controller.signal);
       updateResolved(next);
-      setStatus(`Ready to download ${next.type}.`);
+      const typeLabel = next.type === "file" ? t("labels.file") : t("labels.folder");
+      setStatus(t("status.readyType", { type: typeLabel }));
     } catch (err) {
       if (isAbortError(err)) {
-        setStatus("Check canceled.");
+        setStatus(t("status.checkCanceled"));
       } else {
         const message =
           err instanceof Error ? err.message : "Unable to reach GitHub.";
-        setError(message);
-        setStatus("Check failed.");
+        setError(localizeError(message));
+        setStatus(t("status.checkFailed"));
       }
     } finally {
       setIsWorking(false);
@@ -801,7 +844,7 @@ export default function DownGitTool() {
     setError(null);
     setProgress(null);
     if (!parsedTarget) {
-      setStatus("Paste a valid GitHub URL.");
+      setStatus(t("status.needUrl"));
       return;
     }
     abortControllerRef.current?.abort();
@@ -810,14 +853,14 @@ export default function DownGitTool() {
     const signal = controller.signal;
     setIsWorking(true);
     try {
-      setStatus("Resolving download target...");
+      setStatus(t("status.resolving"));
       const target = resolved ?? (await resolveTarget(signal));
       if (!resolved) {
         updateResolved(target);
       }
 
       if (target.type === "file") {
-        setStatus("Downloading file...");
+        setStatus(t("status.downloadingFile"));
         const entry: GithubContent = {
           name: target.name,
           path: target.path,
@@ -840,11 +883,11 @@ export default function DownGitTool() {
         const blob = new Blob([bytes], { type: "application/octet-stream" });
         const filename = buildFileName(target);
         triggerDownload(blob, filename);
-        setStatus(`Downloaded ${filename}.`);
+        setStatus(t("status.downloaded", { name: filename }));
         return;
       }
 
-      setStatus("Scanning folders...");
+      setStatus(t("status.scanning"));
       const { files } = await collectFiles(target, signal);
       if (files.length === 0) {
         throw new Error("No files found in this directory.");
@@ -879,7 +922,12 @@ export default function DownGitTool() {
           results[index] = { name: entryName, data: bytes };
           completed += 1;
           setProgress({ current: completed, total: files.length });
-          setStatus(`Downloading ${completed}/${files.length} files...`);
+          setStatus(
+            t("status.downloadingFiles", {
+              completed,
+              total: files.length,
+            })
+          );
         };
 
         try {
@@ -900,22 +948,22 @@ export default function DownGitTool() {
         }
       })();
 
-      setStatus("Building zip...");
+      setStatus(t("status.buildingZip"));
       setProgress({ current: 0, total: entries.length });
       const zipBuffer = await createZipInWorker(entries);
       const zipBlob = new Blob([zipBuffer], { type: "application/zip" });
       const filename = buildFileName(target);
       triggerDownload(zipBlob, filename);
-      setStatus(`Downloaded ${filename}.`);
+      setStatus(t("status.downloaded", { name: filename }));
     } catch (err) {
       if (isAbortError(err)) {
-        setStatus("Download canceled.");
+        setStatus(t("status.downloadCanceled"));
         setProgress(null);
       } else {
         const message =
           err instanceof Error ? err.message : "Download failed.";
-        setError(message);
-        setStatus("Download failed.");
+        setError(localizeError(message));
+        setStatus(t("status.downloadFailed"));
       }
     } finally {
       setIsWorking(false);
@@ -924,7 +972,7 @@ export default function DownGitTool() {
   };
 
   const statusMessage =
-    error ?? (parseError && input.trim() ? parseError : status);
+    error ?? (localizedParseError && input.trim() ? localizedParseError : status);
 
   const disableActions = isWorking || !!parseError;
 
@@ -932,7 +980,7 @@ export default function DownGitTool() {
     <div className="flex h-full flex-col gap-5">
       <div className="flex flex-col gap-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-          GitHub URL
+          {t("labels.githubUrl")}
         </p>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <input
@@ -944,7 +992,7 @@ export default function DownGitTool() {
               setOutputName("");
               setError(null);
               setProgress(null);
-              setStatus("Ready to download from GitHub.");
+              setStatus(t("status.ready"));
             }}
             placeholder={SAMPLE_URL}
             spellCheck={false}
@@ -955,48 +1003,56 @@ export default function DownGitTool() {
               onClick={handleAnalyze}
               disabled={disableActions || !input.trim()}
             >
-              Check
+              {t("actions.check")}
             </SecondaryButton>
             <PrimaryButton
               onClick={handleDownload}
               disabled={disableActions || !input.trim()}
             >
-              Download
+              {t("actions.download")}
             </PrimaryButton>
             {isWorking ? (
-              <DangerButton onClick={cancelWork}>Cancel</DangerButton>
+              <DangerButton onClick={cancelWork}>{t("actions.cancel")}</DangerButton>
             ) : null}
-            <GhostButton onClick={reset}>Clear</GhostButton>
+            <GhostButton onClick={reset}>{t("actions.clear")}</GhostButton>
           </div>
         </div>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
+          <ToolPanel className="flex flex-col gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                Target
+                {t("labels.target")}
               </p>
               <p className="mt-2 text-sm text-[color:var(--text-primary)]">
                 {parsedTarget
                   ? `${parsedTarget.owner}/${parsedTarget.repo}${displayPath}`
-                  : "Waiting for a GitHub URL."}
+                  : t("hints.waiting")}
               </p>
               <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
                 {parsedTarget
-                  ? `Source: ${parsedTarget.source.toUpperCase()}`
-                  : "Paste a repo, file, or folder link."}
+                  ? t("hints.source", {
+                      source: parsedTarget.source.toUpperCase(),
+                    })
+                  : t("hints.paste")}
               </p>
               {parsedTarget ? (
                 <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                  Ref: {displayRef ?? "default branch"}
+                  {t("labels.ref")}: {displayRef ?? t("labels.defaultBranch")}
                 </p>
               ) : null}
             </div>
             <div className="rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-xs text-[color:var(--text-secondary)]">
               {resolved
-                ? `Resolved as a ${resolved.type} (${resolved.name}).`
-                : "Check the URL to confirm file or folder before downloading."}
+                ? t("hints.resolved", {
+                    type:
+                      resolved.type === "file"
+                        ? t("labels.file")
+                        : t("labels.folder"),
+                    name: resolved.name,
+                  })
+                : t("hints.checkUrl")}
             </div>
             {resolved?.htmlUrl ? (
               <a
@@ -1005,19 +1061,20 @@ export default function DownGitTool() {
                 rel="noreferrer"
                 className="text-xs font-semibold text-[color:var(--accent-blue)] hover:underline"
               >
-                View on GitHub
+                {t("actions.viewOnGitHub")}
               </a>
             ) : null}
-          </div>
-          <div className="flex flex-col gap-3 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-                Status
-              </p>
+          </ToolPanel>
+          <ToolPanel
+            title={t("labels.status")}
+            actions={
               <span className="text-[11px] text-[color:var(--text-secondary)]">
                 {concurrencyLabel}
               </span>
-            </div>
+            }
+            headerClassName="flex items-center justify-between"
+            className="flex flex-col gap-3"
+          >
             <p
               className={cn(
                 "min-h-[1.25rem] text-xs",
@@ -1041,114 +1098,116 @@ export default function DownGitTool() {
             ) : null}
             <div className="grid gap-2 text-xs text-[color:var(--text-secondary)]">
               <div className="flex items-center justify-between">
-                <span>Output</span>
+                <span>{t("labels.output")}</span>
                 <span className="text-[color:var(--text-primary)]">{outputPreview}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Auth</span>
+                <span>{t("labels.auth")}</span>
                 <span className="text-[color:var(--text-primary)]">
                   {tokenStatus}
                 </span>
               </div>
             </div>
-          </div>
+          </ToolPanel>
         </div>
-        <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Options
-            </p>
-            <div className="mt-3 flex flex-col gap-3">
-              <div>
-                <label className="text-xs text-[color:var(--text-secondary)]">
-                  Ref override (branch, tag, commit)
-                </label>
-                <input
-                  value={refOverride}
-                  onChange={(event) => {
-                    setRefOverride(event.target.value);
-                    setResolved(null);
-                    setError(null);
-                    setStatus("Ready to download from GitHub.");
-                  }}
-                  placeholder={parsedTarget?.ref ?? "main"}
-                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-[color:var(--text-secondary)]">
-                  Output filename
-                </label>
-                <input
-                  value={outputName}
-                  onChange={(event) => setOutputName(event.target.value)}
-                  placeholder={resolved ? buildFileName(resolved) : "example.zip"}
-                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-[color:var(--text-secondary)]">
-                  Concurrent downloads
-                </label>
-                <input
-                  value={concurrencyInput}
-                  onChange={(event) => setConcurrencyInput(event.target.value)}
-                  placeholder={`Auto (${autoConcurrency})`}
-                  inputMode="numeric"
-                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-                />
-                <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                  Auto uses ~75% of CPU cores (min {MIN_CONCURRENCY}, max {MAX_CONCURRENCY}).
-                  Effective: {effectiveConcurrency}.
-                </p>
-              </div>
-              <div>
-                <label className="text-xs text-[color:var(--text-secondary)]">
-                  GitHub token (optional)
-                </label>
-                <input
-                  value={token}
-                  onChange={(event) => {
-                    setToken(event.target.value);
-                    setError(null);
-                    setStatus("Ready to download from GitHub.");
-                  }}
-                  placeholder="Optional for private repos"
-                  type="password"
-                  className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-                />
-                <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                  Token stays in your browser session and is never stored.
-                </p>
-              </div>
+        <ToolPanel title={t("labels.options")} className="flex flex-col gap-4">
+          <div className="mt-3 flex flex-col gap-3">
+            <div>
+              <label className="text-xs text-[color:var(--text-secondary)]">
+                {t("labels.refOverride")}
+              </label>
+              <input
+                value={refOverride}
+                onChange={(event) => {
+                  setRefOverride(event.target.value);
+                  setResolved(null);
+                  setError(null);
+                  setStatus(t("status.ready"));
+                }}
+                placeholder={parsedTarget?.ref ?? t("placeholders.defaultRef")}
+                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-[color:var(--text-secondary)]">
+                {t("labels.outputFilename")}
+              </label>
+              <input
+                value={outputName}
+                onChange={(event) => setOutputName(event.target.value)}
+                placeholder={
+                  resolved ? buildFileName(resolved) : t("placeholders.output")
+                }
+                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-[color:var(--text-secondary)]">
+                {t("labels.concurrentDownloads")}
+              </label>
+              <input
+                value={concurrencyInput}
+                onChange={(event) => setConcurrencyInput(event.target.value)}
+                placeholder={t("placeholders.concurrencyAuto", {
+                  count: autoConcurrency,
+                })}
+                inputMode="numeric"
+                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              />
+              <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
+                {t("hints.concurrency", {
+                  min: MIN_CONCURRENCY,
+                  max: MAX_CONCURRENCY,
+                  effective: effectiveConcurrency,
+                })}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs text-[color:var(--text-secondary)]">
+                {t("labels.token")}
+              </label>
+              <input
+                value={token}
+                onChange={(event) => {
+                  setToken(event.target.value);
+                  setError(null);
+                  setStatus(t("status.ready"));
+                }}
+                placeholder={t("placeholders.token")}
+                type="password"
+                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              />
+              <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
+                {t("hints.token")}
+              </p>
             </div>
           </div>
-        </div>
+        </ToolPanel>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {[
           {
-            title: "Supports files or folders",
-            detail: "Paste a GitHub link with /blob/ or /tree/ paths.",
+            title: t("cards.files.title"),
+            detail: t("cards.files.detail"),
           },
           {
-            title: "Public repos work best",
-            detail: "Use a token when hitting rate limits or private repos.",
+            title: t("cards.public.title"),
+            detail: t("cards.public.detail"),
           },
           {
-            title: "Keeps folder structure",
-            detail: "Downloads as a zip with the selected path.",
+            title: t("cards.structure.title"),
+            detail: t("cards.structure.detail"),
           },
         ].map((item) => (
-          <div
+          <ToolPanel
             key={item.title}
-            className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 text-xs text-[color:var(--text-secondary)]"
+            className="text-xs text-[color:var(--text-secondary)]"
           >
             <p className="text-sm font-semibold text-[color:var(--text-primary)]">
               {item.title}
             </p>
             <p className="mt-2">{item.detail}</p>
-          </div>
+          </ToolPanel>
         ))}
       </div>
     </div>

@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { DangerButton, PrimaryButton, SecondaryButton } from "@/components/Button";
+import { Select } from "@/components/Select";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 type Coordinates = {
   lat: number;
@@ -11,41 +14,33 @@ type Coordinates = {
 };
 
 const COUNTRIES = [
-  { label: "United States", code: "US" },
-  { label: "United Kingdom", code: "UK" },
-  { label: "France", code: "FR" },
-  { label: "Germany", code: "DE" },
-  { label: "China", code: "CN" },
-  { label: "Taiwan", code: "TW" },
-  { label: "Hong Kong", code: "HK" },
-  { label: "Japan", code: "JP" },
-  { label: "India", code: "IN" },
-  { label: "Australia", code: "AU" },
-  { label: "Brazil", code: "BR" },
-  { label: "Canada", code: "CA" },
-  { label: "Russia", code: "RU" },
-  { label: "South Africa", code: "ZA" },
-  { label: "Mexico", code: "MX" },
-  { label: "South Korea", code: "KR" },
-  { label: "Italy", code: "IT" },
-  { label: "Spain", code: "ES" },
-  { label: "Turkey", code: "TR" },
-  { label: "Saudi Arabia", code: "SA" },
-  { label: "Argentina", code: "AR" },
-  { label: "Egypt", code: "EG" },
-  { label: "Nigeria", code: "NG" },
-  { label: "Indonesia", code: "ID" },
+  { code: "US" },
+  { code: "UK" },
+  { code: "FR" },
+  { code: "DE" },
+  { code: "CN" },
+  { code: "TW" },
+  { code: "HK" },
+  { code: "JP" },
+  { code: "IN" },
+  { code: "AU" },
+  { code: "BR" },
+  { code: "CA" },
+  { code: "RU" },
+  { code: "ZA" },
+  { code: "MX" },
+  { code: "KR" },
+  { code: "IT" },
+  { code: "ES" },
+  { code: "TR" },
+  { code: "SA" },
+  { code: "AR" },
+  { code: "EG" },
+  { code: "NG" },
+  { code: "ID" },
 ] as const;
 
 type CountryCode = (typeof COUNTRIES)[number]["code"];
-
-const COUNTRY_LABELS = COUNTRIES.reduce(
-  (acc, country) => {
-    acc[country.code] = country.label;
-    return acc;
-  },
-  {} as Record<CountryCode, string>
-);
 
 const COUNTRY_COORDINATES: Record<CountryCode, Coordinates[]> = {
   US: [
@@ -998,13 +993,12 @@ const isValidAddress = (data: ReverseGeocodeResponse) => {
   return Boolean(address.city || address.town || address.village);
 };
 
-const formatAddress = (data: ReverseGeocodeResponse, country: CountryCode) => {
+const formatAddress = (data: ReverseGeocodeResponse, countryLabel: string) => {
   const address = data.address;
   if (!address) return "";
   const street = `${address.house_number ?? ""} ${address.road ?? ""}`.trim();
   const city = address.city || address.town || address.village || "";
   const postal = address.postcode ?? "";
-  const countryLabel = COUNTRY_LABELS[country] ?? country;
   return [street, city, postal, countryLabel]
     .filter(Boolean)
     .join(", ")
@@ -1044,18 +1038,22 @@ const createId = () => {
 };
 
 export default function AddressGeneratorTool() {
+  const t = useTranslations("tools.address-generator.ui");
+  const locale = useLocale();
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>(
     COUNTRIES[0].code
   );
   const [current, setCurrent] = useState<AddressResult | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const { copied, copy, reset } = useClipboard<string>({
+    onError: () => setError(t("errors.clipboard")),
+    timeoutMs: 1600,
+  });
   const [note, setNote] = useState("");
   const [savedEntries, setSavedEntries] = useState<SavedEntry[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const copyTimerRef = useRef<number | null>(null);
 
   const generateAddress = useCallback(async (country: CountryCode) => {
     abortRef.current?.abort();
@@ -1063,7 +1061,7 @@ export default function AddressGeneratorTool() {
     abortRef.current = controller;
     setStatus("loading");
     setError(null);
-    setCopied(null);
+    reset();
 
     try {
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
@@ -1078,7 +1076,7 @@ export default function AddressGeneratorTool() {
         const response = await fetch(url.toString(), {
           signal: controller.signal,
           headers: {
-            "Accept-Language": "en",
+            "Accept-Language": locale,
           },
         });
 
@@ -1087,7 +1085,7 @@ export default function AddressGeneratorTool() {
             await delay(ATTEMPT_DELAY_MS);
             continue;
           }
-          throw new Error("OpenStreetMap lookup failed.");
+          throw new Error("LOOKUP_FAILED");
         }
 
         const data = (await response.json()) as ReverseGeocodeResponse;
@@ -1096,13 +1094,14 @@ export default function AddressGeneratorTool() {
             await delay(ATTEMPT_DELAY_MS);
             continue;
           }
-          throw new Error("Could not resolve a full street address.");
+          throw new Error("ADDRESS_INCOMPLETE");
         }
 
-        const address = formatAddress(data, country);
+        const countryLabel = t(`countries.${country}`);
+        const address = formatAddress(data, countryLabel);
         const result: AddressResult = {
           name: getRandomName(country),
-          gender: Math.random() > 0.5 ? "Male" : "Female",
+          gender: Math.random() > 0.5 ? t("gender.male") : t("gender.female"),
           phone: getRandomPhoneNumber(country),
           address,
           coordinates,
@@ -1115,12 +1114,16 @@ export default function AddressGeneratorTool() {
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
-      const message =
-        err instanceof Error ? err.message : "Unable to generate address.";
-      setError(message);
+      if (err instanceof Error && err.message === "LOOKUP_FAILED") {
+        setError(t("errors.lookup"));
+      } else if (err instanceof Error && err.message === "ADDRESS_INCOMPLETE") {
+        setError(t("errors.incomplete"));
+      } else {
+        setError(t("errors.generate"));
+      }
       setStatus("error");
     }
-  }, []);
+  }, [locale, reset, t]);
 
   useEffect(() => {
     generateAddress(selectedCountry);
@@ -1153,27 +1156,10 @@ export default function AddressGeneratorTool() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(savedEntries));
   }, [hasLoaded, savedEntries]);
 
-  useEffect(() => {
-    return () => {
-      if (copyTimerRef.current) {
-        window.clearTimeout(copyTimerRef.current);
-      }
-    };
-  }, []);
-
   const copyValue = useCallback(async (label: string, value: string) => {
     if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(label);
-      if (copyTimerRef.current) {
-        window.clearTimeout(copyTimerRef.current);
-      }
-      copyTimerRef.current = window.setTimeout(() => setCopied(null), 1600);
-    } catch {
-      setCopied("Clipboard unavailable");
-    }
-  }, []);
+    await copy(value, label);
+  }, [copy]);
 
   const copyAll = useCallback(() => {
     if (!current) return;
@@ -1185,8 +1171,8 @@ export default function AddressGeneratorTool() {
     ]
       .filter(Boolean)
       .join(" | ");
-    copyValue("All fields", text);
-  }, [copyValue, current]);
+    copyValue(t("labels.allFields"), text);
+  }, [copyValue, current, t]);
 
   const saveAddress = useCallback(() => {
     if (!current) return;
@@ -1224,17 +1210,17 @@ export default function AddressGeneratorTool() {
   }, [current]);
 
   const statusMessage = useMemo(() => {
-    if (status === "loading") return "Generating a fresh address...";
+    if (status === "loading") return t("status.loading");
     if (error) return error;
-    if (copied) return `Copied ${copied}.`;
-    return "Powered by OpenStreetMap Nominatim.";
-  }, [copied, error, status]);
+    if (copied) return t("status.copied", { label: copied });
+    return t("status.ready");
+  }, [copied, error, status, t]);
 
   const infoItems = [
-    { label: "Name", value: current?.name ?? "-" },
-    { label: "Gender", value: current?.gender ?? "-" },
-    { label: "Phone", value: current?.phone ?? "-" },
-    { label: "Address", value: current?.address ?? "-" },
+    { label: t("labels.name"), value: current?.name ?? "-" },
+    { label: t("labels.gender"), value: current?.gender ?? "-" },
+    { label: t("labels.phone"), value: current?.phone ?? "-" },
+    { label: t("labels.address"), value: current?.address ?? "-" },
   ];
 
   const isLoading = status === "loading";
@@ -1245,35 +1231,35 @@ export default function AddressGeneratorTool() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2 text-sm shadow-[var(--glass-shadow)]">
             <span className="text-xs text-[color:var(--text-secondary)]">
-              Country
+              {t("labels.country")}
             </span>
-            <select
+            <Select
               value={selectedCountry}
               onChange={(event) =>
                 setSelectedCountry(event.target.value as CountryCode)
               }
-              className="bg-transparent text-sm text-[color:var(--text-primary)] outline-none"
+              variant="ghost"
             >
               {COUNTRIES.map((country) => (
                 <option key={country.code} value={country.code}>
-                  {country.label}
+                  {t(`countries.${country.code}`)}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <PrimaryButton
             onClick={() => generateAddress(selectedCountry)}
             disabled={isLoading}
           >
-            {isLoading ? "Generating..." : "Generate"}
+            {isLoading ? t("actions.generating") : t("actions.generate")}
           </PrimaryButton>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <SecondaryButton size="sm" onClick={copyAll} disabled={!current}>
-            Copy all
+            {t("actions.copyAll")}
           </SecondaryButton>
           <SecondaryButton size="sm" onClick={saveAddress} disabled={!current}>
-            Save
+            {t("actions.save")}
           </SecondaryButton>
         </div>
       </div>
@@ -1292,7 +1278,7 @@ export default function AddressGeneratorTool() {
         <div className="flex flex-col gap-4">
           <div className="rounded-[18px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-5 shadow-[var(--glass-shadow)]">
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Generated profile
+              {t("labels.profile")}
             </p>
             <div className="mt-4 grid gap-3">
               {infoItems.map((item) => (
@@ -1317,7 +1303,7 @@ export default function AddressGeneratorTool() {
                     </p>
                   </div>
                   <span className="text-[11px] text-[color:var(--text-secondary)]">
-                    Copy
+                    {t("actions.copy")}
                   </span>
                 </button>
               ))}
@@ -1326,13 +1312,13 @@ export default function AddressGeneratorTool() {
 
           <div className="rounded-[18px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-5 shadow-[var(--glass-shadow)]">
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Notes
+              {t("labels.notes")}
             </p>
             <div className="mt-4 flex flex-col gap-3">
               <input
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
-                placeholder="Optional note for this address"
+                placeholder={t("placeholders.note")}
                 className="w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
               />
               <button
@@ -1346,7 +1332,7 @@ export default function AddressGeneratorTool() {
                     : "cursor-not-allowed bg-[color:var(--glass-recessed-bg)] text-[color:var(--text-secondary)]"
                 )}
               >
-                Save address
+                {t("actions.saveAddress")}
               </button>
             </div>
           </div>
@@ -1355,19 +1341,19 @@ export default function AddressGeneratorTool() {
         <div className="flex flex-col gap-4">
           <div className="rounded-[18px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-5 shadow-[var(--glass-shadow)]">
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Map preview
+              {t("labels.mapPreview")}
             </p>
             <div className="mt-4 overflow-hidden rounded-[14px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)]">
               {current ? (
                 <iframe
-                  title="Map preview"
+                  title={t("labels.mapPreview")}
                   src={mapUrl}
                   className="h-[260px] w-full"
                   loading="lazy"
                 />
               ) : (
                 <div className="flex h-[260px] items-center justify-center text-xs text-[color:var(--text-secondary)]">
-                  Generate an address to preview the map.
+                  {t("status.mapPlaceholder")}
                 </div>
               )}
             </div>
@@ -1378,24 +1364,24 @@ export default function AddressGeneratorTool() {
                 rel="noreferrer"
                 className="mt-3 inline-flex items-center text-xs text-[color:var(--accent-blue)] transition-colors hover:text-[color:var(--text-primary)]"
               >
-                Open in OpenStreetMap
+                {t("actions.openMap")}
               </a>
             ) : null}
           </div>
 
           <div className="rounded-[18px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-5 shadow-[var(--glass-shadow)]">
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Coordinates
+              {t("labels.coordinates")}
             </p>
             <p className="mt-3 text-sm text-[color:var(--text-primary)]">
               {current
                 ? `${current.coordinates.lat.toFixed(
                     5
                   )}, ${current.coordinates.lng.toFixed(5)}`
-                : "Waiting for data"}
+                : t("status.waiting")}
             </p>
             <p className="mt-2 text-xs text-[color:var(--text-secondary)]">
-              Reverse geocoding may require multiple attempts.
+              {t("status.retryHint")}
             </p>
           </div>
         </div>
@@ -1404,19 +1390,19 @@ export default function AddressGeneratorTool() {
       <div className="rounded-[18px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-5 shadow-[var(--glass-shadow)]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            Saved addresses
+            {t("labels.saved")}
           </p>
           <SecondaryButton
             size="sm"
             onClick={clearEntries}
             disabled={savedEntries.length === 0}
           >
-            Clear all
+            {t("actions.clearAll")}
           </SecondaryButton>
         </div>
         {savedEntries.length === 0 ? (
           <p className="mt-3 text-xs text-[color:var(--text-secondary)]">
-            No saved entries yet.
+            {t("status.noSaved")}
           </p>
         ) : (
           <div className="mt-4 max-h-[280px] space-y-3 overflow-y-auto pr-1">
@@ -1438,7 +1424,7 @@ export default function AddressGeneratorTool() {
                     </p>
                     {entry.note ? (
                       <p className="text-xs text-[color:var(--text-secondary)]">
-                        Note: {entry.note}
+                        {t("labels.notePrefix", { note: entry.note })}
                       </p>
                     ) : null}
                   </div>
@@ -1447,7 +1433,7 @@ export default function AddressGeneratorTool() {
                       size="sm"
                       onClick={() =>
                         copyValue(
-                          "Saved entry",
+                          t("labels.savedEntry"),
                           [
                             entry.name,
                             entry.gender,
@@ -1460,10 +1446,10 @@ export default function AddressGeneratorTool() {
                         )
                       }
                     >
-                      Copy
+                      {t("actions.copy")}
                     </SecondaryButton>
                     <DangerButton onClick={() => deleteEntry(entry.id)}>
-                      Delete
+                      {t("actions.delete")}
                     </DangerButton>
                   </div>
                 </div>

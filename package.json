@@ -5,14 +5,20 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
+    "build:locales": "node scripts/build-locales.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "i18n:check": "node scripts/check-i18n.mjs",
+    "coi:sync": "node scripts/sync-coi.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
     "next": "16.1.0",
+    "next-intl": "^4.7.0",
     "onnxruntime-web": "^1.23.2",
+    "react-markdown": "^9.0.1",
     "paddleocr": "^1.0.6",
+    "remark-gfm": "^4.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

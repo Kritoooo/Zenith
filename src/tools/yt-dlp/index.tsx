@@ -1,26 +1,30 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button, GhostButton, SecondaryButton } from "@/components/Button";
+import { Select } from "@/components/Select";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 const SAMPLE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 const DEFAULT_OUTPUT_TEMPLATE = "%(title)s.%(ext)s";
 
 const FORMAT_PRESETS = [
-  { label: "Recommended (single file)", value: "best" },
-  { label: "Best video + audio (ffmpeg)", value: "bestvideo+bestaudio/best" },
-  { label: "Small (worst)", value: "worst" },
-  { label: "Custom", value: "custom" },
+  { key: "recommended", value: "best" },
+  { key: "best", value: "bestvideo+bestaudio/best" },
+  { key: "small", value: "worst" },
+  { key: "custom", value: "custom" },
 ] as const;
 
 const AUDIO_FORMATS = ["mp3", "m4a", "opus", "wav"] as const;
 const MERGE_FORMATS = [
-  { label: "Auto (default)", value: "default" },
-  { label: "MP4", value: "mp4" },
-  { label: "MKV", value: "mkv" },
-  { label: "WebM", value: "webm" },
+  { key: "auto", value: "default" },
+  { key: "mp4", value: "mp4" },
+  { key: "mkv", value: "mkv" },
+  { key: "webm", value: "webm" },
 ] as const;
 
 type DownloadMode = "video" | "audio";
@@ -90,6 +94,7 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 export default function YtDlpTool() {
+  const t = useTranslations("tools.yt-dlp.ui");
   const [url, setUrl] = useState("");
   const [mode, setMode] = useState<DownloadMode>(RECOMMENDED_SETTINGS.mode);
   const [formatPreset, setFormatPreset] = useState<FormatPreset>(
@@ -138,7 +143,7 @@ export default function YtDlpTool() {
   );
   const [rateLimit, setRateLimit] = useState(RECOMMENDED_SETTINGS.rateLimit);
   const [customArgs, setCustomArgs] = useState(RECOMMENDED_SETTINGS.customArgs);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy, reset } = useClipboard();
 
   const resolvedFormat = useMemo(() => {
     if (formatPreset !== "custom") return formatPreset;
@@ -276,22 +281,16 @@ export default function YtDlpTool() {
   ]);
 
   const status = useMemo(() => {
-    if (copied) return "Copied to clipboard.";
-    if (!url.trim()) return "Paste a URL to build the command.";
+    if (copied) return t("status.copied");
+    if (!url.trim()) return t("status.needUrl");
     if (mode === "video" && formatPreset === "custom" && !customFormat.trim()) {
-      return "Custom format is empty; falling back to best.";
+      return t("status.customFormatEmpty");
     }
-    return "Command ready.";
-  }, [copied, customFormat, formatPreset, mode, url]);
+    return t("status.ready");
+  }, [copied, customFormat, formatPreset, mode, t, url]);
 
   const copyCommand = async () => {
-    try {
-      await navigator.clipboard.writeText(command);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      setCopied(false);
-    }
+    await copy(command);
   };
 
   const applyRecommended = () => {
@@ -314,7 +313,7 @@ export default function YtDlpTool() {
     setDownloadArchive(RECOMMENDED_SETTINGS.downloadArchive);
     setRateLimit(RECOMMENDED_SETTINGS.rateLimit);
     setCustomArgs(RECOMMENDED_SETTINGS.customArgs);
-    setCopied(false);
+    reset();
   };
 
   const resetAll = () => {
@@ -330,33 +329,33 @@ export default function YtDlpTool() {
             variant={mode === "video" ? "primary" : "secondary"}
             onClick={() => {
               setMode("video");
-              setCopied(false);
+              reset();
             }}
             className="font-semibold"
           >
-            Video
+            {t("actions.video")}
           </Button>
           <Button
             variant={mode === "audio" ? "primary" : "secondary"}
             onClick={() => {
               setMode("audio");
-              setCopied(false);
+              reset();
             }}
             className="font-semibold"
           >
-            Audio
+            {t("actions.audio")}
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <SecondaryButton
             onClick={() => {
               setUrl(SAMPLE_URL);
-              setCopied(false);
+              reset();
             }}
           >
-            Sample URL
+            {t("actions.sampleUrl")}
           </SecondaryButton>
-          <GhostButton onClick={resetAll}>Reset</GhostButton>
+          <GhostButton onClick={resetAll}>{t("actions.reset")}</GhostButton>
         </div>
       </div>
       <p
@@ -371,54 +370,60 @@ export default function YtDlpTool() {
         {status}
       </p>
       <div className="flex flex-col gap-4">
-        <section className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between">
-            <SectionLabel>Source URL</SectionLabel>
+        <ToolPanel
+          as="section"
+          title={t("labels.sourceUrl")}
+          actions={
             <span className="text-[11px] text-[color:var(--text-secondary)]">
-              Supports playlists and channels.
+              {t("labels.supports")}
             </span>
-          </div>
+          }
+          headerClassName="flex items-center justify-between"
+        >
           <input
             value={url}
             onChange={(event) => {
               setUrl(event.target.value);
-              setCopied(false);
+              reset();
             }}
-            placeholder="https://..."
+            placeholder={t("placeholders.url")}
             spellCheck={false}
             className="mt-3 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
           />
-        </section>
-        <section className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between">
-            <SectionLabel>Download Profile</SectionLabel>
+        </ToolPanel>
+        <ToolPanel
+          as="section"
+          title={t("labels.profile")}
+          actions={
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-[color:var(--text-secondary)]">
-                {isRecommended ? "Recommended (default)" : "Custom"}
+                {isRecommended ? t("labels.profileRecommended") : t("labels.profileCustom")}
               </span>
               {!isRecommended ? (
                 <SecondaryButton size="sm" onClick={applyRecommended}>
-                  Use recommended
+                  {t("actions.applyRecommended")}
                 </SecondaryButton>
               ) : null}
             </div>
-          </div>
+          }
+          headerClassName="flex items-center justify-between"
+        >
           <div className="mt-3 flex flex-wrap gap-2">
             <ToggleButton
               active={mode === "video"}
               onClick={() => {
                 setMode("video");
-                setCopied(false);
+                reset();
               }}
-              label="Video"
+              label={t("actions.video")}
             />
             <ToggleButton
               active={mode === "audio"}
               onClick={() => {
                 setMode("audio");
-                setCopied(false);
+                reset();
               }}
-              label="Audio"
+              label={t("actions.audio")}
             />
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -426,105 +431,108 @@ export default function YtDlpTool() {
               {mode === "video" ? (
                 <div className="flex flex-col gap-3">
                   <div>
-                    <SectionLabel>Format</SectionLabel>
-                    <select
+                    <SectionLabel>{t("labels.format")}</SectionLabel>
+                    <Select
                       value={formatPreset}
                       onChange={(event) => {
                         setFormatPreset(event.target.value as FormatPreset);
-                        setCopied(false);
+                        reset();
                       }}
-                      className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                      className="mt-2"
+                      buttonClassName="border-transparent"
                     >
                       {FORMAT_PRESETS.map((preset) => (
                         <option key={preset.value} value={preset.value}>
-                          {preset.label}
+                          {t(`formatPresets.${preset.key}`)}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                     {formatPreset === "custom" ? (
                       <div className="mt-2">
                         <input
                           value={customFormat}
                           onChange={(event) => {
                             setCustomFormat(event.target.value);
-                            setCopied(false);
+                            reset();
                           }}
                           placeholder="bv*+ba/b"
                           spellCheck={false}
                           className="w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                         />
                         <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                          Leave blank to fall back to best.
+                          {t("hints.customFormat")}
                         </p>
                       </div>
                     ) : null}
                   </div>
                   <div>
-                    <SectionLabel>Merge format</SectionLabel>
-                    <select
+                    <SectionLabel>{t("labels.mergeFormat")}</SectionLabel>
+                    <Select
                       value={mergeFormat}
                       onChange={(event) => {
                         setMergeFormat(event.target.value as MergeFormat);
-                        setCopied(false);
+                        reset();
                       }}
-                      className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                      className="mt-2"
+                      buttonClassName="border-transparent"
                     >
                       {MERGE_FORMATS.map((preset) => (
                         <option key={preset.value} value={preset.value}>
-                          {preset.label}
+                          {t(`mergeFormats.${preset.key}`)}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                     <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                      Use MP4 for broad compatibility.
+                      {t("hints.mergeFormat")}
                     </p>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
                   <div>
-                    <SectionLabel>Audio format</SectionLabel>
-                    <select
+                    <SectionLabel>{t("labels.audioFormat")}</SectionLabel>
+                    <Select
                       value={audioFormat}
                       onChange={(event) => {
                         setAudioFormat(event.target.value as AudioFormat);
-                        setCopied(false);
+                        reset();
                       }}
-                      className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                      className="mt-2"
+                      buttonClassName="border-transparent"
                     >
                       {AUDIO_FORMATS.map((format) => (
                         <option key={format} value={format}>
                           {format}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   <div>
-                    <SectionLabel>Audio quality</SectionLabel>
+                    <SectionLabel>{t("labels.audioQuality")}</SectionLabel>
                     <input
                       value={audioQuality}
                       onChange={(event) => {
                         setAudioQuality(event.target.value);
-                        setCopied(false);
+                        reset();
                       }}
                       spellCheck={false}
-                      placeholder="0 (best) or 192K"
+                      placeholder={t("placeholders.audioQuality")}
                       className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                     />
                     <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                      Optional quality hint for audio extraction.
+                      {t("hints.audioQuality")}
                     </p>
                   </div>
                 </div>
               )}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <SectionLabel>Output template</SectionLabel>
+                  <SectionLabel>{t("labels.outputTemplate")}</SectionLabel>
                   <input
                     value={outputTemplate}
                     onChange={(event) => {
                       setOutputTemplate(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
                     placeholder={DEFAULT_OUTPUT_TEMPLATE}
@@ -532,57 +540,57 @@ export default function YtDlpTool() {
                   />
                 </div>
                 <div>
-                  <SectionLabel>Output folder</SectionLabel>
+                  <SectionLabel>{t("labels.outputFolder")}</SectionLabel>
                   <input
                     value={outputPath}
                     onChange={(event) => {
                       setOutputPath(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
-                    placeholder="./downloads"
+                    placeholder={t("placeholders.outputFolder")}
                     className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                   />
                   <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                    Optional base folder for downloads.
+                    {t("hints.outputFolder")}
                   </p>
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <SectionLabel>Playlist</SectionLabel>
+                  <SectionLabel>{t("labels.playlist")}</SectionLabel>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <ToggleButton
                       active={noPlaylist}
                       onClick={() => {
                         setNoPlaylist((prev) => !prev);
-                        setCopied(false);
+                        reset();
                       }}
-                      label="No playlist"
+                      label={t("actions.noPlaylist")}
                     />
                   </div>
                 </div>
                 <div>
-                  <SectionLabel>Rate limit</SectionLabel>
+                  <SectionLabel>{t("labels.rateLimit")}</SectionLabel>
                   <input
                     value={rateLimit}
                     onChange={(event) => {
                       setRateLimit(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
-                    placeholder="1M, 500K"
+                    placeholder={t("placeholders.rateLimit")}
                     className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                   />
                   <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                    Optional bandwidth throttle.
+                    {t("hints.rateLimit")}
                   </p>
                 </div>
               </div>
             </div>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-3">
-                <SectionLabel>Subtitles</SectionLabel>
+                <SectionLabel>{t("labels.subtitles")}</SectionLabel>
                 <div className="flex flex-wrap gap-2">
                   <ToggleButton
                     active={manualSubtitles}
@@ -594,9 +602,9 @@ export default function YtDlpTool() {
                         }
                         return next;
                       });
-                      setCopied(false);
+                      reset();
                     }}
-                    label="Manual"
+                    label={t("actions.subtitlesManual")}
                   />
                   <ToggleButton
                     active={autoSubtitles}
@@ -608,119 +616,123 @@ export default function YtDlpTool() {
                         }
                         return next;
                       });
-                      setCopied(false);
+                      reset();
                     }}
-                    label="Auto"
+                    label={t("actions.subtitlesAuto")}
                   />
                   {hasSubtitles ? (
                     <ToggleButton
                       active={embedSubtitles}
                       onClick={() => {
                         setEmbedSubtitles((prev) => !prev);
-                        setCopied(false);
+                        reset();
                       }}
-                      label="Embed"
+                      label={t("actions.subtitlesEmbed")}
                     />
                   ) : null}
                 </div>
                 {hasSubtitles ? (
                   <div>
-                    <SectionLabel>Subtitle langs</SectionLabel>
+                    <SectionLabel>{t("labels.subtitleLangs")}</SectionLabel>
                     <input
                       value={subtitleLangs}
                       onChange={(event) => {
                         setSubtitleLangs(event.target.value);
-                        setCopied(false);
+                        reset();
                       }}
                       spellCheck={false}
-                      placeholder="en.*,zh.*,ja"
+                      placeholder={t("placeholders.subtitleLangs")}
                       className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                     />
                   </div>
                 ) : null}
               </div>
               <div className="flex flex-col gap-3">
-                <SectionLabel>Thumbnails</SectionLabel>
+                <SectionLabel>{t("labels.thumbnails")}</SectionLabel>
                 <div className="flex flex-wrap gap-2">
                   <ToggleButton
                     active={embedThumbnail}
                     onClick={() => {
                       setEmbedThumbnail((prev) => !prev);
-                      setCopied(false);
+                      reset();
                     }}
-                    label="Embed"
+                    label={t("actions.thumbnailsEmbed")}
                   />
                   <ToggleButton
                     active={writeThumbnail}
                     onClick={() => {
                       setWriteThumbnail((prev) => !prev);
-                      setCopied(false);
+                      reset();
                     }}
-                    label="Save file"
+                    label={t("actions.thumbnailsSave")}
                   />
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <SectionLabel>Cookies file</SectionLabel>
+                  <SectionLabel>{t("labels.cookiesFile")}</SectionLabel>
                   <input
                     value={cookiesFile}
                     onChange={(event) => {
                       setCookiesFile(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
-                    placeholder="cookies.txt"
+                    placeholder={t("placeholders.cookiesFile")}
                     className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                   />
                   <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                    Use for age-gated or private content.
+                    {t("hints.cookiesFile")}
                   </p>
                 </div>
                 <div>
-                  <SectionLabel>Download archive</SectionLabel>
+                  <SectionLabel>{t("labels.downloadArchive")}</SectionLabel>
                   <input
                     value={downloadArchive}
                     onChange={(event) => {
                       setDownloadArchive(event.target.value);
-                      setCopied(false);
+                      reset();
                     }}
                     spellCheck={false}
-                    placeholder="archive.txt"
+                    placeholder={t("placeholders.downloadArchive")}
                     className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                   />
                   <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-                    Skip URLs already recorded in this file.
+                    {t("hints.downloadArchive")}
                   </p>
                 </div>
               </div>
               <div className="flex flex-col gap-3">
-                <SectionLabel>Extra args</SectionLabel>
+                <SectionLabel>{t("labels.extraArgs")}</SectionLabel>
                 <input
                   value={customArgs}
                   onChange={(event) => {
                     setCustomArgs(event.target.value);
-                    setCopied(false);
+                    reset();
                   }}
                   spellCheck={false}
-                  placeholder="--cookies cookies.txt --remux-video mp4"
+                  placeholder={t("placeholders.extraArgs")}
                   className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                 />
                 <p className="text-[11px] text-[color:var(--text-secondary)]">
-                  Extra args are appended verbatim before the URL.
+                  {t("hints.extraArgs")}
                 </p>
               </div>
             </div>
           </div>
-        </section>
+        </ToolPanel>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <section className="flex min-h-[220px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <div className="flex items-center justify-between">
-              <SectionLabel>Command</SectionLabel>
+          <ToolPanel
+            as="section"
+            title={t("labels.command")}
+            actions={
               <SecondaryButton size="sm" onClick={copyCommand}>
-                Copy
+                {t("actions.copy")}
               </SecondaryButton>
-            </div>
+            }
+            headerClassName="flex items-center justify-between"
+            className="min-h-[220px]"
+          >
             <textarea
               value={command}
               readOnly
@@ -728,13 +740,12 @@ export default function YtDlpTool() {
               className="mt-3 min-h-[160px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
             />
             <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
-              Edit flags to match your target quality and output layout.
+              {t("hints.command")}
             </p>
-          </section>
-          <section className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-            <SectionLabel>Quick start</SectionLabel>
+          </ToolPanel>
+          <ToolPanel as="section" title={t("labels.quickStart")}>
             <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
-              Install yt-dlp locally, then run the command above.
+              {t("hints.quickStart")}
             </p>
             <div className="mt-3 flex flex-col gap-2 text-xs">
               <div className="rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 font-mono text-[color:var(--text-primary)]">
@@ -749,7 +760,7 @@ export default function YtDlpTool() {
             </div>
             {needsFfmpeg ? (
               <p className="mt-3 text-xs text-[color:var(--text-secondary)]">
-                FFmpeg is required for merge or embed options.
+                {t("hints.ffmpeg")}
               </p>
             ) : null}
             <a
@@ -758,9 +769,9 @@ export default function YtDlpTool() {
               rel="noreferrer"
               className="mt-4 inline-flex text-xs font-semibold text-[color:var(--accent-blue)]"
             >
-              View GitHub repo
+              {t("actions.viewRepo")}
             </a>
-          </section>
+          </ToolPanel>
         </div>
       </div>
     </div>

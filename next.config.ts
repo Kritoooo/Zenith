@@ -1,17 +1,37 @@
-import type { NextConfig } from "next";
+import fs from "fs";
+import path from "path";
 
-const isGitHubPages = process.env.GITHUB_ACTIONS === 'true';
-const basePath = isGitHubPages ? '/Zenith' : '';
+import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const isGitHubPages = process.env.GITHUB_ACTIONS === "true";
+const isVercel = process.env.VERCEL === "1";
+const isStaticExport = isGitHubPages || isVercel;
+const basePath = isGitHubPages ? "/Zenith" : "";
 
 const crossOriginHeaders = [
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
   { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
 ];
 
+const coiToolSlugs = JSON.parse(
+  fs.readFileSync(
+    path.join(process.cwd(), "src", "tools", "coi-slugs.json"),
+    "utf8"
+  )
+) as string[];
+
+const coiToolPaths = coiToolSlugs.map((slug) => `/tool/${slug}/:path*`);
+
+const coiToolSources = [
+  ...coiToolPaths,
+  ...coiToolPaths.map((path) => `/:locale${path}`),
+];
+
 const nextConfig: NextConfig = {
-  output: 'export',
   basePath,
   trailingSlash: true,
+  ...(isStaticExport ? { output: "export" } : {}),
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
@@ -20,18 +40,10 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      {
-        source: '/tool/anime-upscale/:path*',
+      ...coiToolSources.map((source) => ({
+        source,
         headers: crossOriginHeaders,
-      },
-      {
-        source: '/tool/aigc-detector/:path*',
-        headers: crossOriginHeaders,
-      },
-      {
-        source: '/tool/paddleocr-onnx/:path*',
-        headers: crossOriginHeaders,
-      },
+      })),
       {
         source: '/_next/static/:path*',
         headers: crossOriginHeaders,
@@ -40,4 +52,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
+export default withNextIntl(nextConfig);

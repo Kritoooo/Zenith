@@ -2,11 +2,15 @@
 
 import type { ChangeEvent, DragEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import NextImage from "next/image";
 
 import { PrimaryButton, SecondaryButton } from "@/components/Button";
 import { UploadIcon } from "@/components/Icons";
+import { Select } from "@/components/Select";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { formatBytes } from "@/lib/formatBytes";
 
 type OutputFormat = "image/jpeg" | "image/webp" | "image/png";
 
@@ -17,18 +21,10 @@ const FORMAT_LABELS: Record<OutputFormat, string> = {
 };
 
 const QUICK_PRESETS = [
-  { label: "Crisp", quality: 0.92 },
-  { label: "Balanced", quality: 0.82 },
-  { label: "Small", quality: 0.7 },
+  { key: "crisp", quality: 0.92 },
+  { key: "balanced", quality: 0.82 },
+  { key: "small", quality: 0.7 },
 ];
-
-const formatBytes = (bytes: number) => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`;
-};
 
 const parseLimit = (value: string) => {
   const parsed = Number.parseInt(value, 10);
@@ -38,23 +34,25 @@ const parseLimit = (value: string) => {
 
 type PreviewCardProps = {
   label: string;
+  alt: string;
   src: string | null;
   sizeLabel?: string;
   helper?: string;
 };
 
-function PreviewCard({ label, src, sizeLabel, helper }: PreviewCardProps) {
+function PreviewCard({ label, alt, src, sizeLabel, helper }: PreviewCardProps) {
   return (
-    <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-      <div className="flex items-center justify-between text-xs text-[color:var(--text-secondary)]">
-        <span className="font-semibold uppercase tracking-wide">{label}</span>
-        {sizeLabel ? <span>{sizeLabel}</span> : null}
-      </div>
+    <ToolPanel
+      title={label}
+      actions={sizeLabel ? <span>{sizeLabel}</span> : null}
+      headerClassName="flex items-center justify-between text-xs text-[color:var(--text-secondary)]"
+      className="min-h-[260px]"
+    >
       <div className="relative mt-3 flex flex-1 items-center justify-center rounded-[14px] bg-[color:var(--glass-recessed-bg)] p-3">
         {src ? (
           <NextImage
             src={src}
-            alt={`${label} preview`}
+            alt={alt}
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
             className="rounded-[12px] object-contain"
@@ -62,15 +60,16 @@ function PreviewCard({ label, src, sizeLabel, helper }: PreviewCardProps) {
           />
         ) : (
           <p className="text-sm text-[color:var(--text-secondary)]">
-            {helper ?? "No preview yet."}
+            {helper}
           </p>
         )}
       </div>
-    </div>
+    </ToolPanel>
   );
 }
 
 export default function ImageCompressTool() {
+  const t = useTranslations("tools.image-compress.ui");
   const [originalUrl, setOriginalUrl] = useState<string | null>(null);
   const [compressedUrl, setCompressedUrl] = useState<string | null>(null);
   const [originalSize, setOriginalSize] = useState<number | null>(null);
@@ -131,7 +130,7 @@ export default function ImageCompressTool() {
       }, 0);
     };
     image.onerror = () => {
-      setError("Unable to read this image.");
+      setError(t("errors.read"));
       imageRef.current = null;
     };
     image.src = url;
@@ -141,7 +140,7 @@ export default function ImageCompressTool() {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file.");
+      setError(t("errors.selectImage"));
       return;
     }
     loadImage(file);
@@ -153,7 +152,7 @@ export default function ImageCompressTool() {
     const file = event.dataTransfer.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Please drop an image file.");
+      setError(t("errors.dropImage"));
       return;
     }
     loadImage(file);
@@ -186,7 +185,7 @@ export default function ImageCompressTool() {
       canvas.height = height;
       const context = canvas.getContext("2d");
       if (!context) {
-        throw new Error("Canvas is not available.");
+        throw new Error("NO_CANVAS");
       }
       context.drawImage(image, 0, 0, width, height);
       const blob = await new Promise<Blob | null>((resolve) => {
@@ -197,19 +196,22 @@ export default function ImageCompressTool() {
         }
       });
       if (!blob) {
-        throw new Error("Compression failed.");
+        throw new Error("NO_BLOB");
       }
       const url = URL.createObjectURL(blob);
       setCompressedUrl(url);
       setCompressedSize(blob.size);
       setPending(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Compression failed.";
-      setError(message);
+      if (err instanceof Error && err.message === "NO_CANVAS") {
+        setError(t("errors.canvas"));
+      } else {
+        setError(t("errors.compress"));
+      }
     } finally {
       setIsProcessing(false);
     }
-  }, [computeTargetSize, format, quality]);
+  }, [computeTargetSize, format, quality, t]);
 
   const handleDownload = () => {
     if (!compressedUrl) return;
@@ -224,45 +226,47 @@ export default function ImageCompressTool() {
     if (!originalSize || !compressedSize) return null;
     const delta = originalSize - compressedSize;
     const percent = Math.round((Math.abs(delta) / originalSize) * 100);
-    const status = delta >= 0 ? `${percent}% smaller` : `${percent}% larger`;
+    const status =
+      delta >= 0 ? t("stats.smaller", { percent }) : t("stats.larger", { percent });
     return `${formatBytes(compressedSize)} (${status})`;
-  }, [compressedSize, originalSize]);
+  }, [compressedSize, originalSize, t]);
 
   const dimensionSummary = dimensions
     ? `${dimensions.width} × ${dimensions.height}px`
-    : "—";
+    : t("stats.empty");
   const targetSummary = useMemo(() => {
-    if (!dimensions) return "—";
+    if (!dimensions) return t("stats.empty");
     const target = computeTargetSize(dimensions.width, dimensions.height);
     return `${target.width} × ${target.height}px`;
-  }, [computeTargetSize, dimensions]);
+  }, [computeTargetSize, dimensions, t]);
   const dropTitle = isDragActive
-    ? "Drop image here"
+    ? t("drop.dropHere")
     : originalUrl
-      ? "Replace image"
-      : "Choose an image";
+      ? t("drop.replace")
+      : t("drop.choose");
   const dropSubtitle = isDragActive
-    ? "Release to upload"
+    ? t("drop.release")
     : originalUrl
-      ? "JPG, PNG, WebP"
-      : "JPG, PNG, WebP · drag & drop or click";
+      ? t("drop.formats")
+      : t("drop.formatsHint");
 
   return (
     <div className="flex h-full flex-col gap-5">
       <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
-        <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Source
-            </p>
+        <ToolPanel
+          title={t("labels.source")}
+          actions={
             <button
               type="button"
               onClick={clearAll}
               className="text-xs text-[color:var(--text-secondary)] transition-colors hover:text-[color:var(--text-primary)]"
             >
-              Clear
+              {t("actions.clear")}
             </button>
-          </div>
+          }
+          headerClassName="flex items-center justify-between"
+          className="flex flex-col gap-4"
+        >
           <label
             className={cn(
               "group flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-3 rounded-[16px] border border-dashed border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-4 text-center text-sm text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]",
@@ -315,53 +319,62 @@ export default function ImageCompressTool() {
             </span>
           </label>
           <div className="flex flex-wrap gap-3 text-xs text-[color:var(--text-secondary)]">
-            <span>Original: {originalSize ? formatBytes(originalSize) : "—"}</span>
-            <span>Dimensions: {dimensionSummary}</span>
+            <span>
+              {t("stats.original")}: {originalSize ? formatBytes(originalSize) : t("stats.empty")}
+            </span>
+            <span>
+              {t("stats.dimensions")}: {dimensionSummary}
+            </span>
           </div>
           {error ? (
             <p className="text-xs text-rose-500/80">{error}</p>
           ) : (
             <p className="text-xs text-[color:var(--text-secondary)]">
               {pending
-                ? "Adjust settings then compress."
-                : "Compression stays on-device."}
+                ? t("status.adjust")
+                : t("status.onDevice")}
             </p>
           )}
-        </div>
-        <div className="flex flex-col gap-4 rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Settings
-            </p>
+        </ToolPanel>
+        <ToolPanel
+          title={t("labels.settings")}
+          actions={
             <div className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-secondary)]">
               <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2.5 py-1">
-                Target {targetSummary}
+                {t("stats.target", { size: targetSummary })}
               </span>
               <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-2.5 py-1">
-                {sizeSummary ?? "No output yet"}
+                {sizeSummary ?? t("stats.noOutput")}
               </span>
             </div>
-          </div>
+          }
+          headerClassName="flex flex-wrap items-center justify-between gap-2"
+          className="flex flex-col gap-4"
+        >
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs text-[color:var(--text-secondary)]">
-              Format
-              <select
+            <div className="text-xs text-[color:var(--text-secondary)]">
+              <span id="image-compress-format-label" className="block">
+                {t("labels.format")}
+              </span>
+              <Select
                 value={format}
                 onChange={(event) => {
                   setFormat(event.target.value as OutputFormat);
                   setPending(true);
                 }}
-                className="mt-2 w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)]"
+                className="mt-2"
+                buttonClassName="rounded-[12px]"
+                aria-labelledby="image-compress-format-label"
               >
                 {Object.entries(FORMAT_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </div>
             <label className="text-xs text-[color:var(--text-secondary)]">
-              Quality
+              {t("labels.quality")}
               <div className="mt-2 flex items-center gap-2 rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2">
                 <input
                   type="range"
@@ -377,14 +390,16 @@ export default function ImageCompressTool() {
                   className="h-1 w-full accent-[color:var(--accent-orange)]"
                 />
                 <span className="text-xs text-[color:var(--text-secondary)]">
-                  {format === "image/png" ? "Lossless" : Math.round(quality * 100)}
+                  {format === "image/png"
+                    ? t("labels.lossless")
+                    : Math.round(quality * 100)}
                 </span>
               </div>
             </label>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-[color:var(--text-secondary)]">
-              Max width (px)
+              {t("labels.maxWidth")}
               <input
                 type="number"
                 min={1}
@@ -393,12 +408,12 @@ export default function ImageCompressTool() {
                   setMaxWidth(event.target.value);
                   setPending(true);
                 }}
-                placeholder="auto"
+                placeholder={t("placeholders.auto")}
                 className="mt-2 w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)]"
               />
             </label>
             <label className="text-xs text-[color:var(--text-secondary)]">
-              Max height (px)
+              {t("labels.maxHeight")}
               <input
                 type="number"
                 min={1}
@@ -407,7 +422,7 @@ export default function ImageCompressTool() {
                   setMaxHeight(event.target.value);
                   setPending(true);
                 }}
-                placeholder="auto"
+                placeholder={t("placeholders.auto")}
                 className="mt-2 w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)]"
               />
             </label>
@@ -415,14 +430,14 @@ export default function ImageCompressTool() {
           <div className="flex flex-wrap items-center gap-2">
             {QUICK_PRESETS.map((preset) => (
               <SecondaryButton
-                key={preset.label}
+                key={preset.key}
                 size="sm"
                 onClick={() => {
                   setQuality(preset.quality);
                   setPending(true);
                 }}
               >
-                {preset.label}
+                {t(`presets.${preset.key}`)}
               </SecondaryButton>
             ))}
           </div>
@@ -431,31 +446,33 @@ export default function ImageCompressTool() {
               onClick={compressImage}
               disabled={!originalUrl || isProcessing}
             >
-              {isProcessing ? "Compressing..." : "Compress"}
+              {isProcessing ? t("actions.compressing") : t("actions.compress")}
             </PrimaryButton>
             <SecondaryButton onClick={handleDownload} disabled={!compressedUrl}>
-              Download
+              {t("actions.download")}
             </SecondaryButton>
             {pending ? (
               <span className="text-xs text-[color:var(--text-secondary)]">
-                Settings changed — recompress.
+                {t("status.pending")}
               </span>
             ) : null}
           </div>
-        </div>
+        </ToolPanel>
       </div>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <PreviewCard
-          label="Original"
+          label={t("labels.original")}
+          alt={t("aria.originalPreview")}
           src={originalUrl}
           sizeLabel={originalSize ? formatBytes(originalSize) : undefined}
-          helper="Load an image to preview it."
+          helper={t("helpers.original")}
         />
         <PreviewCard
-          label="Compressed"
+          label={t("labels.compressed")}
+          alt={t("aria.compressedPreview")}
           src={compressedUrl}
           sizeLabel={compressedSize ? formatBytes(compressedSize) : undefined}
-          helper="Click compress to generate output."
+          helper={t("helpers.compressed")}
         />
       </div>
     </div>

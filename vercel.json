@@ -1,8 +1,16 @@
 {
-    "buildCommand": "npm run build",
+    "buildCommand": "npm run build:locales",
     "outputDirectory": "out",
     "framework": null,
     "rewrites": [
+        {
+            "source": "/:locale",
+            "destination": "/:locale/index.html"
+        },
+        {
+            "source": "/:locale/tool/:slug",
+            "destination": "/:locale/tool/:slug/index.html"
+        },
         {
             "source": "/tool/:slug",
             "destination": "/tool/:slug/index.html"
@@ -23,7 +31,59 @@
             ]
         },
         {
+            "source": "/:locale/tool/anime-upscale/:path*",
+            "headers": [
+                {
+                    "key": "Cross-Origin-Opener-Policy",
+                    "value": "same-origin"
+                },
+                {
+                    "key": "Cross-Origin-Embedder-Policy",
+                    "value": "require-corp"
+                }
+            ]
+        },
+        {
             "source": "/tool/aigc-detector/:path*",
+            "headers": [
+                {
+                    "key": "Cross-Origin-Opener-Policy",
+                    "value": "same-origin"
+                },
+                {
+                    "key": "Cross-Origin-Embedder-Policy",
+                    "value": "require-corp"
+                }
+            ]
+        },
+        {
+            "source": "/:locale/tool/aigc-detector/:path*",
+            "headers": [
+                {
+                    "key": "Cross-Origin-Opener-Policy",
+                    "value": "same-origin"
+                },
+                {
+                    "key": "Cross-Origin-Embedder-Policy",
+                    "value": "require-corp"
+                }
+            ]
+        },
+        {
+            "source": "/tool/paddleocr-onnx/:path*",
+            "headers": [
+                {
+                    "key": "Cross-Origin-Opener-Policy",
+                    "value": "same-origin"
+                },
+                {
+                    "key": "Cross-Origin-Embedder-Policy",
+                    "value": "require-corp"
+                }
+            ]
+        },
+        {
+            "source": "/:locale/tool/paddleocr-onnx/:path*",
             "headers": [
                 {
                     "key": "Cross-Origin-Opener-Policy",

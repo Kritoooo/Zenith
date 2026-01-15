@@ -1,25 +1,33 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 type ClockZone = {
-  label: string;
+  key: "utc" | "newYork" | "tokyo";
   timeZone: string;
 };
 
 const WORLD_CLOCKS: ClockZone[] = [
-  { label: "UTC", timeZone: "UTC" },
-  { label: "New York", timeZone: "America/New_York" },
-  { label: "Tokyo", timeZone: "Asia/Tokyo" },
+  { key: "utc", timeZone: "UTC" },
+  { key: "newYork", timeZone: "America/New_York" },
+  { key: "tokyo", timeZone: "Asia/Tokyo" },
 ];
 
 export default function LocalTimeTool() {
+  const t = useTranslations("tools.local-time.ui");
+  const locale = useLocale();
   const [now, setNow] = useState(() => new Date());
   const [is24h, setIs24h] = useState(true);
   const [showSeconds, setShowSeconds] = useState(true);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { copied, copy } = useClipboard<string>({
+    onError: () => setError(t("errors.clipboard")),
+  });
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -33,13 +41,13 @@ export default function LocalTimeTool() {
 
   const timeFormatter = useMemo(
     () =>
-      new Intl.DateTimeFormat("en-US", {
+      new Intl.DateTimeFormat(locale, {
         hour: "2-digit",
         minute: "2-digit",
         second: showSeconds ? "2-digit" : undefined,
         hour12: !is24h,
       }),
-    [is24h, showSeconds]
+    [is24h, locale, showSeconds]
   );
 
   const zoneFormatters = useMemo(() => {
@@ -51,7 +59,7 @@ export default function LocalTimeTool() {
     } as const;
     return WORLD_CLOCKS.reduce(
       (acc, zone) => {
-        acc[zone.timeZone] = new Intl.DateTimeFormat("en-US", {
+        acc[zone.timeZone] = new Intl.DateTimeFormat(locale, {
           ...baseOptions,
           timeZone: zone.timeZone,
         });
@@ -59,17 +67,17 @@ export default function LocalTimeTool() {
       },
       {} as Record<string, Intl.DateTimeFormat>
     );
-  }, [is24h, showSeconds]);
+  }, [is24h, locale, showSeconds]);
 
   const dateFormatter = useMemo(
     () =>
-      new Intl.DateTimeFormat("en-US", {
+      new Intl.DateTimeFormat(locale, {
         weekday: "long",
         year: "numeric",
         month: "short",
         day: "numeric",
       }),
-    []
+    [locale]
   );
 
   const localTime = timeFormatter.format(now);
@@ -77,18 +85,13 @@ export default function LocalTimeTool() {
   const isoString = now.toISOString();
 
   const copyValue = async (label: string, value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(label);
-      window.setTimeout(() => setCopied(null), 1400);
-    } catch {
-      setCopied("Clipboard unavailable");
-    }
+    setError(null);
+    await copy(value, label);
   };
 
   const formatZoneTime = (zone: ClockZone) =>
     (zoneFormatters[zone.timeZone] ??
-      new Intl.DateTimeFormat("en-US", {
+      new Intl.DateTimeFormat(locale, {
         hour: "2-digit",
         minute: "2-digit",
         second: showSeconds ? "2-digit" : undefined,
@@ -111,7 +114,7 @@ export default function LocalTimeTool() {
                 : "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
             )}
           >
-            24 Hour
+            {t("actions.hour24")}
           </button>
           <button
             type="button"
@@ -123,34 +126,38 @@ export default function LocalTimeTool() {
                 : "bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] hover:bg-[color:var(--glass-hover-bg)]"
             )}
           >
-            Seconds
+            {t("actions.seconds")}
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => copyValue("Time", localTime)}
+            onClick={() => copyValue(t("labels.time"), localTime)}
             className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-primary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
           >
-            Copy time
+            {t("actions.copyTime")}
           </button>
           <button
             type="button"
-            onClick={() => copyValue("ISO", isoString)}
+            onClick={() => copyValue(t("labels.iso"), isoString)}
             className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1 text-xs text-[color:var(--text-primary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
           >
-            Copy ISO
+            {t("actions.copyIso")}
           </button>
         </div>
       </div>
       <p className="text-xs text-[color:var(--text-secondary)]" aria-live="polite">
-        {copied ? `Copied ${copied}.` : "Local clock updates every second."}
+        {error
+          ? error
+          : copied
+            ? t("status.copied", { label: copied })
+            : t("status.ready")}
       </p>
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <div className="relative overflow-hidden rounded-[20px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-6 shadow-[var(--glass-shadow)]">
           <div className="absolute -right-20 -top-24 h-48 w-48 rounded-full bg-[radial-gradient(circle,#007AFF33,transparent_70%)]" />
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--text-secondary)]">
-            Local Time
+            {t("labels.localTime")}
           </p>
           <div className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
             {localTime}
@@ -162,7 +169,7 @@ export default function LocalTimeTool() {
         <div className="flex flex-col gap-3 rounded-[20px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              Timezone
+              {t("labels.timeZone")}
             </p>
             <p className="mt-2 text-sm text-[color:var(--text-primary)]">
               {timeZone}
@@ -170,25 +177,22 @@ export default function LocalTimeTool() {
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              ISO Timestamp
+              {t("labels.isoTimestamp")}
             </p>
             <p className="mt-2 break-all text-xs text-[color:var(--text-secondary)]">
               {isoString}
             </p>
           </div>
           <div className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-xs text-[color:var(--text-secondary)]">
-            Widget preview matches macOS-style cards.
+            {t("labels.widgetNote")}
           </div>
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {WORLD_CLOCKS.map((zone) => (
-          <div
-            key={zone.timeZone}
-            className="rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 text-sm"
-          >
+          <ToolPanel key={zone.timeZone} className="text-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-              {zone.label}
+              {t(`zones.${zone.key}`)}
             </p>
             <p className="mt-2 text-lg font-semibold text-[color:var(--text-primary)]">
               {formatZoneTime(zone)}
@@ -196,7 +200,7 @@ export default function LocalTimeTool() {
             <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
               {zone.timeZone}
             </p>
-          </div>
+          </ToolPanel>
         ))}
       </div>
     </div>

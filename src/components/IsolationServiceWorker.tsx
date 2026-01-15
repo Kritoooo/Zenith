@@ -2,24 +2,32 @@
 
 import { useEffect } from "react";
 
-const RELOAD_KEY = "zenith-coi-reload";
-const COI_TOOL_PATHS = [
-  "/tool/anime-upscale",
-  "/tool/aigc-detector",
-  "/tool/paddleocr-onnx",
-];
+import { locales } from "@/i18n/config";
+import { COI_TOOL_PATHS } from "@/tools/coi";
 
+const RELOAD_KEY = "zenith-coi-reload";
 const getBasePath = () => {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   return basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
 };
 
+const stripLocalePrefix = (pathname: string) => {
+  const segments = pathname.split("/");
+  const maybeLocale = segments[1];
+  if (locales.includes(maybeLocale as (typeof locales)[number])) {
+    const rest = segments.slice(2).join("/");
+    return rest ? `/${rest}` : "/";
+  }
+  return pathname;
+};
+
 const normalizePathname = (pathname: string, basePath: string) => {
   if (basePath && pathname.startsWith(basePath)) {
     const trimmed = pathname.slice(basePath.length);
-    return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    const withSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return stripLocalePrefix(withSlash);
   }
-  return pathname;
+  return stripLocalePrefix(pathname);
 };
 
 const getActiveScope = (pathname: string, basePath: string) => {

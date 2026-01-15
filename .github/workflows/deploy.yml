@@ -24,7 +24,8 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm run build
+      - run: npm run i18n:check
+      - run: npm run build:locales
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./out

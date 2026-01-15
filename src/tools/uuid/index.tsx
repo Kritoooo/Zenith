@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button, PrimaryButton, SecondaryButton } from "@/components/Button";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { useClipboard } from "@/lib/useClipboard";
 
 const QUICK_COUNTS = [1, 3, 5] as const;
 
@@ -16,7 +19,7 @@ const createUuid = () => {
     return cryptoRef.randomUUID();
   }
   if (!cryptoRef || typeof cryptoRef.getRandomValues !== "function") {
-    throw new Error("Secure random generator is unavailable.");
+    throw new Error("RNG_UNAVAILABLE");
   }
   const bytes = new Uint8Array(16);
   cryptoRef.getRandomValues(bytes);
@@ -29,12 +32,15 @@ const createUuid = () => {
 };
 
 export default function UuidTool() {
+  const t = useTranslations("tools.uuid.ui");
   const [count, setCount] = useState(3);
   const [uppercase, setUppercase] = useState(false);
   const [withHyphens, setWithHyphens] = useState(true);
   const [uuids, setUuids] = useState<string[]>([]);
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { copied, copy, reset } = useClipboard({
+    onError: () => setError(t("errors.clipboard")),
+  });
 
   const normalizedCount = useMemo(() => Math.min(Math.max(count, 1), 20), [count]);
 
@@ -53,14 +59,16 @@ export default function UuidTool() {
         formatUuid(createUuid())
       );
       setUuids(next);
-      setCopied(false);
+      reset();
       setError(null);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to generate UUIDs.";
-      setError(message);
+      if (err instanceof Error && err.message === "RNG_UNAVAILABLE") {
+        setError(t("errors.rng"));
+      } else {
+        setError(t("errors.generate"));
+      }
     }
-  }, [formatUuid, normalizedCount]);
+  }, [formatUuid, normalizedCount, reset, t]);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -71,13 +79,7 @@ export default function UuidTool() {
 
   const copyAll = async () => {
     if (!uuids.length) return;
-    try {
-      await navigator.clipboard.writeText(uuids.join("\n"));
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      setError("Clipboard unavailable. Copy manually.");
-    }
+    await copy(uuids.join("\n"));
   };
 
   return (
@@ -85,7 +87,9 @@ export default function UuidTool() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2 text-sm shadow-[var(--glass-shadow)]">
-            <span className="text-xs text-[color:var(--text-secondary)]">Count</span>
+            <span className="text-xs text-[color:var(--text-secondary)]">
+              {t("labels.count")}
+            </span>
             <input
               type="number"
               min={1}
@@ -93,7 +97,7 @@ export default function UuidTool() {
               value={count}
               onChange={(event) => {
                 setCount(Number(event.target.value));
-                setCopied(false);
+                reset();
               }}
               className="w-14 bg-transparent text-sm text-[color:var(--text-primary)] outline-none"
             />
@@ -110,21 +114,21 @@ export default function UuidTool() {
             size="sm"
             onClick={() => setWithHyphens((prev) => !prev)}
           >
-            Hyphens
+            {t("actions.hyphens")}
           </Button>
           <Button
             variant={uppercase ? "primary" : "secondary"}
             size="sm"
             onClick={() => setUppercase((prev) => !prev)}
           >
-            Uppercase
+            {t("actions.uppercase")}
           </Button>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <PrimaryButton onClick={generate}>Generate</PrimaryButton>
+        <PrimaryButton onClick={generate}>{t("actions.generate")}</PrimaryButton>
         <SecondaryButton onClick={copyAll} disabled={!uuids.length}>
-          Copy
+          {t("actions.copy")}
         </SecondaryButton>
         <p
           className={cn(
@@ -133,20 +137,17 @@ export default function UuidTool() {
           )}
           aria-live="polite"
         >
-          {error ? error : copied ? "Copied to clipboard." : "v4 UUIDs"}
+          {error ? error : copied ? t("status.copied") : t("status.ready")}
         </p>
       </div>
-      <div className="flex min-h-[260px] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-          Output
-        </p>
+      <ToolPanel title={t("labels.output")} className="min-h-[260px]">
         <textarea
           value={uuids.join("\n")}
           readOnly
           spellCheck={false}
           className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
         />
-      </div>
+      </ToolPanel>
     </div>
   );
 }

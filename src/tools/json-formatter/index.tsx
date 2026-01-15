@@ -1,227 +1,60 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { PrimaryButton, SecondaryButton } from "@/components/Button";
+import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
-
-const SAMPLE_JSON = `{
-  "project": "Zenith",
-  "status": "ok",
-  "items": [
-    1,
-    2,
-    3
-  ]
-}`;
+import { useClipboard } from "@/lib/useClipboard";
+import { JsonTree } from "./JsonTree";
+import { JsonValue, collectPaths, countNodesWithCap } from "./jsonUtils";
 
 const indentOptions = [2, 4] as const;
+const fontSizeOptions = [12, 14, 16, 18] as const;
+const LARGE_TEXT_THRESHOLD = 120_000;
+const TREE_NODE_LIMIT = 8000;
+const PROCESS_DELAY_MS = 12;
+const DEFAULT_SAMPLE = `{
+  "name": "Zenith",
+  "active": true,
+  "tags": ["tooling", "design"]
+}`;
 
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
-
-const isJsonBranch = (
-  value: JsonValue
-): value is Record<string, JsonValue> | JsonValue[] =>
-  typeof value === "object" && value !== null;
-
-const formatPrimitive = (value: JsonValue) => {
-  if (value === null) return "null";
-  if (typeof value === "string") return JSON.stringify(value);
-  return String(value);
+type TreeGuardState = {
+  disabled: boolean;
+  forced: boolean;
+  reason: "size" | "nodes" | null;
+  nodeCount: number | null;
 };
 
-const formatKey = (value: string) => JSON.stringify(value);
+const createInitialTreeGuard = (): TreeGuardState => ({
+  disabled: false,
+  forced: false,
+  reason: null,
+  nodeCount: null,
+});
 
-const getPrimitiveTone = (value: JsonValue) => {
-  if (value === null) return "text-[color:var(--accent-pink)]";
-  if (typeof value === "string") return "text-[color:var(--accent-green)]";
-  if (typeof value === "number") return "text-[color:var(--accent-orange)]";
-  return "text-[color:var(--accent-blue)]";
-};
-
-const getNodeSummary = (value: JsonValue) => {
-  if (Array.isArray(value)) return `Array(${value.length})`;
-  if (isJsonBranch(value)) return `Object(${Object.keys(value).length})`;
-  return formatPrimitive(value);
-};
-
-const buildPath = (parent: string, key: string | number) => {
-  if (typeof key === "number") return `${parent}/${key}`;
-  const escaped = key.replace(/~/g, "~0").replace(/\//g, "~1");
-  return `${parent}/${escaped}`;
-};
-
-const collectPaths = (
-  value: JsonValue | null,
-  path: string,
-  paths: Set<string>,
-  includeSelf: boolean
-) => {
-  if (!value || !isJsonBranch(value)) return;
-  if (includeSelf) paths.add(path);
-  const entries = Array.isArray(value)
-    ? value.map((item, index) => [index, item] as const)
-    : (Object.entries(value) as [string, JsonValue][]);
-  entries.forEach(([key, child]) => {
-    if (!isJsonBranch(child)) return;
-    const childPath = buildPath(path, key);
-    collectPaths(child, childPath, paths, true);
+const waitForNextFrame = () =>
+  new Promise<void>((resolve) => {
+    if (typeof requestAnimationFrame !== "undefined") {
+      requestAnimationFrame(() => resolve());
+      return;
+    }
+    window.setTimeout(resolve, PROCESS_DELAY_MS);
   });
-};
 
-type JsonNodeProps = {
-  label?: string;
-  value: JsonValue;
-  path: string;
-  depth: number;
-  isLast: boolean;
-  collapsedPaths: Set<string>;
-  onToggle: (path: string) => void;
-};
-
-function JsonNode({
-  label,
-  value,
-  path,
-  depth,
-  isLast,
-  collapsedPaths,
-  onToggle,
-}: JsonNodeProps) {
-  const isBranch = isJsonBranch(value);
-  const isArray = Array.isArray(value);
-  const entries = isBranch
-    ? isArray
-      ? value.map((item, index) => [index, item] as const)
-      : (Object.entries(value) as [string, JsonValue][])
-    : [];
-  const hasChildren = entries.length > 0;
-  const isCollapsed = collapsedPaths.has(path);
-  const comma = isLast ? "" : ",";
-  const opener = isArray ? "[" : "{";
-  const closer = isArray ? "]" : "}";
-  const summary = getNodeSummary(value);
-
-  const renderControl = (interactive: boolean) =>
-    interactive ? (
-      <button
-        type="button"
-        onClick={() => onToggle(path)}
-        aria-label={isCollapsed ? "Expand node" : "Collapse node"}
-        className="mt-[2px] flex h-4 w-4 items-center justify-center rounded border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[10px] text-[color:var(--text-secondary)] transition-colors hover:bg-[color:var(--glass-hover-bg)]"
-      >
-        {isCollapsed ? "+" : "-"}
-      </button>
-    ) : (
-      <span className="mt-[2px] inline-flex h-4 w-4" aria-hidden="true" />
-    );
-
-  const renderLabel = () =>
-    label !== undefined ? (
-      <>
-        <span className="text-[color:var(--accent-blue)]">
-          {formatKey(label)}
-        </span>
-        <span className="text-[color:var(--text-secondary)]">: </span>
-      </>
-    ) : null;
-
-  if (!isBranch) {
-    return (
-      <div className="flex items-start gap-2" style={{ paddingLeft: depth * 16 }}>
-        {renderControl(false)}
-        <div className="flex flex-wrap items-center">
-          {renderLabel()}
-          <span className={getPrimitiveTone(value)}>
-            {formatPrimitive(value)}
-            {comma}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!hasChildren) {
-    return (
-      <div className="flex items-start gap-2" style={{ paddingLeft: depth * 16 }}>
-        {renderControl(false)}
-        <div className="flex flex-wrap items-center">
-          {renderLabel()}
-          <span className="text-[color:var(--text-secondary)]">
-            {opener}
-            {closer}
-            {comma}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (isCollapsed) {
-    return (
-      <div className="flex items-start gap-2" style={{ paddingLeft: depth * 16 }}>
-        {renderControl(true)}
-        <div className="flex flex-wrap items-center">
-          {renderLabel()}
-          <span className="text-[color:var(--text-secondary)]">
-            {opener}...{closer}
-            {comma}
-          </span>
-          <span className="ml-2 text-[10px] text-[color:var(--text-secondary)]">
-            {summary}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-start gap-2" style={{ paddingLeft: depth * 16 }}>
-        {renderControl(true)}
-        <div className="flex flex-wrap items-center">
-          {renderLabel()}
-          <span className="text-[color:var(--text-secondary)]">{opener}</span>
-        </div>
-      </div>
-      {entries.map(([key, child], index) => {
-        const childPath = buildPath(path, key);
-        const childLabel = isArray ? undefined : (key as string);
-        const childIsLast = index === entries.length - 1;
-        return (
-          <JsonNode
-            key={childPath}
-            label={childLabel}
-            value={child}
-            path={childPath}
-            depth={depth + 1}
-            isLast={childIsLast}
-            collapsedPaths={collapsedPaths}
-            onToggle={onToggle}
-          />
-        );
-      })}
-      <div className="flex items-start gap-2" style={{ paddingLeft: depth * 16 }}>
-        {renderControl(false)}
-        <div className="flex flex-wrap items-center">
-          <span className="text-[color:var(--text-secondary)]">
-            {closer}
-            {comma}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+const toKilobytes = (length: number) => Math.max(1, Math.round(length / 1024));
 
 export default function JsonFormatterTool() {
-  const [input, setInput] = useState(SAMPLE_JSON);
+  const t = useTranslations("tools.json-formatter.ui");
+  const sampleJson = useMemo(() => {
+    const value = t("sample");
+    // Fallback when locale messages are missing and NextIntl returns the key.
+    if (value === "tools.json-formatter.ui.sample") return DEFAULT_SAMPLE;
+    return value;
+  }, [t]);
+  const [input, setInput] = useState(sampleJson);
   const [output, setOutput] = useState("");
   const [parsedValue, setParsedValue] = useState<JsonValue | null>(null);
   const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(
@@ -230,47 +63,104 @@ export default function JsonFormatterTool() {
   const [viewMode, setViewMode] = useState<"tree" | "raw">("tree");
   const [error, setError] = useState<string | null>(null);
   const [indent, setIndent] = useState<(typeof indentOptions)[number]>(2);
-  const [copied, setCopied] = useState(false);
+  const [fontSize, setFontSize] = useState<(typeof fontSizeOptions)[number]>(14);
+  const { copied, copy, reset } = useClipboard({
+    onError: () => setError(t("errors.clipboard")),
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [treeGuard, setTreeGuard] = useState<TreeGuardState>(
+    createInitialTreeGuard
+  );
+  const [payloadSize, setPayloadSize] = useState(0);
+  const [showInput, setShowInput] = useState(true);
+  const [lastMode, setLastMode] = useState<"pretty" | "minify" | null>(null);
+  const treeBlocked = treeGuard.disabled && !treeGuard.forced;
   const allPaths = useMemo(() => {
-    if (!parsedValue) return new Set<string>();
+    if (!parsedValue || treeBlocked) return new Set<string>();
     const next = new Set<string>();
     collectPaths(parsedValue, "$", next, false);
     return next;
-  }, [parsedValue]);
-
+  }, [parsedValue, treeBlocked]);
+  const payloadSizeKb = payloadSize ? toKilobytes(payloadSize) : 0;
+  const statusMessage =
+    error ??
+    (isProcessing
+      ? t("status.processing")
+      : copied
+        ? t("status.copied")
+        : treeBlocked
+          ? treeGuard.reason === "size"
+            ? t("status.treeGuardSize")
+            : t("status.treeGuardNodes", { limit: TREE_NODE_LIMIT.toLocaleString() })
+          : "");
+  const statusTone = error
+    ? "text-rose-500/80"
+    : isProcessing
+      ? "text-[color:var(--accent-blue)]"
+      : "text-[color:var(--text-secondary)]";
   const parseJson = () => {
     try {
       const value = JSON.parse(input);
       setError(null);
       return value;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Invalid JSON payload.";
-      setError(message);
+    } catch {
+      setError(t("errors.invalid"));
       setOutput("");
       setParsedValue(null);
       setCollapsedPaths(new Set());
+      setTreeGuard(createInitialTreeGuard());
+      setPayloadSize(0);
       return undefined;
     }
   };
 
-  const formatJson = () => {
+  const processJson = async (mode: "pretty" | "minify") => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    setError(null);
+    if (copied) reset();
+
+    await waitForNextFrame();
+
     const value = parseJson();
-    if (value === undefined) return;
-    setCopied(false);
-    setOutput(JSON.stringify(value, null, indent));
-    setParsedValue(value as JsonValue);
+    if (value === undefined) {
+      setIsProcessing(false);
+      return;
+    }
+
+    const size = input.length;
+    const nodeCount = countNodesWithCap(value as JsonValue, TREE_NODE_LIMIT + 1);
+    const isSizeBlocked = size >= LARGE_TEXT_THRESHOLD;
+    const isNodeBlocked = nodeCount > TREE_NODE_LIMIT;
+    const shouldDisableTree = isSizeBlocked || isNodeBlocked;
+
+    setTreeGuard({
+      disabled: shouldDisableTree,
+      forced: false,
+      reason: isSizeBlocked ? "size" : isNodeBlocked ? "nodes" : null,
+      nodeCount: Math.min(nodeCount, TREE_NODE_LIMIT + 1),
+    });
+    setPayloadSize(size);
     setCollapsedPaths(new Set());
+
+    const nextOutput =
+      mode === "pretty"
+        ? JSON.stringify(value, null, indent)
+        : JSON.stringify(value);
+    setOutput(nextOutput);
+    setParsedValue(value as JsonValue);
+    setLastMode(mode);
+
+    if (shouldDisableTree && viewMode === "tree") {
+      setViewMode("raw");
+    }
+
+    setIsProcessing(false);
   };
 
-  const minifyJson = () => {
-    const value = parseJson();
-    if (value === undefined) return;
-    setCopied(false);
-    setOutput(JSON.stringify(value));
-    setParsedValue(value as JsonValue);
-    setCollapsedPaths(new Set());
-  };
+  const formatJson = () => processJson("pretty");
+
+  const minifyJson = () => processJson("minify");
 
   const togglePath = (path: string) => {
     setCollapsedPaths((prev) => {
@@ -292,23 +182,37 @@ export default function JsonFormatterTool() {
     setCollapsedPaths(new Set(allPaths));
   };
 
+  const forceTreeRender = () => {
+    if (!parsedValue) return;
+    setTreeGuard((prev) => ({
+      ...prev,
+      disabled: false,
+      forced: true,
+    }));
+    setViewMode("tree");
+  };
+
   const copyOutput = async () => {
     if (!output) return;
-    try {
-      await navigator.clipboard.writeText(output);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
-    } catch {
-      setError("Clipboard unavailable. Switch to Raw to copy manually.");
-    }
+    await copy(output);
   };
 
   return (
     <div className="flex h-full flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <PrimaryButton onClick={formatJson}>Format</PrimaryButton>
-          <SecondaryButton onClick={minifyJson}>Minify</SecondaryButton>
+          <PrimaryButton onClick={formatJson} disabled={isProcessing}>
+            {t("actions.format")}
+          </PrimaryButton>
+          <SecondaryButton onClick={minifyJson} disabled={isProcessing}>
+            {t("actions.minify")}
+          </SecondaryButton>
+          <SecondaryButton
+            onClick={() => setShowInput((prev) => !prev)}
+            disabled={isProcessing}
+          >
+            {showInput ? t("actions.hideInput") : t("actions.showInput")}
+          </SecondaryButton>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-1 text-[11px] text-[color:var(--text-secondary)] shadow-[var(--glass-shadow)]">
@@ -316,7 +220,13 @@ export default function JsonFormatterTool() {
               <button
                 key={value}
                 type="button"
-                onClick={() => setIndent(value)}
+                onClick={() => {
+                  setIndent(value);
+                  if (lastMode === "pretty" && parsedValue) {
+                    setOutput(JSON.stringify(parsedValue, null, value));
+                    reset();
+                  }
+                }}
                 className={cn(
                   "rounded-full px-3 py-1 transition-colors",
                   value === indent
@@ -324,61 +234,84 @@ export default function JsonFormatterTool() {
                     : "hover:bg-[color:var(--glass-hover-bg)]"
                 )}
               >
-                {value} spaces
+                {t("indent.option", { count: value })}
               </button>
             ))}
           </div>
-          <SecondaryButton onClick={copyOutput} disabled={!output}>
-            Copy
+          <div className="flex items-center gap-1 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-1 text-[11px] text-[color:var(--text-secondary)] shadow-[var(--glass-shadow)]">
+            {fontSizeOptions.map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFontSize(value)}
+                className={cn(
+                  "rounded-full px-3 py-1 transition-colors",
+                  value === fontSize
+                    ? "bg-[color:var(--accent-blue)] text-white"
+                    : "hover:bg-[color:var(--glass-hover-bg)]"
+                )}
+              >
+                {t("font.label", { size: value })}
+              </button>
+            ))}
+          </div>
+          <SecondaryButton onClick={copyOutput} disabled={!output || isProcessing}>
+            {t("actions.copy")}
           </SecondaryButton>
         </div>
       </div>
       <p
-        className={cn(
-          "min-h-[1.25rem] text-xs",
-          error
-            ? "text-rose-500/80"
-            : "text-[color:var(--text-secondary)]"
-        )}
+        className={cn("min-h-[1.25rem] text-xs transition-colors", statusTone)}
         aria-live="polite"
       >
-        {error ?? (copied ? "Copied to clipboard." : "")}
+        {statusMessage}
       </p>
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
-        <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            Input
-          </p>
-          <textarea
-            value={input}
-            onChange={(event) => {
-              setInput(event.target.value);
-              if (error) setError(null);
-              if (copied) setCopied(false);
-            }}
-            spellCheck={false}
-            placeholder='{"hello":"world"}'
-            className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
-          />
-        </div>
-        <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col rounded-[16px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-secondary)]">
-            <p>Output</p>
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium normal-case">
+        {showInput ? (
+          <ToolPanel
+            title={t("labels.input")}
+            className="min-h-[clamp(360px,58vh,720px)] min-w-0"
+          >
+            <textarea
+              value={input}
+              onChange={(event) => {
+                setInput(event.target.value);
+                if (error) setError(null);
+                if (copied) reset();
+              }}
+              spellCheck={false}
+              placeholder={t("placeholders.input")}
+              wrap="off"
+              style={{ fontSize, whiteSpace: "pre" }}
+              className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none overflow-auto rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            />
+          </ToolPanel>
+        ) : null}
+        <ToolPanel
+          title={t("labels.output")}
+          className={cn(
+            "min-h-[clamp(360px,58vh,720px)] min-w-0",
+            showInput ? "" : "lg:w-full"
+          )}
+          headerClassName="flex flex-wrap items-center justify-between gap-2"
+          actionsClassName="flex flex-wrap items-center gap-2 text-[11px] font-medium normal-case"
+          actions={
+            <>
               <div className="flex items-center gap-1 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-1">
                 {(["tree", "raw"] as const).map((mode) => (
                   <button
                     key={mode}
                     type="button"
                     onClick={() => setViewMode(mode)}
+                    disabled={mode === "tree" && treeBlocked}
                     className={cn(
-                      "rounded-full px-3 py-1 capitalize transition-colors",
+                      "rounded-full px-3 py-1 capitalize transition-colors disabled:cursor-not-allowed disabled:opacity-60",
                       viewMode === mode
                         ? "bg-[color:var(--accent-blue)] text-white"
                         : "text-[color:var(--text-secondary)] hover:bg-[color:var(--glass-hover-bg)]"
                     )}
                   >
-                    {mode}
+                    {t(`view.${mode}`)}
                   </button>
                 ))}
               </div>
@@ -387,35 +320,98 @@ export default function JsonFormatterTool() {
                   <SecondaryButton
                     size="sm"
                     onClick={expandAll}
-                    disabled={!parsedValue}
+                    disabled={!parsedValue || treeBlocked}
                   >
-                    Expand all
+                    {t("actions.expandAll")}
                   </SecondaryButton>
                   <SecondaryButton
                     size="sm"
                     onClick={collapseAll}
-                    disabled={!parsedValue}
+                    disabled={!parsedValue || treeBlocked}
                   >
-                    Collapse all
+                    {t("actions.collapseAll")}
                   </SecondaryButton>
                 </>
               ) : null}
+            </>
+          }
+        >
+          {output ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--text-secondary)]">
+              <span className="rounded-full bg-[color:var(--glass-recessed-bg)] px-2 py-1">
+                {t("status.sizeLabel", { size: payloadSizeKb })}
+              </span>
+              {treeGuard.nodeCount !== null ? (
+                <span className="rounded-full bg-[color:var(--glass-recessed-bg)] px-2 py-1">
+                  {t("status.nodeLabel", {
+                    count:
+                      treeGuard.nodeCount > TREE_NODE_LIMIT
+                        ? `${TREE_NODE_LIMIT}+`
+                        : treeGuard.nodeCount.toLocaleString(),
+                  })}
+                </span>
+              ) : null}
+              {treeGuard.forced ? (
+                <span className="rounded-full border border-[color:var(--glass-border)] px-2 py-1">
+                  {t("status.forcedTree")}
+                </span>
+              ) : null}
+              {treeGuard.reason ? (
+                <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-hover-bg)] px-2 py-1 text-[color:var(--text-primary)]">
+                  {treeGuard.reason === "size"
+                    ? t("status.treeGuardSize")
+                    : t("status.treeGuardNodes", {
+                        limit: TREE_NODE_LIMIT.toLocaleString(),
+                      })}
+                </span>
+              ) : null}
+              {lastMode === "pretty" ? (
+                <span className="rounded-full bg-[color:var(--glass-recessed-bg)] px-2 py-1">
+                  {t("status.indentLabel", { count: indent })}
+                </span>
+              ) : null}
             </div>
-          </div>
+          ) : null}
+          {treeBlocked ? (
+            <div className="mt-2 flex flex-wrap items-center gap-3 rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] p-3 text-[11px] text-[color:var(--text-secondary)]">
+              <p className="leading-relaxed">
+                {treeGuard.reason === "size"
+                  ? t("status.treeGuardSize")
+                  : t("status.treeGuardNodes", { limit: TREE_NODE_LIMIT.toLocaleString() })}
+              </p>
+              <SecondaryButton size="sm" onClick={forceTreeRender}>
+                {t("actions.forceTree")}
+              </SecondaryButton>
+            </div>
+          ) : null}
           {viewMode === "tree" ? (
-            <div className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 overflow-auto rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] focus-within:border-[color:var(--accent-blue)]">
-              {parsedValue && output ? (
-                <JsonNode
+            <div
+              className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 overflow-auto rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono leading-relaxed text-[color:var(--text-primary)] whitespace-pre focus-within:border-[color:var(--accent-blue)]"
+              style={{ fontSize }}
+            >
+              {treeBlocked ? (
+                <p className="text-[color:var(--text-secondary)]">
+                  {treeGuard.reason === "size"
+                    ? t("status.treeGuardSize")
+                    : t("status.treeGuardNodes", { limit: TREE_NODE_LIMIT.toLocaleString() })}
+                </p>
+              ) : parsedValue && output ? (
+                <JsonTree
                   value={parsedValue}
-                  path="$"
-                  depth={0}
-                  isLast
                   collapsedPaths={collapsedPaths}
                   onToggle={togglePath}
+                  summaryLabels={{
+                    array: t("summary.array"),
+                    object: t("summary.object"),
+                  }}
+                  ariaLabels={{
+                    expand: t("aria.expand"),
+                    collapse: t("aria.collapse"),
+                  }}
                 />
               ) : (
                 <p className="text-[color:var(--text-secondary)]">
-                  Formatted JSON appears here.
+                  {t("placeholders.output")}
                 </p>
               )}
             </div>
@@ -424,11 +420,13 @@ export default function JsonFormatterTool() {
               value={output}
               readOnly
               spellCheck={false}
-              placeholder="Formatted JSON appears here."
-              className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              placeholder={t("placeholders.output")}
+              wrap="off"
+              style={{ fontSize, whiteSpace: "pre" }}
+              className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none overflow-auto rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
             />
           )}
-        </div>
+        </ToolPanel>
       </div>
     </div>
   );

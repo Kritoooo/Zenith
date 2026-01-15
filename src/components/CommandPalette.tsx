@@ -10,11 +10,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { SearchIcon } from "@/components/Icons";
+import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/cn";
 import { toolMetas } from "@/tools/catalog";
+import { localizeToolMetas } from "@/tools/i18n";
 import { CATEGORY_ACCENTS } from "@/tools/palette";
 
 type CommandPaletteContextValue = {
@@ -31,6 +33,7 @@ type CommandPaletteProviderProps = {
 };
 
 export function CommandPaletteProvider({ children }: CommandPaletteProviderProps) {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -58,14 +61,16 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
     });
   }, [resetSelection]);
 
+  const localizedTools = useMemo(() => localizeToolMetas(toolMetas, t), [t]);
+
   const tools = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return toolMetas;
-    return toolMetas.filter((meta) => {
+    if (!trimmed) return localizedTools;
+    return localizedTools.filter((meta) => {
       const haystack = `${meta.title} ${meta.description} ${meta.slug}`.toLowerCase();
       return haystack.includes(trimmed);
     });
-  }, [query]);
+  }, [localizedTools, query]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -124,14 +129,14 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
             type="button"
             className="absolute inset-0 bg-black/30 backdrop-blur-sm"
             onClick={close}
-            aria-label="Close search"
+            aria-label={t("commandPalette.closeLabel")}
           />
           <div className="relative mx-auto mt-16 w-full max-w-2xl px-4 sm:mt-24">
             <div
               className="rounded-[26px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] p-4 shadow-[0_24px_60px_-40px_rgba(15,20,25,0.65)] backdrop-blur-[24px]"
               role="dialog"
               aria-modal="true"
-              aria-label="Search tools"
+              aria-label={t("commandPalette.dialogLabel")}
             >
               <div className="flex items-center gap-3 rounded-[18px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-4 py-3">
                 <SearchIcon className="h-4 w-4 text-[color:var(--text-secondary)]" />
@@ -165,7 +170,7 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
                       if (target) goToTool(target.slug);
                     }
                   }}
-                  placeholder="Search tools..."
+                  placeholder={t("commandPalette.placeholder")}
                   className="w-full bg-transparent text-sm text-[color:var(--text-primary)] outline-none"
                 />
                 <span className="hidden rounded-full border border-[color:var(--glass-border)] px-2 py-1 text-[10px] uppercase tracking-widest text-[color:var(--text-secondary)] sm:inline-flex">
@@ -179,7 +184,7 @@ export function CommandPaletteProvider({ children }: CommandPaletteProviderProps
               >
                 {tools.length === 0 ? (
                   <div className="rounded-[18px] border border-dashed border-[color:var(--glass-border)] p-6 text-center text-sm text-[color:var(--text-secondary)]">
-                    No tools match that query.
+                    {t("commandPalette.emptyState")}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -247,6 +252,7 @@ type CommandPaletteTriggerProps = {
 
 export function CommandPaletteTrigger({ className }: CommandPaletteTriggerProps) {
   const { open } = useCommandPalette();
+  const t = useTranslations();
 
   return (
     <button
@@ -256,7 +262,7 @@ export function CommandPaletteTrigger({ className }: CommandPaletteTriggerProps)
         "flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] text-[color:var(--text-primary)] shadow-[var(--glass-shadow)] backdrop-blur-[16px] transition-colors hover:bg-[color:var(--glass-hover-bg)]",
         className
       )}
-      aria-label="Search"
+      aria-label={t("commandPalette.triggerLabel")}
     >
       <SearchIcon className="h-4 w-4" />
     </button>
