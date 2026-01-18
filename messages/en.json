@@ -99,6 +99,101 @@
         }
       }
     },
+    "json-field-extractor": {
+      "title": "JSON Field Extractor",
+      "description": "Extract fields into plain text and post-process with scripts.",
+      "highlights": [
+        "Auto detect",
+        "Path search",
+        "Script output"
+      ],
+      "ui": {
+        "actions": {
+          "extract": "Extract",
+          "detect": "Detect",
+          "copy": "Copy",
+          "sample": "Sample",
+          "clear": "Clear",
+          "selectAll": "Select all",
+          "selectFiltered": "Select filtered",
+          "clearSelection": "Clear selection",
+          "manageScripts": "Manage",
+          "close": "Close",
+          "saveScript": "Save",
+          "saveAsNew": "Save as new",
+          "deleteScript": "Delete"
+        },
+        "labels": {
+          "input": "JSON input",
+          "paths": "Detected paths",
+          "manual": "Manual paths",
+          "manageScripts": "Scripts",
+          "scriptName": "Script name",
+          "savedScripts": "Saved scripts",
+          "script": "Post-process script",
+          "output": "Output"
+        },
+        "placeholders": {
+          "input": "Paste JSON here...",
+          "search": "Search detected paths...",
+          "manual": "Additional paths, one per line (optional)...",
+          "scriptName": "Name this script...",
+          "script": "return items\n  .flatMap((item) =>\n    item.values.map((value) => item.path + \": \" + helpers.toText(value))\n  )\n  .join(\"\\n\");",
+          "output": "Extracted text will appear here."
+        },
+        "toggles": {
+          "script": "Enable script"
+        },
+        "errors": {
+          "invalidJson": "Invalid JSON.",
+          "noPaths": "Select at least one detected path or add a manual path.",
+          "invalidPath": "Invalid path: {path}",
+          "scriptFailed": "Script failed: {message}",
+          "clipboard": "Failed to copy.",
+          "storage": "Local storage is unavailable.",
+          "scriptNameRequired": "Script name is required.",
+          "scriptEmpty": "Script cannot be empty.",
+          "scriptMissing": "Saved script not found."
+        },
+        "status": {
+          "ready": "Ready to extract.",
+          "copied": "Copied to clipboard.",
+          "extracted": "Extracted {count} values.",
+          "extractedMissing": "Extracted {count} values, {missing} paths empty.",
+          "scripted": "Scripted {count} values.",
+          "scriptedMissing": "Scripted {count} values, {missing} paths empty.",
+          "scriptSaved": "Saved \"{name}\".",
+          "scriptUpdated": "Updated \"{name}\".",
+          "scriptLoaded": "Loaded \"{name}\".",
+          "scriptDeleted": "Deleted \"{name}\".",
+          "savedCount": "{count} saved",
+          "activeScript": "Active: {name}",
+          "noActiveScript": "No active script",
+          "active": "Active",
+          "detected": "Detected {count} paths.",
+          "detectedTruncated": "Detected {count}+ paths (truncated).",
+          "noDetected": "No paths detected yet.",
+          "selected": "{count} selected"
+        },
+        "hints": {
+          "paths": "Click Detect to scan JSON, then search and select paths. Supports dot, [index], and [*], with $ as root.",
+          "script": "Script receives items (path + values), raw (original JSON), and helpers. Saved locally."
+        },
+        "emptyState": {
+          "noPaths": "No detected paths. Click Detect to scan JSON.",
+          "noMatches": "No paths match this search.",
+          "noScripts": "No saved scripts yet."
+        },
+        "defaults": {
+          "scriptName": "Saved script"
+        },
+        "sample": {
+          "json": "{\n  \"order\": {\n    \"id\": \"ORD-2025-0192\",\n    \"customer\": {\n      \"name\": \"Ava Chen\",\n      \"email\": \"ava@zenith.dev\"\n    },\n    \"items\": [\n      { \"sku\": \"S-1001\", \"title\": \"Aurora Lamp\", \"price\": 129 },\n      { \"sku\": \"S-1002\", \"title\": \"Nimbus Stand\", \"price\": 89 }\n    ]\n  }\n}",
+          "paths": "order.id\norder.customer.name\norder.items[*].sku",
+          "script": "return items\n  .flatMap((item) =>\n    item.values.map((value) => item.path + \": \" + helpers.toText(value))\n  )\n  .join(\"\\n\");"
+        }
+      }
+    },
     "class-to-json": {
       "title": "Class to JSON",
       "description": "Generate JSON templates and mock data from class definitions.",
