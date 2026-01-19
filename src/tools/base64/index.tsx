@@ -4,27 +4,13 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button, GhostButton, SecondaryButton } from "@/components/Button";
+import { StatusLine } from "@/components/StatusLine";
 import { ToolPanel } from "@/components/ToolPanel";
-import { cn } from "@/lib/cn";
+import { ToolTextarea } from "@/components/ToolTextarea";
+import { decodeBase64, encodeBase64 } from "@/lib/base64";
 import { useClipboard } from "@/lib/useClipboard";
 
 type Mode = "encode" | "decode";
-
-const encodeBase64 = (value: string) => {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
-};
-
-const decodeBase64 = (value: string) => {
-  const cleaned = value.replace(/\s+/g, "");
-  const binary = atob(cleaned);
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-};
 
 export default function Base64Tool() {
   const t = useTranslations("tools.base64.ui");
@@ -107,18 +93,10 @@ export default function Base64Tool() {
           <GhostButton onClick={clearAll}>{t("actions.clear")}</GhostButton>
         </div>
       </div>
-      <p
-        className={cn(
-          "min-h-[1.25rem] text-xs",
-          error ? "text-rose-500/80" : "text-[color:var(--text-secondary)]"
-        )}
-        aria-live="polite"
-      >
-        {status}
-      </p>
+      <StatusLine text={status} tone={error ? "error" : "normal"} />
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <ToolPanel title={t("labels.input")} className="min-h-[260px]">
-          <textarea
+          <ToolTextarea
             value={input}
             onChange={(event) => {
               setInput(event.target.value);
@@ -127,16 +105,16 @@ export default function Base64Tool() {
             }}
             placeholder={t("placeholders.input")}
             spellCheck={false}
-            className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[220px]"
           />
         </ToolPanel>
         <ToolPanel title={t("labels.output")} className="min-h-[260px]">
-          <textarea
+          <ToolTextarea
             value={output}
             readOnly
             spellCheck={false}
             placeholder={t("placeholders.output")}
-            className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[220px]"
           />
         </ToolPanel>
       </div>

@@ -8,6 +8,7 @@ import { Select } from "@/components/Select";
 import { UploadIcon } from "@/components/Icons";
 import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { formatErrorMessage } from "@/lib/errors";
 import { useClipboard } from "@/lib/useClipboard";
 
 type DetectionVersion = "v5" | "v3";
@@ -254,16 +255,6 @@ const getConfidenceColor = (value: number) => {
   return "var(--accent-pink)";
 };
 
-const formatErrorMessage = (err: unknown, fallback: string) => {
-  if (err instanceof Error && err.message) return err.message;
-  if (typeof err === "string") return err;
-  if (err && typeof err === "object") {
-    const maybeMessage = (err as { message?: unknown }).message;
-    if (typeof maybeMessage === "string" && maybeMessage) return maybeMessage;
-  }
-  return fallback;
-};
-
 const loadImageDataFromFile = async (file: File) => {
   const bitmap = await createImageBitmap(file);
   const canvas = document.createElement("canvas");
@@ -312,7 +303,10 @@ export default function PaddleOcrTool() {
   const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
   const [hasWorker, setHasWorker] = useState(false);
   const { copied, copy, reset } = useClipboard({
-    onError: (err) => setError(localizeError(formatErrorMessage(err, "Copy failed."))),
+    onError: (err) =>
+      setError(
+        localizeError(formatErrorMessage(err, "Copy failed.", { includeDetails: false }))
+      ),
   });
   const workerRef = useRef<Worker | null>(null);
   const workerRunIdRef = useRef(0);
@@ -520,7 +514,9 @@ export default function PaddleOcrTool() {
       setImageSize({ width, height });
     } catch (err) {
       setError(
-        localizeError(formatErrorMessage(err, "Unable to read this image."))
+        localizeError(
+          formatErrorMessage(err, "Unable to read this image.", { includeDetails: false })
+        )
       );
       setPhase("error");
     }
@@ -583,7 +579,11 @@ export default function PaddleOcrTool() {
       setPhase("ready");
     } catch (err) {
       setError(
-        localizeError(formatErrorMessage(err, "OCR failed. Please try again."))
+        localizeError(
+          formatErrorMessage(err, "OCR failed. Please try again.", {
+            includeDetails: false,
+          })
+        )
       );
       setPhase("error");
     }

@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 
 import { Button, GhostButton, SecondaryButton } from "@/components/Button";
 import { Select } from "@/components/Select";
+import { ToolInput } from "@/components/ToolInput";
 import { ToolPanel } from "@/components/ToolPanel";
+import { ToolTextarea } from "@/components/ToolTextarea";
 import { cn } from "@/lib/cn";
 import { useClipboard } from "@/lib/useClipboard";
 
@@ -380,7 +382,7 @@ export default function YtDlpTool() {
           }
           headerClassName="flex items-center justify-between"
         >
-          <input
+          <ToolInput
             value={url}
             onChange={(event) => {
               setUrl(event.target.value);
@@ -388,7 +390,7 @@ export default function YtDlpTool() {
             }}
             placeholder={t("placeholders.url")}
             spellCheck={false}
-            className="mt-3 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3"
           />
         </ToolPanel>
         <ToolPanel
@@ -449,7 +451,7 @@ export default function YtDlpTool() {
                     </Select>
                     {formatPreset === "custom" ? (
                       <div className="mt-2">
-                        <input
+                        <ToolInput
                           value={customFormat}
                           onChange={(event) => {
                             setCustomFormat(event.target.value);
@@ -457,7 +459,6 @@ export default function YtDlpTool() {
                           }}
                           placeholder="bv*+ba/b"
                           spellCheck={false}
-                          className="w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
                         />
                         <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                           {t("hints.customFormat")}
@@ -509,7 +510,7 @@ export default function YtDlpTool() {
                   </div>
                   <div>
                     <SectionLabel>{t("labels.audioQuality")}</SectionLabel>
-                    <input
+                    <ToolInput
                       value={audioQuality}
                       onChange={(event) => {
                         setAudioQuality(event.target.value);
@@ -517,7 +518,7 @@ export default function YtDlpTool() {
                       }}
                       spellCheck={false}
                       placeholder={t("placeholders.audioQuality")}
-                      className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                      className="mt-2"
                     />
                     <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                       {t("hints.audioQuality")}
@@ -528,7 +529,7 @@ export default function YtDlpTool() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <SectionLabel>{t("labels.outputTemplate")}</SectionLabel>
-                  <input
+                  <ToolInput
                     value={outputTemplate}
                     onChange={(event) => {
                       setOutputTemplate(event.target.value);
@@ -536,12 +537,12 @@ export default function YtDlpTool() {
                     }}
                     spellCheck={false}
                     placeholder={DEFAULT_OUTPUT_TEMPLATE}
-                    className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                    className="mt-2"
                   />
                 </div>
                 <div>
                   <SectionLabel>{t("labels.outputFolder")}</SectionLabel>
-                  <input
+                  <ToolInput
                     value={outputPath}
                     onChange={(event) => {
                       setOutputPath(event.target.value);
@@ -549,7 +550,7 @@ export default function YtDlpTool() {
                     }}
                     spellCheck={false}
                     placeholder={t("placeholders.outputFolder")}
-                    className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                    className="mt-2"
                   />
                   <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                     {t("hints.outputFolder")}
@@ -572,7 +573,7 @@ export default function YtDlpTool() {
                 </div>
                 <div>
                   <SectionLabel>{t("labels.rateLimit")}</SectionLabel>
-                  <input
+                  <ToolInput
                     value={rateLimit}
                     onChange={(event) => {
                       setRateLimit(event.target.value);
@@ -580,7 +581,7 @@ export default function YtDlpTool() {
                     }}
                     spellCheck={false}
                     placeholder={t("placeholders.rateLimit")}
-                    className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                    className="mt-2"
                   />
                   <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                     {t("hints.rateLimit")}
@@ -634,7 +635,7 @@ export default function YtDlpTool() {
                 {hasSubtitles ? (
                   <div>
                     <SectionLabel>{t("labels.subtitleLangs")}</SectionLabel>
-                    <input
+                    <ToolInput
                       value={subtitleLangs}
                       onChange={(event) => {
                         setSubtitleLangs(event.target.value);
@@ -642,7 +643,7 @@ export default function YtDlpTool() {
                       }}
                       spellCheck={false}
                       placeholder={t("placeholders.subtitleLangs")}
-                      className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                      className="mt-2"
                     />
                   </div>
                 ) : null}
@@ -671,7 +672,7 @@ export default function YtDlpTool() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <SectionLabel>{t("labels.cookiesFile")}</SectionLabel>
-                  <input
+                  <ToolInput
                     value={cookiesFile}
                     onChange={(event) => {
                       setCookiesFile(event.target.value);
@@ -679,7 +680,7 @@ export default function YtDlpTool() {
                     }}
                     spellCheck={false}
                     placeholder={t("placeholders.cookiesFile")}
-                    className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                    className="mt-2"
                   />
                   <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                     {t("hints.cookiesFile")}
@@ -687,7 +688,7 @@ export default function YtDlpTool() {
                 </div>
                 <div>
                   <SectionLabel>{t("labels.downloadArchive")}</SectionLabel>
-                  <input
+                  <ToolInput
                     value={downloadArchive}
                     onChange={(event) => {
                       setDownloadArchive(event.target.value);
@@ -695,7 +696,7 @@ export default function YtDlpTool() {
                     }}
                     spellCheck={false}
                     placeholder={t("placeholders.downloadArchive")}
-                    className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                    className="mt-2"
                   />
                   <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                     {t("hints.downloadArchive")}
@@ -704,7 +705,7 @@ export default function YtDlpTool() {
               </div>
               <div className="flex flex-col gap-3">
                 <SectionLabel>{t("labels.extraArgs")}</SectionLabel>
-                <input
+                <ToolInput
                   value={customArgs}
                   onChange={(event) => {
                     setCustomArgs(event.target.value);
@@ -712,7 +713,7 @@ export default function YtDlpTool() {
                   }}
                   spellCheck={false}
                   placeholder={t("placeholders.extraArgs")}
-                  className="mt-2 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                  className="mt-2"
                 />
                 <p className="text-[11px] text-[color:var(--text-secondary)]">
                   {t("hints.extraArgs")}
@@ -733,11 +734,11 @@ export default function YtDlpTool() {
             headerClassName="flex items-center justify-between"
             className="min-h-[220px]"
           >
-            <textarea
+            <ToolTextarea
               value={command}
               readOnly
               spellCheck={false}
-              className="mt-3 min-h-[160px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              className="mt-3 min-h-[160px]"
             />
             <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
               {t("hints.command")}

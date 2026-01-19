@@ -8,6 +8,7 @@ import NextImage from "next/image";
 import { ArrowLeftIcon, UploadIcon } from "@/components/Icons";
 import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { formatErrorMessage } from "@/lib/errors";
 import { formatBytes } from "@/lib/formatBytes";
 
 type UpscaleModelId = "2x" | "4x";
@@ -368,21 +369,6 @@ const checkWebGpuFp16Support = async () => {
   }
 };
 
-
-const formatErrorMessage = (err: unknown, fallback: string) => {
-  if (err instanceof Error && err.message) return err.message;
-  if (typeof err === "string") return err;
-  if (err && typeof err === "object") {
-    const maybeMessage = (err as { message?: unknown }).message;
-    if (typeof maybeMessage === "string" && maybeMessage) return maybeMessage;
-    try {
-      return JSON.stringify(err);
-    } catch {
-      return fallback;
-    }
-  }
-  return fallback;
-};
 
 
 const getDtypeForPrecision = (

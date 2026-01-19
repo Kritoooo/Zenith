@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { ToolPanel } from "@/components/ToolPanel";
+import { ToolTextarea } from "@/components/ToolTextarea";
 import { cn } from "@/lib/cn";
+import { formatErrorMessage } from "@/lib/errors";
 
 type ClassificationResult = {
   label: string;
@@ -58,21 +60,6 @@ const formatLabel = (label: string, unknownLabel: string, labelPrefix: string) =
     return `${labelPrefix} ${cleaned.split("_")[1]}`;
   }
   return cleaned;
-};
-
-const formatErrorMessage = (err: unknown, fallback: string) => {
-  if (err instanceof Error && err.message) return err.message;
-  if (typeof err === "string") return err;
-  if (err && typeof err === "object") {
-    const maybeMessage = (err as { message?: unknown }).message;
-    if (typeof maybeMessage === "string" && maybeMessage) return maybeMessage;
-    try {
-      return JSON.stringify(err);
-    } catch {
-      return fallback;
-    }
-  }
-  return fallback;
 };
 
 const sanitizeInput = (value: string) => value.replace(/\s+/g, "");
@@ -368,7 +355,7 @@ export default function AigcDetectorTool() {
           headerClassName="flex items-center justify-between text-xs text-[color:var(--text-secondary)]"
           className="min-h-[280px]"
         >
-          <textarea
+          <ToolTextarea
             value={input}
             onChange={(event) => {
               setInput(event.target.value);
@@ -380,7 +367,8 @@ export default function AigcDetectorTool() {
             placeholder={t("placeholders.input")}
             spellCheck={false}
             disabled={isBusy}
-            className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-green)]"
+            className="mt-3 min-h-[220px]"
+            focusBorderClassName="focus:border-[color:var(--accent-green)]"
           />
           {isChunked ? (
             <p className="mt-2 text-[10px] text-amber-500/90">
