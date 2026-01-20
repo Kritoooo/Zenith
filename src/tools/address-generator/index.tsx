@@ -5,7 +5,9 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { DangerButton, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { Select } from "@/components/Select";
+import { ToolInputInset } from "@/components/ToolInputInset";
 import { cn } from "@/lib/cn";
+import { createId } from "@/lib/createId";
 import { useClipboard } from "@/lib/useClipboard";
 
 type Coordinates = {
@@ -1026,17 +1028,6 @@ type SavedEntry = AddressResult & {
   savedAt: string;
 };
 
-const createId = () => {
-  const cryptoRef =
-    typeof globalThis !== "undefined"
-      ? (globalThis.crypto as { randomUUID?: () => string } | undefined)
-      : undefined;
-  if (cryptoRef?.randomUUID) {
-    return cryptoRef.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-};
-
 export default function AddressGeneratorTool() {
   const t = useTranslations("tools.address-generator.ui");
   const locale = useLocale();
@@ -1315,11 +1306,11 @@ export default function AddressGeneratorTool() {
               {t("labels.notes")}
             </p>
             <div className="mt-4 flex flex-col gap-3">
-              <input
+              <ToolInputInset
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder={t("placeholders.note")}
-                className="w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                className="text-sm outline-none focus:border-[color:var(--accent-blue)]"
               />
               <button
                 type="button"

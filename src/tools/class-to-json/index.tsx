@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { GhostButton, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { ToolPanel } from "@/components/ToolPanel";
+import { ToolTextarea } from "@/components/ToolTextarea";
 import { cn } from "@/lib/cn";
 import { useClipboard } from "@/lib/useClipboard";
 
@@ -803,7 +804,7 @@ export default function ClassToJsonTool() {
           title={t("labels.input")}
           className="min-h-[clamp(360px,58vh,720px)]"
         >
-          <textarea
+          <ToolTextarea
             value={input}
             onChange={(event) => {
               setInput(event.target.value);
@@ -812,7 +813,7 @@ export default function ClassToJsonTool() {
             }}
             spellCheck={false}
             placeholder={t("placeholders.input")}
-            className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[clamp(260px,44vh,560px)] font-mono text-xs"
           />
         </ToolPanel>
         <div className="flex min-h-[clamp(360px,58vh,720px)] flex-1 flex-col gap-4">
@@ -829,12 +830,12 @@ export default function ClassToJsonTool() {
             }
             headerClassName="flex flex-wrap items-center justify-between gap-2"
           >
-            <textarea
+            <ToolTextarea
               value={templateOutput}
               readOnly
               spellCheck={false}
               placeholder={t("placeholders.template")}
-              className="mt-3 min-h-[200px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              className="mt-3 min-h-[200px] font-mono text-xs"
             />
           </ToolPanel>
           <ToolPanel
@@ -850,12 +851,12 @@ export default function ClassToJsonTool() {
             }
             headerClassName="flex flex-wrap items-center justify-between gap-2"
           >
-            <textarea
+            <ToolTextarea
               value={mockOutput}
               readOnly
               spellCheck={false}
               placeholder={t("placeholders.mock")}
-              className="mt-3 min-h-[200px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              className="mt-3 min-h-[200px] font-mono text-xs"
             />
           </ToolPanel>
         </div>

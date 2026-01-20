@@ -9,7 +9,10 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from "@/components/Button";
+import { ToolInput } from "@/components/ToolInput";
+import { ToolInputCompact } from "@/components/ToolInputCompact";
 import { ToolPanel } from "@/components/ToolPanel";
+import { decodeBase64ToBytes } from "@/lib/base64";
 import { cn } from "@/lib/cn";
 
 const SAMPLE_URL = "https://github.com/Kritoooo/Zenith";
@@ -330,16 +333,6 @@ const fetchRawBytes = async (url: string, token?: string, signal?: AbortSignal) 
   }
   const buffer = await response.arrayBuffer();
   return new Uint8Array(buffer);
-};
-
-const decodeBase64 = (value: string) => {
-  const cleaned = value.replace(/\s+/g, "");
-  const binary = atob(cleaned);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
 };
 
 const sanitizeFileName = (value: string) =>
@@ -763,7 +756,7 @@ export default function DownGitTool() {
     if (!data?.content || data.encoding !== "base64") {
       throw new Error(`Unable to download ${entry.path}.`);
     }
-    return decodeBase64(data.content);
+    return decodeBase64ToBytes(data.content);
   };
 
   const triggerDownload = (blob: Blob, filename: string) => {
@@ -983,7 +976,7 @@ export default function DownGitTool() {
           {t("labels.githubUrl")}
         </p>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <input
+          <ToolInput
             value={input}
             onChange={(event) => {
               setInput(event.target.value);
@@ -996,7 +989,7 @@ export default function DownGitTool() {
             }}
             placeholder={SAMPLE_URL}
             spellCheck={false}
-            className="w-full flex-1 rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="flex-1 p-3"
           />
           <div className="flex flex-wrap items-center gap-2">
             <SecondaryButton
@@ -1116,7 +1109,7 @@ export default function DownGitTool() {
               <label className="text-xs text-[color:var(--text-secondary)]">
                 {t("labels.refOverride")}
               </label>
-              <input
+              <ToolInputCompact
                 value={refOverride}
                 onChange={(event) => {
                   setRefOverride(event.target.value);
@@ -1125,34 +1118,34 @@ export default function DownGitTool() {
                   setStatus(t("status.ready"));
                 }}
                 placeholder={parsedTarget?.ref ?? t("placeholders.defaultRef")}
-                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                className="mt-2 text-xs"
               />
             </div>
             <div>
               <label className="text-xs text-[color:var(--text-secondary)]">
                 {t("labels.outputFilename")}
               </label>
-              <input
+              <ToolInputCompact
                 value={outputName}
                 onChange={(event) => setOutputName(event.target.value)}
                 placeholder={
                   resolved ? buildFileName(resolved) : t("placeholders.output")
                 }
-                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                className="mt-2 text-xs"
               />
             </div>
             <div>
               <label className="text-xs text-[color:var(--text-secondary)]">
                 {t("labels.concurrentDownloads")}
               </label>
-              <input
+              <ToolInputCompact
                 value={concurrencyInput}
                 onChange={(event) => setConcurrencyInput(event.target.value)}
                 placeholder={t("placeholders.concurrencyAuto", {
                   count: autoConcurrency,
                 })}
                 inputMode="numeric"
-                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                className="mt-2 text-xs"
               />
               <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                 {t("hints.concurrency", {
@@ -1166,7 +1159,7 @@ export default function DownGitTool() {
               <label className="text-xs text-[color:var(--text-secondary)]">
                 {t("labels.token")}
               </label>
-              <input
+              <ToolInputCompact
                 value={token}
                 onChange={(event) => {
                   setToken(event.target.value);
@@ -1175,7 +1168,7 @@ export default function DownGitTool() {
                 }}
                 placeholder={t("placeholders.token")}
                 type="password"
-                className="mt-2 w-full rounded-[12px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-xs text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+                className="mt-2 text-xs"
               />
               <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
                 {t("hints.token")}

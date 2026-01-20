@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button, SecondaryButton } from "@/components/Button";
+import { ToolInput } from "@/components/ToolInput";
 import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
 import { useClipboard } from "@/lib/useClipboard";
@@ -163,12 +164,12 @@ function InputRow({
       }
       headerClassName="flex items-center justify-between"
     >
-      <input
+      <ToolInput
         value={value}
         onChange={(event) => onChange(event.target.value)}
         spellCheck={false}
         placeholder={placeholder}
-        className="mt-3 w-full rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+        className="mt-3"
       />
     </ToolPanel>
   );

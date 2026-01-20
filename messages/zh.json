@@ -99,6 +99,101 @@
         }
       }
     },
+    "json-field-extractor": {
+      "title": "JSON 字段提取",
+      "description": "从 JSON 提取字段并支持脚本处理。",
+      "highlights": [
+        "自动识别",
+        "路径搜索",
+        "脚本输出"
+      ],
+      "ui": {
+        "actions": {
+          "extract": "提取",
+          "detect": "识别路径",
+          "copy": "复制",
+          "sample": "示例",
+          "clear": "清空",
+          "selectAll": "全选",
+          "selectFiltered": "选择筛选",
+          "clearSelection": "清除选择",
+          "manageScripts": "脚本管理",
+          "close": "关闭",
+          "saveScript": "保存",
+          "saveAsNew": "另存为新脚本",
+          "deleteScript": "删除"
+        },
+        "labels": {
+          "input": "JSON 输入",
+          "paths": "已识别路径",
+          "manual": "手动路径",
+          "manageScripts": "脚本管理",
+          "scriptName": "脚本名称",
+          "savedScripts": "脚本列表",
+          "script": "脚本处理",
+          "output": "输出"
+        },
+        "placeholders": {
+          "input": "在此粘贴 JSON…",
+          "search": "搜索路径…",
+          "manual": "额外路径（可选），每行一个…",
+          "scriptName": "给脚本起个名字…",
+          "script": "return items\n  .flatMap((item) =>\n    item.values.map((value) => item.path + \": \" + helpers.toText(value))\n  )\n  .join(\"\\n\");",
+          "output": "提取结果会显示在这里。"
+        },
+        "toggles": {
+          "script": "启用脚本"
+        },
+        "errors": {
+          "invalidJson": "JSON 无效。",
+          "noPaths": "请选择至少一个已识别路径或填写手动路径。",
+          "invalidPath": "路径无效：{path}",
+          "scriptFailed": "脚本执行失败：{message}",
+          "clipboard": "复制失败。",
+          "storage": "本地存储不可用。",
+          "scriptNameRequired": "请填写脚本名称。",
+          "scriptEmpty": "脚本内容不能为空。",
+          "scriptMissing": "未找到已保存的脚本。"
+        },
+        "status": {
+          "ready": "等待提取。",
+          "copied": "已复制到剪贴板。",
+          "extracted": "已提取 {count} 条。",
+          "extractedMissing": "已提取 {count} 条，{missing} 个路径为空。",
+          "scripted": "脚本处理 {count} 条。",
+          "scriptedMissing": "脚本处理 {count} 条，{missing} 个路径为空。",
+          "scriptSaved": "已保存「{name}」。",
+          "scriptUpdated": "已更新「{name}」。",
+          "scriptLoaded": "已切换到「{name}」。",
+          "scriptDeleted": "已删除「{name}」。",
+          "savedCount": "已保存 {count} 条",
+          "activeScript": "当前脚本：{name}",
+          "noActiveScript": "未选择脚本",
+          "active": "当前",
+          "detected": "已识别 {count} 条路径。",
+          "detectedTruncated": "已识别 {count}+ 条路径（已截断）。",
+          "noDetected": "尚未识别路径。",
+          "selected": "已选择 {count} 条"
+        },
+        "hints": {
+          "paths": "先点击识别路径，再搜索并选择。支持点号、[index]、[*]，可用 $ 表示根节点。",
+          "script": "脚本可访问 items（路径+值）、raw（原始 JSON）和 helpers，本地保存。"
+        },
+        "emptyState": {
+          "noPaths": "暂无已识别路径，请先点击识别路径。",
+          "noMatches": "没有匹配的路径。",
+          "noScripts": "暂无保存的脚本。"
+        },
+        "defaults": {
+          "scriptName": "已保存脚本"
+        },
+        "sample": {
+          "json": "{\n  \"order\": {\n    \"id\": \"ORD-2025-0192\",\n    \"customer\": {\n      \"name\": \"Ava Chen\",\n      \"email\": \"ava@zenith.dev\"\n    },\n    \"items\": [\n      { \"sku\": \"S-1001\", \"title\": \"Aurora Lamp\", \"price\": 129 },\n      { \"sku\": \"S-1002\", \"title\": \"Nimbus Stand\", \"price\": 89 }\n    ]\n  }\n}",
+          "paths": "order.id\norder.customer.name\norder.items[*].sku",
+          "script": "return items\n  .flatMap((item) =>\n    item.values.map((value) => item.path + \": \" + helpers.toText(value))\n  )\n  .join(\"\\n\");"
+        }
+      }
+    },
     "class-to-json": {
       "title": "类转 JSON",
       "description": "从类定义生成 JSON 模板与模拟数据。",

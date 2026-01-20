@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 
 import { Button, PrimaryButton, SecondaryButton } from "@/components/Button";
 import { ToolPanel } from "@/components/ToolPanel";
+import { ToolTextarea } from "@/components/ToolTextarea";
 import { cn } from "@/lib/cn";
 
 type DiffOp = { type: "equal" | "delete" | "insert"; value: string };
@@ -1503,24 +1504,24 @@ export default function CodeCompareTool() {
           title={t("labels.original")}
           className="min-h-[clamp(260px,45vh,520px)]"
         >
-          <textarea
+          <ToolTextarea
             value={left}
             onChange={(event) => setLeft(event.target.value)}
             spellCheck={false}
             placeholder={t("placeholders.left")}
-            className="mt-3 min-h-[clamp(220px,38vh,480px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[clamp(220px,38vh,480px)] font-mono text-xs"
           />
         </ToolPanel>
         <ToolPanel
           title={t("labels.updated")}
           className="min-h-[clamp(260px,45vh,520px)]"
         >
-          <textarea
+          <ToolTextarea
             value={right}
             onChange={(event) => setRight(event.target.value)}
             spellCheck={false}
             placeholder={t("placeholders.right")}
-            className="mt-3 min-h-[clamp(220px,38vh,480px)] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 font-mono text-xs leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+            className="mt-3 min-h-[clamp(220px,38vh,480px)] font-mono text-xs"
           />
         </ToolPanel>
       </div>

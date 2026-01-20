@@ -6,6 +6,7 @@ import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
+import { meta as jsonFieldExtractorMeta } from "@/tools/json-field-extractor/meta";
 import { meta as classToJsonMeta } from "@/tools/class-to-json/meta";
 import { meta as localTimeMeta } from "@/tools/local-time/meta";
 import { meta as downGitMeta } from "@/tools/downgit/meta";
@@ -17,6 +18,7 @@ import { meta as paddleOcrMeta } from "@/tools/paddleocr-onnx/meta";
 
 export const toolMetas: ToolMeta[] = [
   jsonFormatterMeta,
+  jsonFieldExtractorMeta,
   classToJsonMeta,
   codeCompareMeta,
   downGitMeta,

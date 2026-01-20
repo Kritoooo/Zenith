@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button, PrimaryButton, SecondaryButton } from "@/components/Button";
+import { StatusLine } from "@/components/StatusLine";
 import { ToolPanel } from "@/components/ToolPanel";
-import { cn } from "@/lib/cn";
+import { ToolTextarea } from "@/components/ToolTextarea";
 import { useClipboard } from "@/lib/useClipboard";
 
 const QUICK_COUNTS = [1, 3, 5] as const;
@@ -130,22 +131,17 @@ export default function UuidTool() {
         <SecondaryButton onClick={copyAll} disabled={!uuids.length}>
           {t("actions.copy")}
         </SecondaryButton>
-        <p
-          className={cn(
-            "text-xs",
-            error ? "text-rose-500/80" : "text-[color:var(--text-secondary)]"
-          )}
-          aria-live="polite"
-        >
-          {error ? error : copied ? t("status.copied") : t("status.ready")}
-        </p>
+        <StatusLine
+          text={error ? error : copied ? t("status.copied") : t("status.ready")}
+          tone={error ? "error" : "normal"}
+        />
       </div>
       <ToolPanel title={t("labels.output")} className="min-h-[260px]">
-        <textarea
+        <ToolTextarea
           value={uuids.join("\n")}
           readOnly
           spellCheck={false}
-          className="mt-3 min-h-[220px] w-full flex-1 resize-none rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 text-sm leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+          className="mt-3 min-h-[220px]"
         />
       </ToolPanel>
     </div>

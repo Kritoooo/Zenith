@@ -4,8 +4,11 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { PrimaryButton, SecondaryButton } from "@/components/Button";
+import { StatusLine } from "@/components/StatusLine";
 import { ToolPanel } from "@/components/ToolPanel";
+import { ToolTextarea } from "@/components/ToolTextarea";
 import { cn } from "@/lib/cn";
+import { resolveTranslationFallback } from "@/lib/i18n";
 import { useClipboard } from "@/lib/useClipboard";
 import { JsonTree } from "./JsonTree";
 import { JsonValue, collectPaths, countNodesWithCap } from "./jsonUtils";
@@ -48,12 +51,16 @@ const toKilobytes = (length: number) => Math.max(1, Math.round(length / 1024));
 
 export default function JsonFormatterTool() {
   const t = useTranslations("tools.json-formatter.ui");
-  const sampleJson = useMemo(() => {
-    const value = t("sample");
-    // Fallback when locale messages are missing and NextIntl returns the key.
-    if (value === "tools.json-formatter.ui.sample") return DEFAULT_SAMPLE;
-    return value;
-  }, [t]);
+  const sampleJson = useMemo(
+    () =>
+      resolveTranslationFallback(
+        t,
+        "sample",
+        DEFAULT_SAMPLE,
+        "tools.json-formatter.ui.sample"
+      ),
+    [t]
+  );
   const [input, setInput] = useState(sampleJson);
   const [output, setOutput] = useState("");
   const [parsedValue, setParsedValue] = useState<JsonValue | null>(null);
@@ -260,19 +267,14 @@ export default function JsonFormatterTool() {
           </SecondaryButton>
         </div>
       </div>
-      <p
-        className={cn("min-h-[1.25rem] text-xs transition-colors", statusTone)}
-        aria-live="polite"
-      >
-        {statusMessage}
-      </p>
+      <StatusLine text={statusMessage} className={cn("transition-colors", statusTone)} />
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         {showInput ? (
           <ToolPanel
             title={t("labels.input")}
             className="min-h-[clamp(360px,58vh,720px)] min-w-0"
           >
-            <textarea
+            <ToolTextarea
               value={input}
               onChange={(event) => {
                 setInput(event.target.value);
@@ -283,7 +285,7 @@ export default function JsonFormatterTool() {
               placeholder={t("placeholders.input")}
               wrap="off"
               style={{ fontSize, whiteSpace: "pre" }}
-              className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none overflow-auto rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              className="mt-3 min-h-[clamp(260px,44vh,560px)] overflow-auto"
             />
           </ToolPanel>
         ) : null}
@@ -416,14 +418,14 @@ export default function JsonFormatterTool() {
               )}
             </div>
           ) : (
-            <textarea
+            <ToolTextarea
               value={output}
               readOnly
               spellCheck={false}
               placeholder={t("placeholders.output")}
               wrap="off"
               style={{ fontSize, whiteSpace: "pre" }}
-              className="mt-3 min-h-[clamp(260px,44vh,560px)] w-full flex-1 resize-none overflow-auto rounded-[14px] border border-transparent bg-[color:var(--glass-recessed-bg)] p-3 leading-relaxed text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent-blue)]"
+              className="mt-3 min-h-[clamp(260px,44vh,560px)] overflow-auto"
             />
           )}
         </ToolPanel>

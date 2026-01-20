@@ -9,6 +9,7 @@ import { PrimaryButton, SecondaryButton } from "@/components/Button";
 import { UploadIcon } from "@/components/Icons";
 import { Select } from "@/components/Select";
 import { ToolPanel } from "@/components/ToolPanel";
+import { ToolInputInset } from "@/components/ToolInputInset";
 import { cn } from "@/lib/cn";
 import { formatBytes } from "@/lib/formatBytes";
 
@@ -400,7 +401,7 @@ export default function ImageCompressTool() {
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-[color:var(--text-secondary)]">
               {t("labels.maxWidth")}
-              <input
+              <ToolInputInset
                 type="number"
                 min={1}
                 value={maxWidth}
@@ -409,12 +410,12 @@ export default function ImageCompressTool() {
                   setPending(true);
                 }}
                 placeholder={t("placeholders.auto")}
-                className="mt-2 w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)]"
+                className="mt-2 text-sm"
               />
             </label>
             <label className="text-xs text-[color:var(--text-secondary)]">
               {t("labels.maxHeight")}
-              <input
+              <ToolInputInset
                 type="number"
                 min={1}
                 value={maxHeight}
@@ -423,7 +424,7 @@ export default function ImageCompressTool() {
                   setPending(true);
                 }}
                 placeholder={t("placeholders.auto")}
-                className="mt-2 w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-recessed-bg)] px-3 py-2 text-sm text-[color:var(--text-primary)]"
+                className="mt-2 text-sm"
               />
             </label>
           </div>

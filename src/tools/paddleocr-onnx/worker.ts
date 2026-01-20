@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+import { formatErrorMessage } from "@/lib/errors";
+
 export {};
 
 type WorkerImagePayload = {
@@ -308,21 +310,6 @@ const ensureService = async (model: ModelConfig, runId: number) => {
   return service;
 };
 
-const formatErrorMessage = (err: unknown) => {
-  if (err instanceof Error && err.message) return err.message;
-  if (typeof err === "string") return err;
-  if (err && typeof err === "object") {
-    const maybeMessage = (err as { message?: unknown }).message;
-    if (typeof maybeMessage === "string" && maybeMessage) return maybeMessage;
-    try {
-      return JSON.stringify(err);
-    } catch {
-      return "Unknown worker error.";
-    }
-  }
-  return "Unknown worker error.";
-};
-
 ctx.onmessage = async (event: MessageEvent<IncomingMessage>) => {
   const data = event.data;
   if (data.type === "dispose") {
@@ -378,7 +365,7 @@ ctx.onmessage = async (event: MessageEvent<IncomingMessage>) => {
     postWorkerMessage({
       type: "error",
       id: data.id,
-      message: formatErrorMessage(err),
+      message: formatErrorMessage(err, "Unknown worker error."),
     });
   } finally {
   }
