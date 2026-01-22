@@ -947,6 +947,100 @@
         }
       }
     },
+    "regex-matcher": {
+      "title": "正则匹配",
+      "description": "快速验证正则与文本的匹配结果。",
+      "ui": {
+        "actions": {
+          "sample": "示例",
+          "copyMatches": "复制匹配",
+          "clear": "清空",
+          "script": "脚本",
+          "addField": "添加字段",
+          "removeField": "移除",
+          "textMode": "文本模式",
+          "listMode": "列表模式",
+          "applyFields": "应用",
+          "clearFields": "清空字段",
+          "editFields": "编辑字段",
+          "hideFields": "收起编辑"
+        },
+        "errors": {
+          "invalidPattern": "正则表达式无效。",
+          "clipboard": "复制失败。",
+          "script": "脚本错误：{message}"
+        },
+        "labels": {
+          "pattern": "字段模式",
+          "flags": "标志",
+          "input": "输入",
+          "matches": "匹配结果",
+          "presets": "常用模式",
+          "script": "脚本"
+        },
+        "hints": {
+          "pattern": "每行一个字段：字段名,正则（或 字段名:正则）。",
+          "script": "返回字符串或字符串数组。可用变量：rows、fields、matches、input、flags。脚本会在浏览器中执行，请只使用可信代码。"
+        },
+        "placeholders": {
+          "pattern": "url,https?://...\nemail,\\\\b...\\\\b",
+          "fieldName": "字段名",
+          "fieldPattern": "正则表达式",
+          "input": "粘贴待匹配文本…",
+          "matches": "匹配结果会显示在这里。",
+          "script": "return rows.map((row) => row.join(\",\")).join(\"\\n\");"
+        },
+        "status": {
+          "ready": "准备匹配。",
+          "emptyPattern": "请输入字段模式开始匹配。",
+          "noMatch": "未找到匹配。",
+          "matches": "{count} 个匹配。",
+          "truncated": "仅显示前 {count} 个匹配。",
+          "copied": "已复制匹配结果。",
+          "noFields": "暂无字段配置。",
+          "fieldsCount": "已配置 {count} 个字段。",
+          "moreFields": "还有 {count} 个"
+        },
+        "flags": {
+          "global": "全局",
+          "ignoreCase": "忽略大小写",
+          "multiline": "多行",
+          "dotAll": "点号匹配换行",
+          "unicode": "Unicode"
+        },
+        "presets": {
+          "url": {
+            "label": "URL",
+            "description": "HTTP/HTTPS 链接"
+          },
+          "email": {
+            "label": "邮箱",
+            "description": "常见邮箱地址"
+          },
+          "ipv4": {
+            "label": "IPv4",
+            "description": "IPv4 地址"
+          },
+          "date": {
+            "label": "日期 (YYYY-MM-DD)",
+            "description": "类似 ISO 日期"
+          },
+          "hexColor": {
+            "label": "十六进制颜色",
+            "description": "3/6/8 位颜色值"
+          },
+          "uuid": {
+            "label": "UUID",
+            "description": "UUID v1-v5"
+          }
+        },
+        "sample": {
+          "text": "访问 https://example.com 和 http://docs.example.org。\n联系 hello@zenith.dev 或 support@zenith.dev。\n服务器 IP：192.168.0.42。发布日期：2025-12-01。\n主色：#FF6B6B。UUID：550e8400-e29b-41d4-a716-446655440000。",
+          "fields": "url,https?:\\/\\/(?:[\\w-]+\\.)+[\\w-]+(?:[/?#][^\\s]*)?\nemail,\\\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\\\b\nipv4,\\\\b(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\\\b\ndate,\\\\b\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])\\\\b\nhex,#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\\\b\nuuid,\\\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\\\\b",
+          "script": "return rows.map((row) => row.join(\",\")).join(\"\\n\");"
+        }
+      }
+    },
     "aigc-detector": {
       "title": "AIGC 检测",
       "description": "使用本地推理检测中文 AI 生成文本。",

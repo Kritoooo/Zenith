@@ -947,6 +947,100 @@
         }
       }
     },
+    "regex-matcher": {
+      "title": "Regex Matcher",
+      "description": "Test patterns against text instantly.",
+      "ui": {
+        "actions": {
+          "sample": "Sample",
+          "copyMatches": "Copy matches",
+          "clear": "Clear",
+          "script": "Script",
+          "addField": "Add field",
+          "removeField": "Remove",
+          "textMode": "Text mode",
+          "listMode": "List mode",
+          "applyFields": "Apply",
+          "clearFields": "Clear fields",
+          "editFields": "Edit fields",
+          "hideFields": "Hide editor"
+        },
+        "errors": {
+          "invalidPattern": "Invalid regular expression.",
+          "clipboard": "Failed to copy.",
+          "script": "Script error: {message}"
+        },
+        "labels": {
+          "pattern": "Field patterns",
+          "flags": "Flags",
+          "input": "Input",
+          "matches": "Matches",
+          "presets": "Presets",
+          "script": "Script"
+        },
+        "hints": {
+          "pattern": "One line per field: name,regex (or name:regex).",
+          "script": "Return a string or an array of strings. Vars: rows, fields, matches, input, flags. Scripts run in your browser, only use trusted code."
+        },
+        "placeholders": {
+          "pattern": "url,https?://...\nemail,\\\\b...\\\\b",
+          "fieldName": "Field name",
+          "fieldPattern": "Regex pattern",
+          "input": "Paste text to test...",
+          "matches": "Matched results will appear here.",
+          "script": "return rows.map((row) => row.join(\",\")).join(\"\\n\");"
+        },
+        "status": {
+          "ready": "Ready to match.",
+          "emptyPattern": "Enter field patterns to start matching.",
+          "noMatch": "No matches found.",
+          "matches": "{count} match(es).",
+          "truncated": "Showing {count} matches (truncated).",
+          "copied": "Matches copied.",
+          "noFields": "No fields configured yet.",
+          "fieldsCount": "{count} fields configured.",
+          "moreFields": "+{count} more"
+        },
+        "flags": {
+          "global": "Global",
+          "ignoreCase": "Ignore case",
+          "multiline": "Multiline",
+          "dotAll": "Dot all",
+          "unicode": "Unicode"
+        },
+        "presets": {
+          "url": {
+            "label": "URL",
+            "description": "HTTP/HTTPS links"
+          },
+          "email": {
+            "label": "Email",
+            "description": "Standard email addresses"
+          },
+          "ipv4": {
+            "label": "IPv4",
+            "description": "IPv4 addresses"
+          },
+          "date": {
+            "label": "Date (YYYY-MM-DD)",
+            "description": "ISO-like dates"
+          },
+          "hexColor": {
+            "label": "Hex Color",
+            "description": "3/6/8-digit hex colors"
+          },
+          "uuid": {
+            "label": "UUID",
+            "description": "UUID v1-v5"
+          }
+        },
+        "sample": {
+          "text": "Visit https://example.com and http://docs.example.org.\nContact hello@zenith.dev or support@zenith.dev.\nServer IP: 192.168.0.42. Release date: 2025-12-01.\nPrimary color: #FF6B6B. UUID: 550e8400-e29b-41d4-a716-446655440000.",
+          "fields": "url,https?:\\/\\/(?:[\\w-]+\\.)+[\\w-]+(?:[/?#][^\\s]*)?\nemail,\\\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\\\b\nipv4,\\\\b(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\\\b\ndate,\\\\b\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])\\\\b\nhex,#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\\\b\nuuid,\\\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\\\\b",
+          "script": "return rows.map((row) => row.join(\",\")).join(\"\\n\");"
+        }
+      }
+    },
     "aigc-detector": {
       "title": "AIGC Detector",
       "description": "Detect AI-generated Chinese text with on-device inference.",

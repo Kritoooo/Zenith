@@ -4,6 +4,7 @@ import type { ToolRegistration } from "@/tools/types";
 
 import { meta as animeUpscaleMeta } from "@/tools/anime-upscale/meta";
 import { meta as base64Meta } from "@/tools/base64/meta";
+import { meta as regexMatcherMeta } from "@/tools/regex-matcher/meta";
 import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
@@ -31,6 +32,7 @@ const AnimeUpscaleTool = dynamic(() => import("@/tools/anime-upscale"));
 const PaddleOcrTool = dynamic(() => import("@/tools/paddleocr-onnx"));
 const ImageCompressTool = dynamic(() => import("@/tools/image-compress"));
 const Base64Tool = dynamic(() => import("@/tools/base64"));
+const RegexMatcherTool = dynamic(() => import("@/tools/regex-matcher"));
 const AigcDetectorTool = dynamic(() => import("@/tools/aigc-detector"));
 const UuidTool = dynamic(() => import("@/tools/uuid"));
 const LocalTimeTool = dynamic(() => import("@/tools/local-time"));
@@ -48,6 +50,7 @@ export const tools: ToolRegistration[] = [
   { meta: paddleOcrMeta, component: PaddleOcrTool },
   { meta: imageCompressMeta, component: ImageCompressTool },
   { meta: base64Meta, component: Base64Tool },
+  { meta: regexMatcherMeta, component: RegexMatcherTool },
   { meta: aigcDetectorMeta, component: AigcDetectorTool },
   { meta: uuidMeta, component: UuidTool },
   { meta: localTimeMeta, component: LocalTimeTool },
