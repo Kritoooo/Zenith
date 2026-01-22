@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import { clampConfidence } from "@/lib/confidence";
 import { formatErrorMessage } from "@/lib/errors";
 
 export {};
@@ -99,8 +100,6 @@ let cachedKey: string | null = null;
 let patchedWebgpu = false;
 
 const assetCache = new Map<string, ArrayBuffer | string | string[]>();
-
-const clampConfidence = (value: number) => Math.min(1, Math.max(0, value));
 
 const normalizeConfidence = (value: unknown) => {
   if (typeof value !== "number" || !Number.isFinite(value)) return null;

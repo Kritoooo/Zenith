@@ -8,6 +8,7 @@ import { Select } from "@/components/Select";
 import { UploadIcon } from "@/components/Icons";
 import { ToolPanel } from "@/components/ToolPanel";
 import { cn } from "@/lib/cn";
+import { clampConfidence } from "@/lib/confidence";
 import { formatErrorMessage } from "@/lib/errors";
 import { useClipboard } from "@/lib/useClipboard";
 
@@ -216,8 +217,6 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 const createOcrWorker = () => new Worker(new URL("./worker.ts", import.meta.url));
-
-const clampConfidence = (value: number) => Math.min(1, Math.max(0, value));
 
 const HIGH_CONFIDENCE_THRESHOLD = 0.85;
 const LOW_CONFIDENCE_THRESHOLD = 0.6;

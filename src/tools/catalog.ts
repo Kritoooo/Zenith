@@ -1,6 +1,7 @@
 import type { ToolMeta } from "@/tools/types";
 
 import { meta as base64Meta } from "@/tools/base64/meta";
+import { meta as regexMatcherMeta } from "@/tools/regex-matcher/meta";
 import { meta as animeUpscaleMeta } from "@/tools/anime-upscale/meta";
 import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
@@ -28,6 +29,7 @@ export const toolMetas: ToolMeta[] = [
   paddleOcrMeta,
   imageCompressMeta,
   base64Meta,
+  regexMatcherMeta,
   aigcDetectorMeta,
   uuidMeta,
   localTimeMeta,
