@@ -65,3 +65,14 @@ export function UploadIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function PinIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <circle cx="12" cy="7" r="3" strokeWidth="1.6" />
+      <path d="M10.4 7h3.2" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M12 10v7" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M12 17l-2.2 3" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}

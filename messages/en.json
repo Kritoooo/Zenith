@@ -1240,6 +1240,91 @@
           "noSaved": "No saved addresses yet."
         }
       }
+    },
+    "prompt-manager": {
+      "title": "Prompt Manager",
+      "description": "Manage prompt templates, variables, and reusable snippets.",
+      "highlights": [
+        "Variables",
+        "Tag filter",
+        "Import / Export"
+      ],
+      "ui": {
+        "actions": {
+          "create": "Create",
+          "duplicate": "Duplicate",
+          "pin": "Pin",
+          "unpin": "Unpin",
+          "delete": "Delete",
+          "import": "Import",
+          "export": "Export",
+          "copyPrompt": "Copy prompt",
+          "copyPreview": "Copy preview",
+          "clearVariables": "Clear values"
+        },
+        "labels": {
+          "library": "Prompt library",
+          "editor": "Prompt editor",
+          "variables": "Variables",
+          "preview": "Rendered preview",
+          "title": "Title",
+          "tags": "Tags",
+          "prompt": "Prompt content",
+          "pinned": "Pinned",
+          "history": "History",
+          "historyCount": "{count} snapshots",
+          "allTags": "All tags",
+          "promptCount": "{count} prompts"
+        },
+        "placeholders": {
+          "search": "Search title, content, or tags...",
+          "title": "Prompt title...",
+          "tags": "Comma separated tags, e.g. marketing, summary",
+          "prompt": "Write your prompt template here. Use '{{variable}}' placeholders.",
+          "variable": "Value for this variable",
+          "preview": "Rendered prompt will appear here."
+        },
+        "status": {
+          "ready": "Ready.",
+          "unsaved": "Unsaved changes.",
+          "saving": "Saving...",
+          "saved": "All changes saved.",
+          "created": "Prompt created.",
+          "duplicated": "Prompt duplicated.",
+          "pinned": "Prompt pinned.",
+          "unpinned": "Prompt unpinned.",
+          "deleted": "Prompt deleted.",
+          "imported": "Imported {count} prompts.",
+          "exported": "Exported {count} prompts.",
+          "promptCopied": "Prompt copied.",
+          "previewCopied": "Rendered preview copied.",
+          "snapshotRestored": "Snapshot restored."
+        },
+        "errors": {
+          "storage": "Local storage is unavailable.",
+          "clipboard": "Failed to copy.",
+          "invalidImport": "Import failed. Invalid file format.",
+          "emptyExport": "No prompts to export."
+        },
+        "confirm": {
+          "delete": "Delete prompt \"{title}\"?"
+        },
+        "emptyState": {
+          "noPrompts": "No prompts yet. Create your first prompt.",
+          "noMatches": "No prompt matches the current filters.",
+          "noActivePrompt": "Select or create a prompt to start editing.",
+          "noVariables": "No variables detected. Use '{{variable}}' in prompt content.",
+          "noHistory": "No snapshots yet."
+        },
+        "defaults": {
+          "promptTitle": "New Prompt",
+          "newPromptTitle": "Untitled Prompt",
+          "duplicateTitle": "{title} (copy)"
+        },
+        "sample": {
+          "prompt": "You are a senior product analyst.\n\nContext:\n- Product: {{product_name}}\n- Audience: {{audience}}\n- Goal: {{goal}}\n\nPlease provide:\n1) A concise summary.\n2) 3 actionable recommendations.\n3) Potential risks and mitigations."
+        }
+      }
     }
   }
 }
