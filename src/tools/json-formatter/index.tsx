@@ -8,7 +8,7 @@ import { StatusLine } from "@/components/StatusLine";
 import { ToolPanel } from "@/components/ToolPanel";
 import { ToolTextarea } from "@/components/ToolTextarea";
 import { cn } from "@/lib/cn";
-import { resolveTranslationFallback } from "@/lib/i18n";
+import { resolveRawTranslationFallback } from "@/lib/i18n";
 import { useClipboard } from "@/lib/useClipboard";
 import { JsonTree } from "./JsonTree";
 import { JsonValue, collectPaths, countNodesWithCap } from "./jsonUtils";
@@ -53,7 +53,7 @@ export default function JsonFormatterTool() {
   const t = useTranslations("tools.json-formatter.ui");
   const sampleJson = useMemo(
     () =>
-      resolveTranslationFallback(
+      resolveRawTranslationFallback(
         t,
         "sample",
         DEFAULT_SAMPLE,

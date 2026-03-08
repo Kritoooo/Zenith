@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { useClipboard } from "@/lib/useClipboard";
-import { resolveTranslationFallback } from "@/lib/i18n";
+import { resolveRawTranslationFallback, resolveTranslationFallback } from "@/lib/i18n";
 
 import { InputPanel } from "./components/InputPanel";
 import { OutputPanel } from "./components/OutputPanel";
@@ -36,7 +36,7 @@ export default function JsonFieldExtractorTool() {
   const t = useTranslations("tools.json-field-extractor.ui");
   const sampleJson = useMemo(
     () =>
-      resolveTranslationFallback(
+      resolveRawTranslationFallback(
         t,
         "sample.json",
         DEFAULT_SAMPLE_JSON,
