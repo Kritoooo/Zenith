@@ -916,6 +916,81 @@
         }
       }
     },
+
+    "gemini-watermark-remover": {
+      "title": "Gemini 去水印",
+      "description": "不做 AI 补画，仅移除 Gemini 可见水印。",
+      "highlights": [
+        "仅可见水印",
+        "反向混合",
+        "本地处理"
+      ],
+      "ui": {
+        "actions": {
+          "clear": "清空",
+          "remove": "去水印",
+          "removing": "处理中…",
+          "download": "下载 PNG"
+        },
+        "aria": {
+          "originalPreview": "原图预览",
+          "cleanedPreview": "去水印预览"
+        },
+        "drop": {
+          "choose": "选择图片",
+          "dropHere": "拖放图片到这里",
+          "release": "松开以上传",
+          "replace": "替换图片",
+          "formats": "PNG、JPG、WebP",
+          "formatsHint": "PNG、JPG、WebP · 拖拽或点击"
+        },
+        "errors": {
+          "read": "无法读取图片。",
+          "selectImage": "请选择图片文件。",
+          "dropImage": "请拖入图片文件。",
+          "canvas": "Canvas 不可用。",
+          "mask": "无法加载 Gemini 水印模板。",
+          "process": "去水印失败。"
+        },
+        "helpers": {
+          "original": "加载图片后可预览。",
+          "cleaned": "去水印结果会显示在这里。"
+        },
+        "labels": {
+          "source": "来源",
+          "settings": "设置",
+          "mode": "水印模式",
+          "region": "处理区域",
+          "behavior": "处理方式",
+          "output": "输出",
+          "scope": "适用范围",
+          "original": "原图",
+          "cleaned": "去水印后"
+        },
+        "modes": {
+          "auto": "自动",
+          "small": "48 × 48",
+          "large": "96 × 96"
+        },
+        "stats": {
+          "original": "原始",
+          "dimensions": "尺寸",
+          "mask": "模板",
+          "output": "输出",
+          "empty": "—"
+        },
+        "status": {
+          "processing": "正在执行 reverse alpha blending…",
+          "pending": "当前输出已过期。",
+          "localOnly": "处理仅在浏览器本地完成。"
+        },
+        "notes": {
+          "reverseBlend": "仅做 reverse alpha blending，不做 inpaint 或 denoise。",
+          "png": "默认导出 PNG，尽量避免再次有损保存。",
+          "visibleOnly": "只移除 Gemini 可见水印，不处理 SynthID。"
+        }
+      }
+    },
     "base64": {
       "title": "Base64",
       "description": "即时编码或解码。",

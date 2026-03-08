@@ -353,7 +353,6 @@ export default function PaddleOcrTool() {
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWebgpuAvailable(Boolean((navigator as Navigator & { gpu?: unknown })?.gpu));
   }, []);
 
