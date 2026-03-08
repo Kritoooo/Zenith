@@ -1240,6 +1240,91 @@
           "noSaved": "暂无保存的地址。"
         }
       }
+    },
+    "prompt-manager": {
+      "title": "Prompt 管理器",
+      "description": "管理 Prompt 模板、变量与可复用片段。",
+      "highlights": [
+        "变量填充",
+        "标签筛选",
+        "导入导出"
+      ],
+      "ui": {
+        "actions": {
+          "create": "新建",
+          "duplicate": "复制",
+          "pin": "置顶",
+          "unpin": "取消置顶",
+          "delete": "删除",
+          "import": "导入",
+          "export": "导出",
+          "copyPrompt": "复制 Prompt",
+          "copyPreview": "复制预览",
+          "clearVariables": "清空变量值"
+        },
+        "labels": {
+          "library": "Prompt 库",
+          "editor": "编辑区",
+          "variables": "变量",
+          "preview": "渲染预览",
+          "title": "标题",
+          "tags": "标签",
+          "prompt": "Prompt 内容",
+          "pinned": "置顶",
+          "history": "历史快照",
+          "historyCount": "{count} 条快照",
+          "allTags": "全部标签",
+          "promptCount": "共 {count} 条"
+        },
+        "placeholders": {
+          "search": "搜索标题、内容或标签…",
+          "title": "请输入 Prompt 标题…",
+          "tags": "使用逗号分隔标签，例如：营销，总结",
+          "prompt": "在此输入模板内容，使用 '{{variable}}' 作为变量占位。",
+          "variable": "请输入变量值",
+          "preview": "渲染后的 Prompt 会显示在这里。"
+        },
+        "status": {
+          "ready": "就绪。",
+          "unsaved": "有未保存修改。",
+          "saving": "保存中…",
+          "saved": "已自动保存。",
+          "created": "已新建 Prompt。",
+          "duplicated": "已复制 Prompt。",
+          "pinned": "已置顶 Prompt。",
+          "unpinned": "已取消置顶。",
+          "deleted": "已删除 Prompt。",
+          "imported": "已导入 {count} 条 Prompt。",
+          "exported": "已导出 {count} 条 Prompt。",
+          "promptCopied": "Prompt 已复制。",
+          "previewCopied": "渲染预览已复制。",
+          "snapshotRestored": "已恢复历史快照。"
+        },
+        "errors": {
+          "storage": "本地存储不可用。",
+          "clipboard": "复制失败。",
+          "invalidImport": "导入失败，文件格式无效。",
+          "emptyExport": "暂无可导出的 Prompt。"
+        },
+        "confirm": {
+          "delete": "确定删除 Prompt「{title}」吗？"
+        },
+        "emptyState": {
+          "noPrompts": "还没有 Prompt，先创建第一条吧。",
+          "noMatches": "当前筛选条件下没有匹配项。",
+          "noActivePrompt": "请先选择或新建 Prompt。",
+          "noVariables": "未识别到变量。可在内容里使用 '{{variable}}'。",
+          "noHistory": "暂无历史快照。"
+        },
+        "defaults": {
+          "promptTitle": "新 Prompt",
+          "newPromptTitle": "未命名 Prompt",
+          "duplicateTitle": "{title}（副本）"
+        },
+        "sample": {
+          "prompt": "你是一位资深产品分析师。\n\n上下文：\n- 产品：{{product_name}}\n- 受众：{{audience}}\n- 目标：{{goal}}\n\n请给出：\n1) 一段简明总结。\n2) 3 条可执行建议。\n3) 潜在风险与应对方式。"
+        }
+      }
     }
   }
 }
