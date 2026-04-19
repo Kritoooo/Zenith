@@ -917,6 +917,111 @@
       }
     },
 
+    "gemini-batch-image": {
+      "title": "Gemini 批量生图",
+      "description": "选一个文件夹，用同一条 prompt 让 Gemini 处理里面的每张图。",
+      "highlights": [
+        "文件夹上传",
+        "批量生成",
+        "打包下载"
+      ],
+      "ui": {
+        "actions": {
+          "clear": "清空",
+          "chooseFolder": "选择文件夹",
+          "chooseFiles": "选择图片",
+          "run": "开始",
+          "stop": "停止",
+          "downloadZip": "下载 ZIP",
+          "zipping": "正在打包…",
+          "downloadOne": "下载",
+          "retry": "重试",
+          "removeItem": "移除",
+          "downloadAll": "逐个下载",
+          "zoom": "放大",
+          "close": "关闭"
+        },
+        "labels": {
+          "source": "来源",
+          "settings": "设置",
+          "results": "结果",
+          "apiKey": "Gemini API Key",
+          "rememberKey": "在本机记住",
+          "baseUrl": "自定义 Base URL（可选）",
+          "model": "模型",
+          "concurrency": "并发数",
+          "prompt": "Prompt（应用于每张图）",
+          "suffix": "文件名后缀",
+          "original": "原图",
+          "result": "结果"
+        },
+        "placeholders": {
+          "apiKey": "粘贴 Google AI Studio 密钥",
+          "baseUrl": "留空使用 Google · 示例：https://api.grsai.ai",
+          "prompt": "示例：把这张图转成水彩速写风格。",
+          "suffix": "-gemini"
+        },
+        "drop": {
+          "choose": "把文件夹或图片拖到这里",
+          "dropHere": "把文件夹或图片拖到这里",
+          "release": "松开以加入队列",
+          "replace": "继续添加",
+          "formatsHint": "JPEG / PNG / WebP · 可拖入文件夹，或用下方按钮选择"
+        },
+        "stats": {
+          "total": "总数",
+          "queued": "排队中",
+          "done": "完成",
+          "failed": "失败",
+          "skipped": "跳过",
+          "totalSize": "结果体积",
+          "empty": "—"
+        },
+        "status": {
+          "pending": "等待",
+          "processing": "处理中…",
+          "done": "已完成",
+          "error": "失败",
+          "cancelled": "已取消",
+          "skipped": "已跳过",
+          "noKey": "请先粘贴 Gemini API Key。",
+          "noPrompt": "请先填写 prompt。",
+          "noFiles": "拖入文件夹或选择图片以开始。",
+          "runningSummary": "已完成 {done}/{total} · 队列中 {queued}",
+          "idle": "就绪，点击开始处理全部待处理图片。",
+          "zipWarn": "结果总大小 {size}，打包可能较慢——可改用“逐个下载”。",
+          "byok": "密钥仅保存在你的浏览器中。"
+        },
+        "errors": {
+          "missingApiKey": "缺少 API Key。",
+          "missingPrompt": "Prompt 为空。",
+          "unsupportedMime": "不支持的格式（仅限 JPEG / PNG / WebP）。",
+          "noInlineData": "模型未返回图片。",
+          "aborted": "已取消。",
+          "rateLimited": "被限流，建议降低并发。",
+          "authFailed": "API Key 被拒绝。",
+          "network": "网络错误。",
+          "unknown": "处理失败。",
+          "zip": "打包 ZIP 失败。"
+        },
+        "helpers": {
+          "empty": "还没有文件。拖入文件夹或选择图片即可排队。",
+          "original": "原图预览",
+          "result": "结果会显示在这里",
+          "byokDetail": "密钥由浏览器直接发送到所配置的接口。取消勾选仅在本会话中临时保存。",
+          "baseUrlDetail": "可填入任意兼容 Gemini 协议的接口（如 grsai.ai）；留空则走 Google 官方 generativelanguage.googleapis.com。"
+        },
+        "aria": {
+          "toggleApiKey": "切换 API Key 可见性",
+          "downloadItem": "下载此结果",
+          "retryItem": "重试此文件",
+          "removeItem": "移除此文件",
+          "viewOriginal": "查看原图",
+          "viewResult": "查看结果",
+          "closePreview": "关闭预览"
+        }
+      }
+    },
     "gemini-watermark-remover": {
       "title": "Gemini 去水印",
       "description": "不做 AI 补画，仅移除 Gemini 可见水印。",

@@ -917,6 +917,111 @@
       }
     },
 
+    "gemini-batch-image": {
+      "title": "Gemini Batch Image",
+      "description": "Run a prompt over every image in a folder with the Gemini image model.",
+      "highlights": [
+        "Folder upload",
+        "Batch generate",
+        "ZIP export"
+      ],
+      "ui": {
+        "actions": {
+          "clear": "Clear",
+          "chooseFolder": "Choose folder",
+          "chooseFiles": "Choose files",
+          "run": "Run",
+          "stop": "Stop",
+          "downloadZip": "Download ZIP",
+          "zipping": "Packing ZIP...",
+          "downloadOne": "Download",
+          "retry": "Retry",
+          "removeItem": "Remove",
+          "downloadAll": "Download each",
+          "zoom": "Zoom",
+          "close": "Close"
+        },
+        "labels": {
+          "source": "Source",
+          "settings": "Settings",
+          "results": "Results",
+          "apiKey": "Gemini API key",
+          "rememberKey": "Remember on this device",
+          "baseUrl": "Custom base URL (optional)",
+          "model": "Model",
+          "concurrency": "Parallel requests",
+          "prompt": "Prompt (applied to every image)",
+          "suffix": "Output filename suffix",
+          "original": "Original",
+          "result": "Result"
+        },
+        "placeholders": {
+          "apiKey": "Paste your Google AI Studio key",
+          "baseUrl": "Leave empty for Google · e.g. https://api.grsai.ai",
+          "prompt": "e.g. Turn this photo into a watercolor sketch.",
+          "suffix": "-gemini"
+        },
+        "drop": {
+          "choose": "Drop a folder or images here",
+          "dropHere": "Drop a folder or images here",
+          "release": "Release to add to the batch",
+          "replace": "Add more images",
+          "formatsHint": "JPEG, PNG, WebP · drag a folder or pick with the buttons below"
+        },
+        "stats": {
+          "total": "Total",
+          "queued": "Queued",
+          "done": "Done",
+          "failed": "Failed",
+          "skipped": "Skipped",
+          "totalSize": "Output size",
+          "empty": "—"
+        },
+        "status": {
+          "pending": "Pending",
+          "processing": "Processing...",
+          "done": "Done",
+          "error": "Error",
+          "cancelled": "Cancelled",
+          "skipped": "Skipped",
+          "noKey": "Paste a Gemini API key to start.",
+          "noPrompt": "Write a prompt to describe the edit.",
+          "noFiles": "Drop a folder or pick files to begin.",
+          "runningSummary": "Running {done}/{total} · {queued} in queue",
+          "idle": "Ready. Press Run to process all pending images.",
+          "zipWarn": "Total output is {size}. ZIP may be slow — try Download each.",
+          "byok": "Key stays in your browser."
+        },
+        "errors": {
+          "missingApiKey": "No API key.",
+          "missingPrompt": "Prompt is empty.",
+          "unsupportedMime": "Unsupported type (JPEG / PNG / WebP only).",
+          "noInlineData": "Model returned no image.",
+          "aborted": "Cancelled.",
+          "rateLimited": "Rate limited. Try a lower parallelism.",
+          "authFailed": "API key was rejected.",
+          "network": "Network error.",
+          "unknown": "Failed.",
+          "zip": "ZIP build failed."
+        },
+        "helpers": {
+          "empty": "No files yet. Drop a folder or pick images to queue them.",
+          "original": "Original preview",
+          "result": "Result will appear here",
+          "byokDetail": "The key is sent directly from your browser to the configured endpoint. Uncheck to keep it only for this session.",
+          "baseUrlDetail": "Point to any Gemini-compatible endpoint (e.g. grsai.ai). Leave empty to use Google's generativelanguage.googleapis.com."
+        },
+        "aria": {
+          "toggleApiKey": "Toggle API key visibility",
+          "downloadItem": "Download this result",
+          "retryItem": "Retry this file",
+          "removeItem": "Remove this file",
+          "viewOriginal": "View original",
+          "viewResult": "View result",
+          "closePreview": "Close preview"
+        }
+      }
+    },
     "gemini-watermark-remover": {
       "title": "Gemini Watermark Remover",
       "description": "Remove Gemini visible watermarks without AI repainting.",

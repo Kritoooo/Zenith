@@ -12,6 +12,7 @@
     "coi:sync": "node scripts/sync-coi.mjs"
   },
   "dependencies": {
+    "@google/genai": "^1.50.0",
     "@huggingface/transformers": "^3.8.1",
     "next": "^16.1.6",
     "next-intl": "^4.7.0",
