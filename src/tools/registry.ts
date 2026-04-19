@@ -8,6 +8,7 @@ import { meta as regexMatcherMeta } from "@/tools/regex-matcher/meta";
 import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
+import { meta as geminiWatermarkRemoverMeta } from "@/tools/gemini-watermark-remover/meta";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
 import { meta as jsonFieldExtractorMeta } from "@/tools/json-field-extractor/meta";
 import { meta as classToJsonMeta } from "@/tools/class-to-json/meta";
@@ -32,6 +33,7 @@ const ColorConverterTool = dynamic(() => import("@/tools/color-converter"));
 const AnimeUpscaleTool = dynamic(() => import("@/tools/anime-upscale"));
 const PaddleOcrTool = dynamic(() => import("@/tools/paddleocr-onnx"));
 const ImageCompressTool = dynamic(() => import("@/tools/image-compress"));
+const GeminiWatermarkRemoverTool = dynamic(() => import("@/tools/gemini-watermark-remover"));
 const Base64Tool = dynamic(() => import("@/tools/base64"));
 const RegexMatcherTool = dynamic(() => import("@/tools/regex-matcher"));
 const AigcDetectorTool = dynamic(() => import("@/tools/aigc-detector"));
@@ -51,6 +53,7 @@ export const tools: ToolRegistration[] = [
   { meta: animeUpscaleMeta, component: AnimeUpscaleTool },
   { meta: paddleOcrMeta, component: PaddleOcrTool },
   { meta: imageCompressMeta, component: ImageCompressTool },
+  { meta: geminiWatermarkRemoverMeta, component: GeminiWatermarkRemoverTool },
   { meta: base64Meta, component: Base64Tool },
   { meta: regexMatcherMeta, component: RegexMatcherTool },
   { meta: aigcDetectorMeta, component: AigcDetectorTool },

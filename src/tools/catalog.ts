@@ -6,6 +6,7 @@ import { meta as animeUpscaleMeta } from "@/tools/anime-upscale/meta";
 import { meta as codeCompareMeta } from "@/tools/code-compare/meta";
 import { meta as colorConverterMeta } from "@/tools/color-converter/meta";
 import { meta as imageCompressMeta } from "@/tools/image-compress/meta";
+import { meta as geminiWatermarkRemoverMeta } from "@/tools/gemini-watermark-remover/meta";
 import { meta as jsonFormatterMeta } from "@/tools/json-formatter/meta";
 import { meta as jsonFieldExtractorMeta } from "@/tools/json-field-extractor/meta";
 import { meta as classToJsonMeta } from "@/tools/class-to-json/meta";
@@ -29,6 +30,7 @@ export const toolMetas: ToolMeta[] = [
   animeUpscaleMeta,
   paddleOcrMeta,
   imageCompressMeta,
+  geminiWatermarkRemoverMeta,
   base64Meta,
   regexMatcherMeta,
   aigcDetectorMeta,

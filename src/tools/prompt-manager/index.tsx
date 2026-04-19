@@ -49,6 +49,7 @@ const PROMPT_LIST_STORAGE_KEY = "zenith.prompt-manager.items";
 const ACTIVE_PROMPT_STORAGE_KEY = "zenith.prompt-manager.active";
 const PROMPT_HISTORY_STORAGE_KEY = "zenith.prompt-manager.histories";
 const SAVE_DELAY_MS = 220;
+const SNAPSHOT_DEBOUNCE_MS = 1200;
 const MAX_HISTORY_PER_PROMPT = 30;
 const VARIABLE_PATTERN = /\{\{\s*([a-zA-Z0-9._-]+)\s*\}\}/g;
 const DEFAULT_SAMPLE_PROMPT = `You are a senior product analyst.
@@ -345,6 +346,9 @@ export default function PromptManagerTool() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [historyMap, setHistoryMap] = useState<PromptHistoryMap>({});
   const importRef = useRef<HTMLInputElement>(null);
+  const snapshotTimerRef = useRef<Map<string, number>>(new Map());
+  const lastChangedPromptIdRef = useRef<string | null>(null);
+  const previousSaveStateRef = useRef<"ready" | "unsaved" | "saving" | "saved">("ready");
 
   const activePrompt = useMemo(
     () => promptItems.find((item) => item.id === activePromptId) ?? null,
@@ -391,6 +395,32 @@ export default function PromptManagerTool() {
   const activeHistory = useMemo(
     () => (activePromptId ? historyMap[activePromptId] ?? [] : []),
     [activePromptId, historyMap]
+  );
+
+  const clearSnapshotTimer = useCallback((promptId: string) => {
+    const timerId = snapshotTimerRef.current.get(promptId);
+    if (typeof timerId === "undefined") return;
+    window.clearTimeout(timerId);
+    snapshotTimerRef.current.delete(promptId);
+  }, []);
+
+  const clearAllSnapshotTimers = useCallback(() => {
+    for (const timerId of snapshotTimerRef.current.values()) {
+      window.clearTimeout(timerId);
+    }
+    snapshotTimerRef.current.clear();
+  }, []);
+
+  const queueSnapshotForPrompt = useCallback(
+    (prompt: PromptItem) => {
+      clearSnapshotTimer(prompt.id);
+      const timerId = window.setTimeout(() => {
+        setHistoryMap((previous) => addSnapshotForPrompt(previous, prompt));
+        snapshotTimerRef.current.delete(prompt.id);
+      }, SNAPSHOT_DEBOUNCE_MS);
+      snapshotTimerRef.current.set(prompt.id, timerId);
+    },
+    [clearSnapshotTimer]
   );
 
   useEffect(() => {
@@ -470,9 +500,22 @@ export default function PromptManagerTool() {
   }, [activePromptId, hasLoaded, historyMap, promptItems, t]);
 
   useEffect(() => {
-    if (!activePrompt || saveState !== "saved") return;
-    setHistoryMap((previous) => addSnapshotForPrompt(previous, activePrompt));
-  }, [activePrompt, saveState]);
+    const previousSaveState = previousSaveStateRef.current;
+    if (saveState === "saved" && previousSaveState !== "saved") {
+      const promptId = lastChangedPromptIdRef.current;
+      if (promptId) {
+        const promptToSnapshot = promptItems.find((item) => item.id === promptId);
+        if (promptToSnapshot) {
+          queueSnapshotForPrompt(promptToSnapshot);
+        }
+      }
+    }
+    previousSaveStateRef.current = saveState;
+  }, [promptItems, queueSnapshotForPrompt, saveState]);
+
+  useEffect(() => () => {
+    clearAllSnapshotTimers();
+  }, [clearAllSnapshotTimers]);
 
   const { copied, copy, reset } = useClipboard<"prompt" | "preview">({
     onError: () => setStatusNotice({ tone: "error", text: t("errors.clipboard") }),
@@ -504,6 +547,7 @@ export default function PromptManagerTool() {
 
   const patchPromptItem = useCallback(
     (promptId: string, updater: (current: PromptItem) => PromptItem) => {
+      lastChangedPromptIdRef.current = promptId;
       setPromptItems((previous) =>
         previous.map((item) => {
           if (item.id !== promptId) return item;
@@ -517,6 +561,7 @@ export default function PromptManagerTool() {
   );
 
   const createPrompt = () => {
+    lastChangedPromptIdRef.current = null;
     const created = createPromptItem(defaultNewTitle, "");
     setPromptItems((previous) => [created, ...previous]);
     setActivePromptId(created.id);
@@ -528,6 +573,7 @@ export default function PromptManagerTool() {
 
   const duplicatePrompt = () => {
     if (!activePrompt) return;
+    lastChangedPromptIdRef.current = null;
     const now = Date.now();
     const duplicated: PromptItem = {
       ...activePrompt,
@@ -563,6 +609,11 @@ export default function PromptManagerTool() {
       t("confirm.delete", { title: activePrompt.title })
     );
     if (!confirmed) return;
+
+    clearSnapshotTimer(activePrompt.id);
+    if (lastChangedPromptIdRef.current === activePrompt.id) {
+      lastChangedPromptIdRef.current = null;
+    }
 
     const currentIndex = promptItems.findIndex((item) => item.id === activePrompt.id);
     const nextItems = promptItems.filter((item) => item.id !== activePrompt.id);
@@ -648,6 +699,8 @@ export default function PromptManagerTool() {
           ? normalizePromptHistoryMap(parsed.histories, defaultTitle)
           : {};
 
+      clearAllSnapshotTimers();
+      lastChangedPromptIdRef.current = null;
       setPromptItems(imported);
       setActivePromptId(imported[0].id);
       setSearchQuery("");
@@ -714,7 +767,7 @@ export default function PromptManagerTool() {
 
       <StatusLine text={status.text} tone={status.tone} />
 
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_320px]">
         <ToolPanel
           title={t("labels.library")}
           className="min-h-0 gap-3"
@@ -913,10 +966,10 @@ export default function PromptManagerTool() {
           )}
         </ToolPanel>
 
-        <div className="flex min-h-0 flex-col gap-4">
+        <div className="grid min-h-0 gap-4 md:grid-cols-2 lg:col-span-2 xl:col-span-1 xl:grid-cols-1 xl:[grid-template-rows:auto_minmax(0,1fr)]">
           <ToolPanel
             title={t("labels.variables")}
-            className="min-h-0 max-h-[220px] gap-2 overflow-auto"
+            className="min-h-0 max-h-[220px] gap-2 overflow-auto xl:!flex-none"
             actions={
               <GhostButton
                 size="sm"
@@ -958,7 +1011,7 @@ export default function PromptManagerTool() {
 
           <ToolPanel
             title={t("labels.preview")}
-            className="min-h-0 flex-1"
+            className="min-h-[280px] overflow-hidden md:col-span-2 xl:col-span-1 xl:min-h-0"
             actions={
               <SecondaryButton size="sm" onClick={copyPreview} disabled={!renderedPrompt}>
                 {t("actions.copyPreview")}
@@ -969,45 +1022,48 @@ export default function PromptManagerTool() {
               value={renderedPrompt}
               readOnly
               placeholder={t("placeholders.preview")}
-              className="mt-3 min-h-[220px]"
+              className="mt-3 min-h-[260px] xl:min-h-0"
             />
-          </ToolPanel>
-
-          <ToolPanel
-            title={t("labels.history")}
-            className="min-h-0 max-h-[220px]"
-            actions={
-              <span className="text-xs text-[color:var(--text-secondary)]">
-                {t("labels.historyCount", { count: activeHistory.length })}
-              </span>
-            }
-          >
-            {activeHistory.length === 0 ? (
-              <p className="mt-2 text-xs text-[color:var(--text-secondary)]">
-                {t("emptyState.noHistory")}
-              </p>
-            ) : (
-              <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-auto pr-1">
-                {activeHistory.map((snapshot) => (
-                  <button
-                    key={snapshot.id}
-                    type="button"
-                    onClick={() => restoreSnapshot(snapshot.id)}
-                    className="w-full rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2 text-left transition-colors hover:bg-[color:var(--glass-hover-bg)]"
-                  >
-                    <p className="truncate text-xs font-medium text-[color:var(--text-primary)]">
-                      {snapshot.title}
-                    </p>
-                    <p className="mt-1 text-[11px] text-[color:var(--text-secondary)]">
-                      {new Date(snapshot.savedAt).toLocaleString()}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
           </ToolPanel>
         </div>
       </div>
+
+      <ToolPanel
+        title={t("labels.history")}
+        className="!flex-none min-h-[156px]"
+        actions={
+          <span className="text-xs text-[color:var(--text-secondary)]">
+            {t("labels.historyCount", { count: activeHistory.length })}
+          </span>
+        }
+      >
+        {activeHistory.length === 0 ? (
+          <p className="mt-2 text-xs text-[color:var(--text-secondary)]">
+            {t("emptyState.noHistory")}
+          </p>
+        ) : (
+          <div className="mt-2 flex gap-2 overflow-auto pb-1 pr-1">
+            {activeHistory.map((snapshot) => (
+              <button
+                key={snapshot.id}
+                type="button"
+                onClick={() => restoreSnapshot(snapshot.id)}
+                className="min-w-[220px] max-w-[260px] shrink-0 rounded-[12px] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-2 text-left transition-colors hover:bg-[color:var(--glass-hover-bg)]"
+              >
+                <p className="truncate text-xs font-medium text-[color:var(--text-primary)]">
+                  {snapshot.title}
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--text-secondary)]">
+                  {summarizeContent(snapshot.content)}
+                </p>
+                <p className="mt-2 text-[11px] text-[color:var(--text-secondary)]">
+                  {new Date(snapshot.savedAt).toLocaleString()}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+      </ToolPanel>
     </div>
   );
 }

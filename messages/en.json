@@ -916,6 +916,81 @@
         }
       }
     },
+
+    "gemini-watermark-remover": {
+      "title": "Gemini Watermark Remover",
+      "description": "Remove Gemini visible watermarks without AI repainting.",
+      "highlights": [
+        "Visible watermark only",
+        "Reverse blend",
+        "On-device"
+      ],
+      "ui": {
+        "actions": {
+          "clear": "Clear",
+          "remove": "Remove watermark",
+          "removing": "Removing...",
+          "download": "Download PNG"
+        },
+        "aria": {
+          "originalPreview": "Original preview",
+          "cleanedPreview": "Cleaned preview"
+        },
+        "drop": {
+          "choose": "Choose an image",
+          "dropHere": "Drop image here",
+          "release": "Release to upload",
+          "replace": "Replace image",
+          "formats": "PNG, JPG, WebP",
+          "formatsHint": "PNG, JPG, WebP · drag & drop or click"
+        },
+        "errors": {
+          "read": "Unable to read this image.",
+          "selectImage": "Please select an image file.",
+          "dropImage": "Please drop an image file.",
+          "canvas": "Canvas is not available.",
+          "mask": "Unable to load the Gemini watermark mask.",
+          "process": "Watermark removal failed."
+        },
+        "helpers": {
+          "original": "Load an image to preview it.",
+          "cleaned": "The cleaned result will appear here."
+        },
+        "labels": {
+          "source": "Source",
+          "settings": "Settings",
+          "mode": "Watermark mode",
+          "region": "Applied region",
+          "behavior": "Behavior",
+          "output": "Output",
+          "scope": "Scope",
+          "original": "Original",
+          "cleaned": "Cleaned"
+        },
+        "modes": {
+          "auto": "Auto",
+          "small": "48 × 48",
+          "large": "96 × 96"
+        },
+        "stats": {
+          "original": "Original",
+          "dimensions": "Dimensions",
+          "mask": "Mask",
+          "output": "Output",
+          "empty": "—"
+        },
+        "status": {
+          "processing": "Applying reverse alpha blending...",
+          "pending": "Output is out of date.",
+          "localOnly": "Runs locally in your browser."
+        },
+        "notes": {
+          "reverseBlend": "Only reverse alpha blending. No inpaint or denoise.",
+          "png": "Exports PNG by default to avoid another lossy save.",
+          "visibleOnly": "Only removes Gemini's visible watermark, not SynthID."
+        }
+      }
+    },
     "base64": {
       "title": "Base64",
       "description": "Encode or decode instantly.",
