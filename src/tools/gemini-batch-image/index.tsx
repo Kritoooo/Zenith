@@ -440,7 +440,9 @@ export default function GeminiBatchImageTool() {
     const storedSuffix = window.localStorage.getItem(SUFFIX_STORAGE);
     if (storedSuffix) setSuffix(storedSuffix);
     const storedModel = window.localStorage.getItem(MODEL_STORAGE);
-    if (storedModel) setModel(storedModel);
+    if (storedModel && (AVAILABLE_MODELS as readonly string[]).includes(storedModel)) {
+      setModel(storedModel);
+    }
     const storedConcurrency = window.localStorage.getItem(CONCURRENCY_STORAGE);
     const parsed = storedConcurrency ? Number.parseInt(storedConcurrency, 10) : NaN;
     if (Number.isFinite(parsed) && CONCURRENCY_OPTIONS.includes(parsed as (typeof CONCURRENCY_OPTIONS)[number])) {

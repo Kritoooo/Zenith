@@ -3,8 +3,8 @@ import { ApiError, GoogleGenAI } from "@google/genai";
 export const SUPPORTED_INPUT_MIMES = ["image/jpeg", "image/png", "image/webp"] as const;
 export type SupportedInputMime = (typeof SUPPORTED_INPUT_MIMES)[number];
 
-export const DEFAULT_MODEL = "gemini-2.5-flash-image";
-export const AVAILABLE_MODELS = ["gemini-2.5-flash-image"] as const;
+export const AVAILABLE_MODELS = ["nano-banana-pro", "nano-banana-2"] as const;
+export const DEFAULT_MODEL: (typeof AVAILABLE_MODELS)[number] = "nano-banana-pro";
 
 export const GEMINI_ERROR_CODES = [
   "MISSING_API_KEY",
