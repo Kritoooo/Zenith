@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent, DragEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 
 import { Select } from "@/components/Select";
@@ -97,6 +97,13 @@ type WorkerMessage =
   | WorkerErrorMessage;
 
 const MODEL_URL = "https://huggingface.co/monkt/paddleocr-onnx";
+
+const subscribeToWebgpuAvailability = () => () => {};
+
+const getWebgpuAvailability = () =>
+  Boolean((navigator as Navigator & { gpu?: unknown }).gpu);
+
+const getServerWebgpuAvailability = () => null;
 
 const DETECTION_MODELS: Record<
   DetectionVersion,
@@ -299,7 +306,15 @@ export default function PaddleOcrTool() {
   const [lowConfidenceThreshold, setLowConfidenceThreshold] = useState(
     DEFAULT_LOW_CONFIDENCE_THRESHOLD
   );
-  const [webgpuAvailable, setWebgpuAvailable] = useState<boolean | null>(null);
+  const detectedWebgpuAvailable = useSyncExternalStore(
+    subscribeToWebgpuAvailability,
+    getWebgpuAvailability,
+    getServerWebgpuAvailability
+  );
+  const [workerWebgpuAvailable, setWorkerWebgpuAvailable] = useState<boolean | null>(
+    null
+  );
+  const webgpuAvailable = workerWebgpuAvailable ?? detectedWebgpuAvailable;
   const [hasWorker, setHasWorker] = useState(false);
   const { copied, copy, reset } = useClipboard({
     onError: (err) =>
@@ -351,10 +366,6 @@ export default function PaddleOcrTool() {
     }),
     [detectionModel.path, selectedLanguage.dictPath, selectedLanguage.recPath]
   );
-
-  useEffect(() => {
-    setWebgpuAvailable(Boolean((navigator as Navigator & { gpu?: unknown })?.gpu));
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -459,7 +470,7 @@ export default function PaddleOcrTool() {
           return;
         }
         if (data.type === "diagnostics") {
-          setWebgpuAvailable(data.webgpuAvailable);
+          setWorkerWebgpuAvailable(data.webgpuAvailable);
           return;
         }
         if (data.type === "result") {

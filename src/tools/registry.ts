@@ -21,6 +21,7 @@ import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
 import { meta as addressGeneratorMeta } from "@/tools/address-generator/meta";
 import { meta as paddleOcrMeta } from "@/tools/paddleocr-onnx/meta";
 import { meta as promptManagerMeta } from "@/tools/prompt-manager/meta";
+import { meta as tTradeCalculatorMeta } from "@/tools/t-trade-calculator/meta";
 
 // 动态导入工具组件，实现代码分割
 // 每个工具会被打包成独立的 chunk，只在访问时加载
@@ -43,6 +44,7 @@ const UuidTool = dynamic(() => import("@/tools/uuid"));
 const LocalTimeTool = dynamic(() => import("@/tools/local-time"));
 const AddressGeneratorTool = dynamic(() => import("@/tools/address-generator"));
 const PromptManagerTool = dynamic(() => import("@/tools/prompt-manager"));
+const TTradeCalculatorTool = dynamic(() => import("@/tools/t-trade-calculator"));
 
 export const tools: ToolRegistration[] = [
   { meta: jsonFormatterMeta, component: JsonFormatterTool },
@@ -64,6 +66,7 @@ export const tools: ToolRegistration[] = [
   { meta: localTimeMeta, component: LocalTimeTool },
   { meta: addressGeneratorMeta, component: AddressGeneratorTool },
   { meta: promptManagerMeta, component: PromptManagerTool },
+  { meta: tTradeCalculatorMeta, component: TTradeCalculatorTool },
 ];
 
 export const toolIndex = tools.reduce(

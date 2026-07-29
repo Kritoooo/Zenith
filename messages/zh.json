@@ -1505,6 +1505,74 @@
           "prompt": "你是一位资深产品分析师。\n\n上下文：\n- 产品：{{product_name}}\n- 受众：{{audience}}\n- 目标：{{goal}}\n\n请给出：\n1) 一段简明总结。\n2) 3 条可执行建议。\n3) 潜在风险与应对方式。"
         }
       }
+    },
+    "t-trade-calculator": {
+      "title": "做 T 计算器",
+      "description": "计算 A 股日内做 T 的保本价与目标买回价。",
+      "highlights": [
+        "A股费率",
+        "保本价",
+        "目标买回价"
+      ],
+      "ui": {
+        "actions": {
+          "reset": "恢复默认",
+          "copy": "复制结果",
+          "modeRate": "收益率",
+          "modeAmount": "金额"
+        },
+        "labels": {
+          "sellSection": "卖出信息",
+          "shares": "卖出份额",
+          "sellPrice": "卖出价格",
+          "lots": "≈ {count} 手",
+          "feeSection": "费率设置",
+          "commissionRate": "佣金费率",
+          "commissionMin": "最低佣金",
+          "stampDuty": "印花税（卖出）",
+          "transferFee": "过户费（双向）",
+          "tickSize": "最小价格变动",
+          "bps": "≈ 万分之 {value}",
+          "summary": "卖出结果",
+          "grossAmount": "卖出金额",
+          "totalFee": "手续费合计",
+          "netProceeds": "卖出净收入",
+          "breakEvenPrice": "保本买回价",
+          "commission": "佣金",
+          "stampDutyShort": "印花税",
+          "transferFeeShort": "过户费",
+          "targets": "买回目标价",
+          "target": "目标",
+          "buyPrice": "买回价",
+          "drop": "需跌幅",
+          "buyCost": "买回成本",
+          "profit": "净盈亏",
+          "profitRate": "实际收益率",
+          "breakEven": "保本",
+          "custom": "自定义",
+          "basisNote": "先卖后买（正 T）；收益率 = 净盈亏 ÷ 卖出金额。",
+          "roundingNote": "买回价已按最小价格变动向下取整，实际盈亏不低于目标；小字为精确解。"
+        },
+        "units": {
+          "currency": "元",
+          "shares": "股"
+        },
+        "status": {
+          "ready": "就绪。",
+          "copied": "已复制到剪贴板。",
+          "needInput": "请输入卖出份额与卖出价格。",
+          "fixInput": "请修正标红的输入项。"
+        },
+        "errors": {
+          "invalidNumber": "请输入有效数字。",
+          "nonNegative": "请输入大于或等于 0 的数值。",
+          "positive": "请输入大于 0 的数值。",
+          "sharesPositive": "卖出份额必须大于 0。",
+          "sharesInteger": "卖出份额必须是整数。",
+          "sharesLot": "首版仅支持 100 股整数倍的卖出份额。",
+          "clipboard": "复制失败。"
+        }
+      }
     }
   }
 }

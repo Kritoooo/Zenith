@@ -19,6 +19,7 @@ import { meta as aigcDetectorMeta } from "@/tools/aigc-detector/meta";
 import { meta as addressGeneratorMeta } from "@/tools/address-generator/meta";
 import { meta as paddleOcrMeta } from "@/tools/paddleocr-onnx/meta";
 import { meta as promptManagerMeta } from "@/tools/prompt-manager/meta";
+import { meta as tTradeCalculatorMeta } from "@/tools/t-trade-calculator/meta";
 
 export const toolMetas: ToolMeta[] = [
   jsonFormatterMeta,
@@ -40,6 +41,7 @@ export const toolMetas: ToolMeta[] = [
   localTimeMeta,
   addressGeneratorMeta,
   promptManagerMeta,
+  tTradeCalculatorMeta,
 ];
 
 export const toolMetaIndex = toolMetas.reduce(

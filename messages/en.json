@@ -1505,6 +1505,74 @@
           "prompt": "You are a senior product analyst.\n\nContext:\n- Product: {{product_name}}\n- Audience: {{audience}}\n- Goal: {{goal}}\n\nPlease provide:\n1) A concise summary.\n2) 3 actionable recommendations.\n3) Potential risks and mitigations."
         }
       }
+    },
+    "t-trade-calculator": {
+      "title": "T Trade Calculator",
+      "description": "Break-even and target buy-back prices for intraday T trades.",
+      "highlights": [
+        "A-share fees",
+        "Break-even",
+        "Target price"
+      ],
+      "ui": {
+        "actions": {
+          "reset": "Reset",
+          "copy": "Copy result",
+          "modeRate": "Return",
+          "modeAmount": "Amount"
+        },
+        "labels": {
+          "sellSection": "Sell side",
+          "shares": "Shares sold",
+          "sellPrice": "Sell price",
+          "lots": "≈ {count} lots",
+          "feeSection": "Fees",
+          "commissionRate": "Commission rate",
+          "commissionMin": "Minimum commission",
+          "stampDuty": "Stamp duty (sell)",
+          "transferFee": "Transfer fee (both sides)",
+          "tickSize": "Price tick",
+          "bps": "≈ {value} bps",
+          "summary": "Sell result",
+          "grossAmount": "Sell amount",
+          "totalFee": "Total fees",
+          "netProceeds": "Net proceeds",
+          "breakEvenPrice": "Break-even price",
+          "commission": "Commission",
+          "stampDutyShort": "Stamp duty",
+          "transferFeeShort": "Transfer fee",
+          "targets": "Buy-back targets",
+          "target": "Target",
+          "buyPrice": "Buy-back",
+          "drop": "Drop needed",
+          "buyCost": "Buy cost",
+          "profit": "Net P&L",
+          "profitRate": "Actual return",
+          "breakEven": "Break-even",
+          "custom": "Custom",
+          "basisNote": "Sell first, buy back later; return = net P&L ÷ sell amount.",
+          "roundingNote": "Buy-back prices are rounded down to the price tick, so the realised P&L meets or beats the target. Small text shows the exact solution."
+        },
+        "units": {
+          "currency": "CNY",
+          "shares": "sh"
+        },
+        "status": {
+          "ready": "Ready.",
+          "copied": "Copied to clipboard.",
+          "needInput": "Enter the shares sold and the sell price.",
+          "fixInput": "Fix the highlighted inputs."
+        },
+        "errors": {
+          "invalidNumber": "Enter a valid number.",
+          "nonNegative": "Enter a value of 0 or greater.",
+          "positive": "Enter a value greater than 0.",
+          "sharesPositive": "Shares sold must be greater than 0.",
+          "sharesInteger": "Shares sold must be a whole number.",
+          "sharesLot": "Shares sold must be a multiple of 100.",
+          "clipboard": "Failed to copy."
+        }
+      }
     }
   }
 }
