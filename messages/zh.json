@@ -1508,23 +1508,28 @@
     },
     "t-trade-calculator": {
       "title": "做 T 计算器",
-      "description": "计算 A 股日内做 T 的保本价与目标买回价。",
+      "description": "计算 A 股先卖后买与先买后卖的保本价和目标价。",
       "highlights": [
-        "A股费率",
-        "保本价",
-        "目标买回价"
+        "双向做 T",
+        "A 股费率",
+        "目标价格"
       ],
       "ui": {
         "actions": {
           "reset": "恢复默认",
           "copy": "复制结果",
           "modeRate": "收益率",
-          "modeAmount": "金额"
+          "modeAmount": "金额",
+          "sellFirst": "先卖后买",
+          "buyFirst": "先买后卖"
         },
         "labels": {
-          "sellSection": "卖出信息",
-          "shares": "卖出份额",
+          "direction": "交易顺序",
+          "sellSection": "首笔卖出",
+          "buySection": "首笔买入",
+          "shares": "交易份额",
           "sellPrice": "卖出价格",
+          "buyPrice": "买入价格",
           "lots": "≈ {count} 手",
           "feeSection": "费率设置",
           "commissionRate": "佣金费率",
@@ -1533,25 +1538,35 @@
           "transferFee": "过户费（双向）",
           "tickSize": "最小价格变动",
           "bps": "≈ 万分之 {value}",
-          "summary": "卖出结果",
-          "grossAmount": "卖出金额",
+          "sellSummary": "首笔卖出结果",
+          "buySummary": "首笔买入结果",
+          "sellAmount": "卖出金额",
+          "buyAmount": "买入金额",
           "totalFee": "手续费合计",
           "netProceeds": "卖出净收入",
-          "breakEvenPrice": "保本买回价",
+          "totalCost": "买入总成本",
+          "breakEvenBuyPrice": "保本买回价",
+          "breakEvenSellPrice": "保本卖出价",
           "commission": "佣金",
           "stampDutyShort": "印花税",
           "transferFeeShort": "过户费",
-          "targets": "买回目标价",
+          "buyTargets": "目标买回价",
+          "sellTargets": "目标卖出价",
           "target": "目标",
-          "buyPrice": "买回价",
+          "targetBuyPrice": "买回价",
+          "targetSellPrice": "卖出价",
           "drop": "需跌幅",
+          "rise": "需涨幅",
           "buyCost": "买回成本",
+          "sellNetProceeds": "卖出净收入",
           "profit": "净盈亏",
           "profitRate": "实际收益率",
           "breakEven": "保本",
           "custom": "自定义",
-          "basisNote": "先卖后买（正 T）；收益率 = 净盈亏 ÷ 卖出金额。",
-          "roundingNote": "买回价已按最小价格变动向下取整，实际盈亏不低于目标；小字为精确解。"
+          "basisSellFirst": "收益率 = 净盈亏 ÷ 首笔卖出金额。",
+          "basisBuyFirst": "收益率 = 净盈亏 ÷ 首笔买入金额。",
+          "roundingSellFirst": "买回价已按最小价格变动向下取整，实际盈亏不低于目标；小字为精确解。",
+          "roundingBuyFirst": "卖出价已按最小价格变动向上取整，实际盈亏不低于目标；小字为精确解。"
         },
         "units": {
           "currency": "元",
@@ -1560,16 +1575,16 @@
         "status": {
           "ready": "就绪。",
           "copied": "已复制到剪贴板。",
-          "needInput": "请输入卖出份额与卖出价格。",
+          "needInput": "请输入交易份额与首笔成交价格。",
           "fixInput": "请修正标红的输入项。"
         },
         "errors": {
           "invalidNumber": "请输入有效数字。",
           "nonNegative": "请输入大于或等于 0 的数值。",
           "positive": "请输入大于 0 的数值。",
-          "sharesPositive": "卖出份额必须大于 0。",
-          "sharesInteger": "卖出份额必须是整数。",
-          "sharesLot": "首版仅支持 100 股整数倍的卖出份额。",
+          "sharesPositive": "交易份额必须大于 0。",
+          "sharesInteger": "交易份额必须是整数。",
+          "sharesLot": "仅支持 100 股整数倍的交易份额。",
           "clipboard": "复制失败。"
         }
       }

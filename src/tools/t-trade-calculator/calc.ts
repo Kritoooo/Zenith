@@ -1,8 +1,10 @@
 /**
- * Intraday "T trade" math: sell part of an existing position first, then buy the
- * same amount back later in the day. Everything here is pure and unit-agnostic —
- * rates are decimals (0.00025 means 0.025%).
+ * Intraday "T trade" math for both trade sequences: sell then buy, or buy then
+ * sell. Everything here is pure and unit-agnostic — rates are decimals
+ * (0.00025 means 0.025%).
  */
+
+export type TradeDirection = "sell-first" | "buy-first";
 
 export type FeeConfig = {
   /** Broker commission, charged on both sides. */
@@ -45,22 +47,34 @@ export type BuyBreakdown = {
   total: number;
 };
 
-export type TargetOutcome = {
+type TargetOutcomeBase = {
   key: string;
   /** Profit the target asked for, in currency units. */
   targetProfit: number;
-  /** Buy-back price that hits the target exactly. */
+  /** Second-leg price that hits the target exactly. */
   exactPrice: number;
-  /** `exactPrice` rounded down to a placeable tick, so profit is never short. */
+  /** `exactPrice` rounded toward the profitable side to a placeable tick. */
   price: number;
   reachable: boolean;
-  buy: BuyBreakdown;
   /** Profit realised at `price`, not at `exactPrice`. */
   profit: number;
   profitRate: number;
-  drop: number;
-  dropRate: number;
+  /** Required price move in the profitable direction, always positive. */
+  move: number;
+  moveRate: number;
 };
+
+export type SellFirstTargetOutcome = TargetOutcomeBase & {
+  direction: "sell-first";
+  buy: BuyBreakdown;
+};
+
+export type BuyFirstTargetOutcome = TargetOutcomeBase & {
+  direction: "buy-first";
+  sell: SellBreakdown;
+};
+
+export type TargetOutcome = SellFirstTargetOutcome | BuyFirstTargetOutcome;
 
 const commissionFor = (amount: number, fees: FeeConfig) =>
   amount <= 0 ? 0 : Math.max(amount * fees.commissionRate, fees.commissionMin);
@@ -118,6 +132,41 @@ export function solveBuyPrice(
   return (targetCost - fees.commissionMin) / (shares * (1 + fees.transferFeeRate));
 }
 
+/**
+ * Invert `computeSell`: find the price whose net sell proceeds equal `targetNet`.
+ *
+ * Net proceeds are piecewise linear because commission changes from a flat
+ * minimum to a rate. A valid candidate must also fall inside its branch.
+ */
+export function solveSellPrice(
+  targetNet: number,
+  shares: number,
+  fees: FeeConfig
+): number {
+  if (shares <= 0 || !Number.isFinite(targetNet)) return Number.NaN;
+
+  const nonCommissionFactor = 1 - fees.stampDutyRate - fees.transferFeeRate;
+  if (!(nonCommissionFactor > 0)) return Number.NaN;
+
+  if (fees.commissionRate > 0) {
+    const threshold = fees.commissionMin / (shares * fees.commissionRate);
+    const rateFactor = nonCommissionFactor - fees.commissionRate;
+
+    if (rateFactor > 0) {
+      const rateBranch = targetNet / (shares * rateFactor);
+      if (rateBranch >= threshold) return rateBranch;
+    }
+
+    const minimumBranch =
+      (targetNet + fees.commissionMin) / (shares * nonCommissionFactor);
+    if (minimumBranch <= threshold) return minimumBranch;
+
+    return Number.NaN;
+  }
+
+  return (targetNet + fees.commissionMin) / (shares * nonCommissionFactor);
+}
+
 /** Round down to a placeable price so the realised profit meets or beats the target. */
 export function floorToTick(price: number, tick: number): number {
   if (!Number.isFinite(price)) return price;
@@ -125,14 +174,21 @@ export function floorToTick(price: number, tick: number): number {
   return Math.floor(price / tick + 1e-9) * tick;
 }
 
-export function evaluateTarget(
+/** Round up to a placeable price so the realised profit meets or beats the target. */
+export function ceilToTick(price: number, tick: number): number {
+  if (!Number.isFinite(price)) return price;
+  if (!(tick > 0)) return price;
+  return Math.ceil(price / tick - 1e-9) * tick;
+}
+
+export function evaluateSellFirstTarget(
   key: string,
   targetProfit: number,
   shares: number,
   sellPrice: number,
   sell: SellBreakdown,
   fees: FeeConfig
-): TargetOutcome {
+): SellFirstTargetOutcome {
   const exactPrice = solveBuyPrice(sell.net - targetProfit, shares, fees);
   const price = floorToTick(exactPrice, fees.tickSize);
   const reachable = Number.isFinite(price) && price > 0;
@@ -140,6 +196,7 @@ export function evaluateTarget(
   const profit = reachable ? sell.net - buy.total : Number.NaN;
 
   return {
+    direction: "sell-first",
     key,
     targetProfit,
     exactPrice,
@@ -148,8 +205,39 @@ export function evaluateTarget(
     buy,
     profit,
     profitRate: reachable && sell.gross > 0 ? profit / sell.gross : Number.NaN,
-    drop: reachable ? sellPrice - price : Number.NaN,
-    dropRate: reachable && sellPrice > 0 ? (sellPrice - price) / sellPrice : Number.NaN,
+    move: reachable ? sellPrice - price : Number.NaN,
+    moveRate:
+      reachable && sellPrice > 0 ? (sellPrice - price) / sellPrice : Number.NaN,
+  };
+}
+
+export function evaluateBuyFirstTarget(
+  key: string,
+  targetProfit: number,
+  shares: number,
+  buyPrice: number,
+  buy: BuyBreakdown,
+  fees: FeeConfig
+): BuyFirstTargetOutcome {
+  const exactPrice = solveSellPrice(buy.total + targetProfit, shares, fees);
+  const price = ceilToTick(exactPrice, fees.tickSize);
+  const reachable = Number.isFinite(price) && price > 0;
+  const sell = computeSell(shares, reachable ? price : 0, fees);
+  const profit = reachable ? sell.net - buy.total : Number.NaN;
+
+  return {
+    direction: "buy-first",
+    key,
+    targetProfit,
+    exactPrice,
+    price,
+    reachable,
+    sell,
+    profit,
+    profitRate: reachable && buy.gross > 0 ? profit / buy.gross : Number.NaN,
+    move: reachable ? price - buyPrice : Number.NaN,
+    moveRate:
+      reachable && buyPrice > 0 ? (price - buyPrice) / buyPrice : Number.NaN,
   };
 }
 

@@ -1508,10 +1508,10 @@
     },
     "t-trade-calculator": {
       "title": "T Trade Calculator",
-      "description": "Break-even and target buy-back prices for intraday T trades.",
+      "description": "Break-even and target prices for both intraday T-trade sequences.",
       "highlights": [
+        "Both sequences",
         "A-share fees",
-        "Break-even",
         "Target price"
       ],
       "ui": {
@@ -1519,12 +1519,17 @@
           "reset": "Reset",
           "copy": "Copy result",
           "modeRate": "Return",
-          "modeAmount": "Amount"
+          "modeAmount": "Amount",
+          "sellFirst": "Sell then buy",
+          "buyFirst": "Buy then sell"
         },
         "labels": {
-          "sellSection": "Sell side",
-          "shares": "Shares sold",
+          "direction": "Trade sequence",
+          "sellSection": "First-leg sell",
+          "buySection": "First-leg buy",
+          "shares": "Shares traded",
           "sellPrice": "Sell price",
+          "buyPrice": "Buy price",
           "lots": "≈ {count} lots",
           "feeSection": "Fees",
           "commissionRate": "Commission rate",
@@ -1533,25 +1538,35 @@
           "transferFee": "Transfer fee (both sides)",
           "tickSize": "Price tick",
           "bps": "≈ {value} bps",
-          "summary": "Sell result",
-          "grossAmount": "Sell amount",
+          "sellSummary": "First-leg sell result",
+          "buySummary": "First-leg buy result",
+          "sellAmount": "Sell amount",
+          "buyAmount": "Buy amount",
           "totalFee": "Total fees",
           "netProceeds": "Net proceeds",
-          "breakEvenPrice": "Break-even price",
+          "totalCost": "Total buy cost",
+          "breakEvenBuyPrice": "Break-even buy-back",
+          "breakEvenSellPrice": "Break-even sell price",
           "commission": "Commission",
           "stampDutyShort": "Stamp duty",
           "transferFeeShort": "Transfer fee",
-          "targets": "Buy-back targets",
+          "buyTargets": "Target buy-back prices",
+          "sellTargets": "Target sell prices",
           "target": "Target",
-          "buyPrice": "Buy-back",
+          "targetBuyPrice": "Buy-back",
+          "targetSellPrice": "Sell price",
           "drop": "Drop needed",
+          "rise": "Rise needed",
           "buyCost": "Buy cost",
+          "sellNetProceeds": "Net sell proceeds",
           "profit": "Net P&L",
           "profitRate": "Actual return",
           "breakEven": "Break-even",
           "custom": "Custom",
-          "basisNote": "Sell first, buy back later; return = net P&L ÷ sell amount.",
-          "roundingNote": "Buy-back prices are rounded down to the price tick, so the realised P&L meets or beats the target. Small text shows the exact solution."
+          "basisSellFirst": "Return = net P&L ÷ first-leg sell amount.",
+          "basisBuyFirst": "Return = net P&L ÷ first-leg buy amount.",
+          "roundingSellFirst": "Buy-back prices are rounded down to the price tick, so realised P&L meets or beats the target. Small text shows the exact solution.",
+          "roundingBuyFirst": "Sell prices are rounded up to the price tick, so realised P&L meets or beats the target. Small text shows the exact solution."
         },
         "units": {
           "currency": "CNY",
@@ -1560,16 +1575,16 @@
         "status": {
           "ready": "Ready.",
           "copied": "Copied to clipboard.",
-          "needInput": "Enter the shares sold and the sell price.",
+          "needInput": "Enter the shares traded and the first-leg price.",
           "fixInput": "Fix the highlighted inputs."
         },
         "errors": {
           "invalidNumber": "Enter a valid number.",
           "nonNegative": "Enter a value of 0 or greater.",
           "positive": "Enter a value greater than 0.",
-          "sharesPositive": "Shares sold must be greater than 0.",
-          "sharesInteger": "Shares sold must be a whole number.",
-          "sharesLot": "Shares sold must be a multiple of 100.",
+          "sharesPositive": "Shares traded must be greater than 0.",
+          "sharesInteger": "Shares traded must be a whole number.",
+          "sharesLot": "Shares traded must be a multiple of 100.",
           "clipboard": "Failed to copy."
         }
       }

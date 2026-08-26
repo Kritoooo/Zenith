@@ -10,16 +10,19 @@ import { cn } from "@/lib/cn";
 import { useClipboard } from "@/lib/useClipboard";
 import {
   A_SHARE_FEES,
+  computeBuy,
   computeSell,
   decimalsForTick,
-  evaluateTarget,
+  evaluateBuyFirstTarget,
+  evaluateSellFirstTarget,
   type FeeConfig,
   type TargetOutcome,
+  type TradeDirection,
 } from "./calc";
 
 const STORAGE_KEY = "zenith.t-trade-calculator.fees";
 
-/** Preset expected returns, measured against the sell amount. */
+/** Preset expected returns, measured against the first-leg gross amount. */
 const PRESET_RATES = [0, 0.003, 0.005, 0.01, 0.015, 0.02, 0.03];
 
 const LOT_SIZE = 100;
@@ -182,8 +185,9 @@ function Stat({
 
 export default function TTradeCalculatorTool() {
   const t = useTranslations("tools.t-trade-calculator.ui");
+  const [direction, setDirection] = useState<TradeDirection>("sell-first");
   const [sharesInput, setSharesInput] = useState("1000");
-  const [priceInput, setPriceInput] = useState("10.00");
+  const [firstPriceInput, setFirstPriceInput] = useState("10.00");
   const [feeInputs, setFeeInputs] = useState<FeeInputs>(DEFAULT_FEE_INPUTS);
   const [customMode, setCustomMode] = useState<CustomMode>("rate");
   const [customValue, setCustomValue] = useState("0.8");
@@ -204,7 +208,7 @@ export default function TTradeCalculatorTool() {
           : parsedShares % LOT_SIZE !== 0
             ? t("errors.sharesLot")
             : undefined;
-  const sellPriceValidation = validateDecimal(priceInput, "positive");
+  const firstPriceValidation = validateDecimal(firstPriceInput, "positive");
 
   const feeValidations = {
     commissionRate: validateDecimal(feeInputs.commissionRate, "nonNegative"),
@@ -234,12 +238,12 @@ export default function TTradeCalculatorTool() {
   const customError = customValidation.issue
     ? t(`errors.${customValidation.issue}`)
     : undefined;
-  const sellPriceError = sellPriceValidation.issue
-    ? t(`errors.${sellPriceValidation.issue}`)
+  const firstPriceError = firstPriceValidation.issue
+    ? t(`errors.${firstPriceValidation.issue}`)
     : undefined;
   const coreInputErrors = [
     sharesError,
-    sellPriceError,
+    firstPriceError,
     ...Object.values(feeErrors),
   ];
   const hasCoreInputError = coreInputErrors.some(Boolean);
@@ -294,40 +298,88 @@ export default function TTradeCalculatorTool() {
   );
 
   const shares = parsedShares ?? 0;
-  const sellPrice = sellPriceValidation.value ?? 0;
-  const isReady = !hasCoreInputError && shares > 0 && sellPrice > 0;
+  const firstPrice = firstPriceValidation.value ?? 0;
+  const isReady = !hasCoreInputError && shares > 0 && firstPrice > 0;
   const priceDecimals = decimalsForTick(fees.tickSize);
 
-  const sell = useMemo(
-    () => computeSell(shares, sellPrice, fees),
-    [fees, sellPrice, shares]
+  const firstTrade = useMemo(
+    () =>
+      direction === "sell-first"
+        ? { side: "sell" as const, breakdown: computeSell(shares, firstPrice, fees) }
+        : { side: "buy" as const, breakdown: computeBuy(shares, firstPrice, fees) },
+    [direction, fees, firstPrice, shares]
   );
+  const firstGross = firstTrade.breakdown.gross;
+  const firstCashAmount =
+    firstTrade.side === "sell" ? firstTrade.breakdown.net : firstTrade.breakdown.total;
 
   const customProfit = useMemo(() => {
     const raw = customValidation.value;
     if (raw === null || customError) return null;
-    return customMode === "rate" ? (sell.gross * raw) / 100 : raw;
-  }, [customError, customMode, customValidation.value, sell.gross]);
+    return customMode === "rate" ? (firstGross * raw) / 100 : raw;
+  }, [customError, customMode, customValidation.value, firstGross]);
 
   const rows = useMemo(() => {
+    const evaluate = (key: string, targetProfit: number) =>
+      firstTrade.side === "sell"
+        ? evaluateSellFirstTarget(
+            key,
+            targetProfit,
+            shares,
+            firstPrice,
+            firstTrade.breakdown,
+            fees
+          )
+        : evaluateBuyFirstTarget(
+            key,
+            targetProfit,
+            shares,
+            firstPrice,
+            firstTrade.breakdown,
+            fees
+          );
     const presets = PRESET_RATES.map((rate) =>
-      evaluateTarget(
-        rate === 0 ? "breakEven" : `rate-${rate}`,
-        sell.gross * rate,
-        shares,
-        sellPrice,
-        sell,
-        fees
-      )
+      evaluate(rate === 0 ? "breakEven" : `rate-${rate}`, firstGross * rate)
     );
     if (customProfit === null) return presets;
-    return [
-      ...presets,
-      evaluateTarget("custom", customProfit, shares, sellPrice, sell, fees),
-    ];
-  }, [customProfit, fees, sell, sellPrice, shares]);
+    return [...presets, evaluate("custom", customProfit)];
+  }, [customProfit, fees, firstGross, firstPrice, firstTrade, shares]);
 
   const breakEven = rows[0];
+  const sellFirst = direction === "sell-first";
+  const directionLabel = t(sellFirst ? "actions.sellFirst" : "actions.buyFirst");
+  const firstSectionLabel = t(
+    sellFirst ? "labels.sellSection" : "labels.buySection"
+  );
+  const firstPriceLabel = t(sellFirst ? "labels.sellPrice" : "labels.buyPrice");
+  const firstAmountLabel = t(
+    sellFirst ? "labels.sellAmount" : "labels.buyAmount"
+  );
+  const firstCashLabel = t(
+    sellFirst ? "labels.netProceeds" : "labels.totalCost"
+  );
+  const summaryLabel = t(
+    sellFirst ? "labels.sellSummary" : "labels.buySummary"
+  );
+  const breakEvenLabel = t(
+    sellFirst ? "labels.breakEvenBuyPrice" : "labels.breakEvenSellPrice"
+  );
+  const targetsLabel = t(
+    sellFirst ? "labels.buyTargets" : "labels.sellTargets"
+  );
+  const targetPriceLabel = t(
+    sellFirst ? "labels.targetBuyPrice" : "labels.targetSellPrice"
+  );
+  const moveLabel = t(sellFirst ? "labels.drop" : "labels.rise");
+  const secondCashLabel = t(
+    sellFirst ? "labels.buyCost" : "labels.sellNetProceeds"
+  );
+  const basisNote = t(
+    sellFirst ? "labels.basisSellFirst" : "labels.basisBuyFirst"
+  );
+  const roundingNote = t(
+    sellFirst ? "labels.roundingSellFirst" : "labels.roundingBuyFirst"
+  );
 
   const rowLabel = (row: TargetOutcome, index: number) => {
     if (row.key === "custom") {
@@ -352,8 +404,13 @@ export default function TTradeCalculatorTool() {
     setError(null);
   };
 
-  const updatePrice = (value: string) => {
-    setPriceInput(value);
+  const updateFirstPrice = (value: string) => {
+    setFirstPriceInput(value);
+    setError(null);
+  };
+
+  const updateDirection = (value: TradeDirection) => {
+    setDirection(value);
     setError(null);
   };
 
@@ -374,18 +431,19 @@ export default function TTradeCalculatorTool() {
     }
     setError(null);
     const header = [
+      `${t("labels.direction")}: ${directionLabel}`,
       `${t("labels.shares")}: ${shares}`,
-      `${t("labels.sellPrice")}: ${formatPrice(sellPrice, priceDecimals)}`,
-      `${t("labels.grossAmount")}: ${formatMoney(sell.gross)}`,
-      `${t("labels.totalFee")}: ${formatMoney(sell.totalFee)}`,
-      `${t("labels.netProceeds")}: ${formatMoney(sell.net)}`,
+      `${firstPriceLabel}: ${formatPrice(firstPrice, priceDecimals)}`,
+      `${firstAmountLabel}: ${formatMoney(firstGross)}`,
+      `${t("labels.totalFee")}: ${formatMoney(firstTrade.breakdown.totalFee)}`,
+      `${firstCashLabel}: ${formatMoney(firstCashAmount)}`,
     ].join("\n");
     const table = rows
       .map((row, index) =>
         [
           rowLabel(row, index),
-          `${t("labels.buyPrice")} ${formatPrice(row.price, priceDecimals)}`,
-          `${t("labels.drop")} ${formatPercent(row.dropRate)}`,
+          `${targetPriceLabel} ${formatPrice(row.price, priceDecimals)}`,
+          `${moveLabel} ${formatPercent(row.moveRate)}`,
           `${t("labels.profit")} ${formatSigned(row.profit)}`,
         ].join(" | ")
       )
@@ -406,9 +464,36 @@ export default function TTradeCalculatorTool() {
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-[color:var(--text-secondary)]">
-          {t("labels.basisNote")}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-[color:var(--text-secondary)]">
+            {t("labels.direction")}
+          </span>
+          <div
+            className="flex items-center gap-1"
+            role="group"
+            aria-label={t("labels.direction")}
+          >
+            <Button
+              size="sm"
+              variant={sellFirst ? "primary" : "secondary"}
+              aria-pressed={sellFirst}
+              onClick={() => updateDirection("sell-first")}
+            >
+              {t("actions.sellFirst")}
+            </Button>
+            <Button
+              size="sm"
+              variant={sellFirst ? "secondary" : "primary"}
+              aria-pressed={!sellFirst}
+              onClick={() => updateDirection("buy-first")}
+            >
+              {t("actions.buyFirst")}
+            </Button>
+          </div>
+          <span className="text-xs text-[color:var(--text-secondary)]">
+            {basisNote}
+          </span>
+        </div>
         <p
           className={cn(
             "text-xs",
@@ -424,7 +509,7 @@ export default function TTradeCalculatorTool() {
 
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <div className="flex w-full flex-col gap-4 lg:max-w-[300px]">
-          <ToolPanel title={t("labels.sellSection")} className="flex-none">
+          <ToolPanel title={firstSectionLabel} className="flex-none">
             <div className="mt-3 flex flex-col gap-3">
               <Field
                 label={t("labels.shares")}
@@ -443,10 +528,10 @@ export default function TTradeCalculatorTool() {
                 }
               />
               <Field
-                label={t("labels.sellPrice")}
-                value={priceInput}
-                onChange={updatePrice}
-                error={sellPriceError}
+                label={firstPriceLabel}
+                value={firstPriceInput}
+                onChange={updateFirstPrice}
+                error={firstPriceError}
                 suffix={t("units.currency")}
                 placeholder="10.00"
               />
@@ -517,22 +602,22 @@ export default function TTradeCalculatorTool() {
         </div>
 
         <div className="flex flex-1 flex-col gap-4">
-          <ToolPanel title={t("labels.summary")} className="flex-none">
+          <ToolPanel title={summaryLabel} className="flex-none">
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Stat
-                label={t("labels.grossAmount")}
-                value={isReady ? formatMoney(sell.gross) : "—"}
+                label={firstAmountLabel}
+                value={isReady ? formatMoney(firstGross) : "—"}
               />
               <Stat
                 label={t("labels.totalFee")}
-                value={isReady ? formatMoney(sell.totalFee) : "—"}
+                value={isReady ? formatMoney(firstTrade.breakdown.totalFee) : "—"}
               />
               <Stat
-                label={t("labels.netProceeds")}
-                value={isReady ? formatMoney(sell.net) : "—"}
+                label={firstCashLabel}
+                value={isReady ? formatMoney(firstCashAmount) : "—"}
               />
               <Stat
-                label={t("labels.breakEvenPrice")}
+                label={breakEvenLabel}
                 value={
                   isReady && breakEven?.reachable
                     ? formatPrice(breakEven.price, priceDecimals)
@@ -543,20 +628,24 @@ export default function TTradeCalculatorTool() {
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-[color:var(--text-secondary)]">
               <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1">
-                {t("labels.commission")} {isReady ? formatMoney(sell.commission) : "—"}
+                {t("labels.commission")}{" "}
+                {isReady ? formatMoney(firstTrade.breakdown.commission) : "—"}
               </span>
-              <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1">
-                {t("labels.stampDutyShort")} {isReady ? formatMoney(sell.stampDuty) : "—"}
-              </span>
+              {firstTrade.side === "sell" ? (
+                <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1">
+                  {t("labels.stampDutyShort")}{" "}
+                  {isReady ? formatMoney(firstTrade.breakdown.stampDuty) : "—"}
+                </span>
+              ) : null}
               <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--glass-bg)] px-3 py-1">
                 {t("labels.transferFeeShort")}{" "}
-                {isReady ? formatMoney(sell.transferFee) : "—"}
+                {isReady ? formatMoney(firstTrade.breakdown.transferFee) : "—"}
               </span>
             </div>
           </ToolPanel>
 
           <ToolPanel
-            title={t("labels.targets")}
+            title={targetsLabel}
             headerClassName="flex items-center justify-between"
             actions={
               <SecondaryButton size="sm" onClick={copySummary}>
@@ -568,10 +657,15 @@ export default function TTradeCalculatorTool() {
               <span className="text-xs text-[color:var(--text-secondary)]">
                 {t("labels.custom")}
               </span>
-              <div className="flex items-center gap-1">
+              <div
+                className="flex items-center gap-1"
+                role="group"
+                aria-label={t("labels.custom")}
+              >
                 <Button
                   size="sm"
                   variant={customMode === "rate" ? "primary" : "secondary"}
+                  aria-pressed={customMode === "rate"}
                   onClick={() => setCustomMode("rate")}
                 >
                   {t("actions.modeRate")}
@@ -579,6 +673,7 @@ export default function TTradeCalculatorTool() {
                 <Button
                   size="sm"
                   variant={customMode === "amount" ? "primary" : "secondary"}
+                  aria-pressed={customMode === "amount"}
                   onClick={() => setCustomMode("amount")}
                 >
                   {t("actions.modeAmount")}
@@ -617,9 +712,9 @@ export default function TTradeCalculatorTool() {
                   )}
                 >
                   <span>{t("labels.target")}</span>
-                  <span>{t("labels.buyPrice")}</span>
-                  <span>{t("labels.drop")}</span>
-                  <span>{t("labels.buyCost")}</span>
+                  <span>{targetPriceLabel}</span>
+                  <span>{moveLabel}</span>
+                  <span>{secondCashLabel}</span>
                   <span>{t("labels.profit")}</span>
                   <span>{t("labels.profitRate")}</span>
                 </div>
@@ -653,16 +748,25 @@ export default function TTradeCalculatorTool() {
                       </span>
                       <span className="flex flex-col">
                         <span className="text-[color:var(--text-primary)]">
-                          {isReady && row.reachable ? formatPercent(row.dropRate) : "—"}
+                          {isReady && row.reachable ? formatPercent(row.moveRate) : "—"}
                         </span>
                         {isReady && row.reachable ? (
                           <span className="text-[10px] text-[color:var(--text-secondary)]">
-                            {formatSignedPrice(-row.drop, priceDecimals + 2)}
+                            {formatSignedPrice(
+                              sellFirst ? -row.move : row.move,
+                              priceDecimals + 2
+                            )}
                           </span>
                         ) : null}
                       </span>
                       <span className="text-[color:var(--text-primary)]">
-                        {isReady && row.reachable ? formatMoney(row.buy.total) : "—"}
+                        {isReady && row.reachable
+                          ? formatMoney(
+                              row.direction === "sell-first"
+                                ? row.buy.total
+                                : row.sell.net
+                            )
+                          : "—"}
                       </span>
                       <span
                         className={cn(
@@ -685,7 +789,7 @@ export default function TTradeCalculatorTool() {
               </div>
             </div>
             <p className="mt-3 text-[11px] text-[color:var(--text-secondary)]">
-              {t("labels.roundingNote")}
+              {roundingNote}
             </p>
           </ToolPanel>
         </div>

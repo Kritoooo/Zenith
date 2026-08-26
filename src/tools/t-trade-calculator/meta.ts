@@ -4,9 +4,9 @@ export const meta: ToolMeta = {
   id: "t-trade-calculator",
   slug: "t-trade-calculator",
   title: "T Trade Calculator",
-  description: "Break-even and target buy-back prices for intraday T trades.",
+  description: "Break-even and target prices for both intraday T-trade sequences.",
   icon: "T0",
   category: "utility",
   size: "2x2",
-  highlights: ["A-share fees", "Break-even", "Target price"],
+  highlights: ["Both sequences", "A-share fees", "Target price"],
 };
